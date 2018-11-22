@@ -226,6 +226,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</BrowseInformation>
     </ClCompile>
+    <ClCompile Include="VariableSetterDialog.cpp" />
     <ClCompile Include="Vec4.cpp" />
     <ClCompile Include="Vertex.cpp" />
   </ItemGroup>
@@ -278,6 +279,7 @@
     <ClInclude Include="..\include\triv_lib.h" />
     <ClInclude Include="..\include\trng_lib.h" />
     <ClInclude Include="..\include\user_lib.h" />
+    <ClInclude Include="VariableSetterDialog.h" />
     <ClInclude Include="Vec4.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>

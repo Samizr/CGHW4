@@ -47,7 +47,7 @@ CCGWorkApp theApp;
 
 BOOL CCGWorkApp::InitInstance()
 {
-	// Standard initialization
+// TODO: call AfxInitRichEdit2() to initialize richedit2 library.\n"	// Standard initialization
 	// If you are not using these features and wish to reduce the size
 	//  of your final executable, you should remove from the following
 	//  the specific initialization routines you do not need.

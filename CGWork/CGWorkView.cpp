@@ -21,6 +21,7 @@ static char THIS_FILE[] = __FILE__;
 #include "PngWrapper.h"
 #include "iritSkel.h"
 #include "MouseSensitivityDialog.h"
+#include "VariableSetterDialog.h"
 
 
 // For Status Bar access
@@ -28,6 +29,8 @@ static char THIS_FILE[] = __FILE__;
 
 // Static Functions:
 static void testModel(CDC* pDC, const CRect& rect);
+
+
 
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
@@ -100,6 +103,8 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
+	ON_WM_MOUSEMOVE()
+	ON_COMMAND(ID_OPTIONS_SETSENSITIVITYVARIABLES, &CCGWorkView::OnOptionsSetsensitivityvariables)
 END_MESSAGE_MAP()
 
 
@@ -135,6 +140,9 @@ CCGWorkView::CCGWorkView()
 	//Camera cam = scene.getCamera(1);
 
 	//cam.lookat
+	rotationQuota = 1;
+	translationQuota = 1;
+	scalingQuota = 1;
 
 	//Shading Related
 	m_nLightShading = ID_LIGHT_SHADING_FLAT;
@@ -274,6 +282,7 @@ BOOL CCGWorkView::OnEraseBkgnd(CDC* pDC)
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView drawing
 /////////////////////////////////////////////////////////////////////////////
+
 
 void CCGWorkView::OnDraw(CDC* pDC)
 {
@@ -667,15 +676,72 @@ static void testModel(CDC* pDC, const CRect& rect) {
 }
 
 
+
 void CCGWorkView::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	m_bAllowTransformation = true;
+	m_bAllowTransformations = true;
+	m_lnLastXPos = point.x;
 	CView::OnLButtonDown(nFlags, point);
 }
 
 
 void CCGWorkView::OnLButtonUp(UINT nFlags, CPoint point)
 {
-	m_bAllowTransformation = false;
+	m_bAllowTransformations = false;
 	CView::OnLButtonUp(nFlags, point);
+}
+
+
+void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
+{
+	CView::OnMouseMove(nFlags, point);
+	
+	if (!m_bAllowTransformations) {
+		return;
+	}
+	else if (m_lnLastXPos > point.x) {
+		transform(POSITIVE);
+	}
+	else if (m_lnLastXPos < point.x) {
+		transform(NEGATIVE);
+	}
+	m_lnLastXPos = point.x;
+
+}
+
+//Parses the requested transformation and requests the correct transformation:
+void CCGWorkView::transform(Direction direction)
+{
+	//ROTATION
+	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_X && direction == POSITIVE) {}
+	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_Y && direction == POSITIVE) {}
+	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_Z && direction == POSITIVE) {}
+	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_X && direction == NEGATIVE) {}
+	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_Y && direction == NEGATIVE) {}
+	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_Z && direction == NEGATIVE) {}
+	//TRANSLATION:
+	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_X && direction == POSITIVE) {}
+	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_Y && direction == POSITIVE) {}
+	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_Z && direction == POSITIVE) {}
+	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_X && direction == NEGATIVE) {}
+	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_Y && direction == NEGATIVE) {}
+	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_Z && direction == NEGATIVE) {}
+	//SCALING:
+	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_X && direction == POSITIVE) {}
+	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_Y && direction == POSITIVE) {}
+	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_Z && direction == POSITIVE) {}
+	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_X && direction == NEGATIVE) {}
+	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_Y && direction == NEGATIVE) {}
+	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_Z && direction == NEGATIVE) {}
+}
+
+
+void CCGWorkView::OnOptionsSetsensitivityvariables()
+{
+	VariableSetterDialog VSDialog;
+	if (VSDialog.DoModal() == IDOK) {
+		rotationQuota = VSDialog.rotationMax - VSDialog.rotationMin;
+		translationQuota = VSDialog.translationMax - VSDialog.translationMin;
+		scalingQuota = VSDialog.scalingMax - VSDialog.scalingMin;
+	}
 }

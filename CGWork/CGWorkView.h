@@ -32,7 +32,7 @@ public:
 private:
 	void testButtons(); //TODO: DEBUG PURPOSES ONLY, REMOVE WHEN DONE
 
-	//Parameters that define the drawing and viewing of the objects
+	//Parameters that define the drawing and viewing of the objects:
 	int m_nAxis;				// Axis of Action, X Y or Z
 	int m_nAction;				// Rotate, Translate, Scale
 	int m_nView;				// Orthographic, perspective
@@ -49,7 +49,17 @@ private:
 	COLORREF m_clrNormals;			//Current normal color
 	CString m_strItdFileName;		// file name of IRIT data
 	//Scene scene;
-	bool m_bAllowTransformation;	//Set when transformations are allowed
+	//Mouse movement control section:
+	bool m_bAllowTransformations;	//Set when transformations are allowed
+	LONG m_lnLastXPos;				//Stores the x pos of the last place the mouse visited
+	enum Direction {
+		POSITIVE, NEGATIVE
+	};
+	void transform(Direction direction);
+	//Sensetivity test debug configuration:
+	float rotationQuota;
+	float translationQuota;
+	float scalingQuota;
 
 
 	//Parameters not related for HW2 Implementation:
@@ -157,6 +167,8 @@ public:
 
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnOptionsSetsensitivityvariables();
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp
