@@ -98,6 +98,8 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_COMMAND(ID_LIGHT_CONSTANTS, OnLightConstants)
 	//}}AFX_MSG_MAP
 
+	ON_WM_LBUTTONDOWN()
+	ON_WM_LBUTTONUP()
 END_MESSAGE_MAP()
 
 
@@ -603,6 +605,12 @@ void CCGWorkView::OnTimer(UINT_PTR nIDEvent)
 }
 
 
+// MOUSE MOVEMENT HANDLING ///////////////////////////////////////////
+
+
+
+
+
 //////////////////////////////////////////TESTING & DEBUG FUNCTIONS////////////////////////////////////////////////////////
 
 void CCGWorkView::testButtons() {
@@ -656,4 +664,18 @@ static void testModel(CDC* pDC, const CRect& rect) {
 		//plotLine(r1, s1, r2, s2, pDC);
 		plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDC);
 	}
+}
+
+
+void CCGWorkView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	m_bAllowTransformation = true;
+	CView::OnLButtonDown(nFlags, point);
+}
+
+
+void CCGWorkView::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	m_bAllowTransformation = false;
+	CView::OnLButtonUp(nFlags, point);
 }

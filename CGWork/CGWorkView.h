@@ -49,6 +49,7 @@ private:
 	COLORREF m_clrNormals;			//Current normal color
 	CString m_strItdFileName;		// file name of IRIT data
 	//Scene scene;
+	bool m_bAllowTransformation;	//Set when transformations are allowed
 
 
 	//Parameters not related for HW2 Implementation:
@@ -154,6 +155,8 @@ protected:
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp
