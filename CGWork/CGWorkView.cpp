@@ -122,7 +122,6 @@ void auxSolidCone(GLdouble radius, GLdouble height) {
 CCGWorkView::CCGWorkView() :
 	scene(renderer)
 {
-
 	//Set default values
 	m_nAxis = ID_AXIS_X;
 	m_nAction = ID_ACTION_ROTATE;
@@ -710,19 +709,19 @@ void CCGWorkView::OnLButtonUp(UINT nFlags, CPoint point)
 
 void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 {
-	CView::OnMouseMove(nFlags, point);
+	/*CView::OnMouseMove(nFlags, point);
 
-	//if (!m_bAllowTransformations) {
-	//	return;
-	//}
-	//else if (m_lnLastXPos > point.x) {
-	//	transform(POSITIVE);
-	//}
-	//else if (m_lnLastXPos < point.x) {
-	//	transform(NEGATIVE);
-	//}
-	//m_lnLastXPos = point.x;
-
+	if (!m_bAllowTransformations) {
+		return;
+	}
+	else if (m_lnLastXPos > point.x) {
+		transform(POSITIVE);
+	}
+	else if (m_lnLastXPos < point.x) {
+		transform(NEGATIVE);
+	}
+	m_lnLastXPos = point.x;
+	*/
 }
 
 //Parses the requested transformation and requests the correct transformation:
