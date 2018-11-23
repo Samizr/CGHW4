@@ -10,7 +10,6 @@
 
 int Scene::addModel(Model* model){
 	//TODO make sure vector function called insert.
-
 	this->models[modelIdGenerator] = model;
 	activeModel = modelIdGenerator;
 	return modelIdGenerator++;
@@ -28,6 +27,14 @@ Model& Scene::getModel(int id) {
 
 Camera & Scene::getCamera(int id) {
 	return *cameras[id];
+}
+
+Model & Scene::getActiveModel() {
+	return *models[activeModel];
+}
+
+Camera& Scene::getActiveCamera() {
+	return *cameras[activeCamera];
 }
 
 void Scene::draw(CDC* pdc, CRect rect) {
