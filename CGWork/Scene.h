@@ -32,9 +32,7 @@ public:
 	Camera* getCamera(int id);
 	Model* getActiveModel();
 	Camera* getActiveCamera();
-	void draw(CDC* pdc, CRect rect);
-	void enableBoundingBox();
-	void disableBoundingBox();
+	void draw(CDC* pdc, CRect rect, COLORREF clr);
 };
 
 #endif /* Scene_h */

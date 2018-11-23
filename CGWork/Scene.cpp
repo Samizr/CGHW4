@@ -49,7 +49,7 @@ Camera* Scene::getActiveCamera() {
 	return cameras[activeCamera];
 }
 
-void Scene::draw(CDC* pdc, CRect rect) {
+void Scene::draw(CDC* pdc, CRect rect, COLORREF clr) {
 	if (activeModel == -1 || activeCamera == -1) {
 		return;
 	}
@@ -79,7 +79,7 @@ void Scene::draw(CDC* pdc, CRect rect) {
 	float sumH = rect.top + rect.bottom;
 	Vec4 vecVPM[4] = { Vec4(virtualDeltaW / 2, 0, 0, sumW / 2), Vec4(0, virtualDeltaH / 2, 0, sumH / 2), Vec4(0, 0, 0.5, 0.5), Vec4(0, 0, 0, 1) };
 	this->m_renderer.setWindowMatrix(Mat4(vecVPM));
-	m_renderer.drawWireframe(pdc, &model->getGeometry());
+	m_renderer.drawWireframe(pdc, &model->getGeometry(), clr);
 }
 
 void Scene::enableBoundingBox() {
