@@ -147,6 +147,7 @@ CCGWorkView::CCGWorkView() :
 	auto newCamera = new Camera();
 	newCamera->Ortho();
 	cameraIDs.push_back(scene.addCamera(newCamera));
+	
 
 	//Shading Related
 	m_nLightShading = ID_LIGHT_SHADING_FLAT;
@@ -300,9 +301,8 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	GetClientRect(&r);
 	CDC *pDCToUse = /*m_pDC*/m_pDbDC;
 
-	Geometry g = ::loadedGeometry;
+	testModel(m_pDbDC, r);
 
-	//modelIDs.push_back();
 	if (pDCToUse != m_pDC)
 	{
 		m_pDC->BitBlt(r.left, r.top, r.Width(), r.Height(), pDCToUse, r.left, r.top, SRCCOPY);
@@ -349,11 +349,10 @@ void CCGWorkView::OnFileLoad()
 
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 		// Open the file and read it.
-		// VERSION 5 - Currently works with one camera and one model.
+
 		// Does not reload the model if requested.
-		//Model newModel(::loadedGeometry);
-//		scene.addModel(newModel);
-		Geometry g = ::loadedGeometry;
+		auto newModel = new Model(::loadedGeometry);
+		modelIDs.push_back(scene.addModel(newModel));
 
 		Invalidate();	// force a WM_PAINT for drawing.
 	}
@@ -637,23 +636,33 @@ void CCGWorkView::testButtons() {
 static void testModel(CDC* pDC, const CRect& rect) {
 
 	Geometry geometry = ::loadedGeometry;
-	float deltaX = geometry.getMaxX() - geometry.getMinX();
-	float deltaY = geometry.getMaxY() - geometry.getMinY();
-	float deltaZ = geometry.getMaxZ() - geometry.getMinZ();
-	float sumX = geometry.getMaxX() + geometry.getMinX();
-	float sumY = geometry.getMaxY() + geometry.getMinY();
-	float sumZ = geometry.getMaxZ() + geometry.getMinZ();
+	float deltaX = 16;//geometry.getMaxX() - geometry.getMinX();
+	float deltaY = 9;//geometry.getMaxY() - geometry.getMinY();
+	float deltaZ = 6;//  geometry.getMaxZ() - geometry.getMinZ();
+	float sumX = 0; //geometry.getMaxX() + geometry.getMinX();
+	float sumY = 0; //geometry.getMaxY() + geometry.getMinY();
+	float sumZ = 0; //geometry.getMaxZ() + geometry.getMinZ();
 	float deltaW = rect.right - rect.left;
 	float deltaH = rect.top - rect.bottom;
+	float virtualDeltaW = min(deltaH, deltaH);
+	float virtualDeltaH = min(deltaH, deltaH);
+	if (deltaH > deltaW) {
+		virtualDeltaW = deltaW;
+		virtualDeltaH = deltaW * 9 / 16;
+	} else {
+		virtualDeltaW = deltaH * 16 / 9;
+		virtualDeltaH = deltaH;
+	}
 	float sumW = rect.right + rect.left;
 	float sumH = rect.top + rect.bottom;
+	
 
 	Vec4 vecWM[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
 	Vec4 vecCM[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
 	Vec4 vecPM[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 0, 0), Vec4(0, 0, 0, 1) };
 	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, 2 / deltaZ, -sumZ / deltaZ), Vec4(0, 0, 0, 1) };
 
-	Vec4 vecVPM[4] = { Vec4(deltaW / 2, 0, 0, sumW / 2), Vec4(0, deltaH / 2, 0, sumH / 2), Vec4(0, 0, 0.5, 0.5), Vec4(0, 0, 0, 1) };
+	Vec4 vecVPM[4] = { Vec4(virtualDeltaW / 2, 0, 0, sumW / 2), Vec4(0, virtualDeltaH / 2, 0, sumH / 2), Vec4(0, 0, 0.5, 0.5), Vec4(0, 0, 0, 1) };
 
 	Mat4 worldMatrix(vecWM), cameraMatrix(vecCM), projectionMatrix(vecPM), normalizingMatrix(vecNM);
 	Mat4 viewPortMatrix(vecVPM);
@@ -667,12 +676,6 @@ static void testModel(CDC* pDC, const CRect& rect) {
 		p1 = finalMatrix * p1;
 		p2 = finalMatrix * p2;
 
-		//float r1 = width * (p1.xCoord() + 1) / 2;
-		//float r2 = width * (p2.xCoord() + 1) / 2;
-		//float s1 = height * (p1.yCoord() + 1) / 2;
-		//float s2 = height * (p2.yCoord() + 1) / 2;
-
-		//plotLine(r1, s1, r2, s2, pDC);
 		plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDC);
 	}
 }
