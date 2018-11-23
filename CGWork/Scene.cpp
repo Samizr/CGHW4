@@ -58,11 +58,26 @@ void Scene::draw(CDC* pdc, CRect rect) {
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
 	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
 	this->m_renderer.setObjectWorldMatrix(model->getTransformationMatrix());
+	float deltaX = 16; //geometry.getMaxX() - geometry.getMinX();
+	float deltaY = 9;  //geometry.getMaxY() - geometry.getMinY();
+	float deltaZ = 6;  //geometry.getMaxZ() - geometry.getMinZ();
+	float sumX = 0;	 //geometry.getMaxX() + geometry.getMinX();
+	float sumY = 0; //geometry.getMaxY() + geometry.getMinY();
+	float sumZ = 0; //geometry.getMaxZ() + geometry.getMinZ();
 	float deltaW = rect.right - rect.left;
-	float deltaH = rect.top - rect.bottom;
+	float deltaH = rect.bottom - rect.top;
+	float virtualDeltaW = min(deltaH, deltaH);
+	float virtualDeltaH = min(deltaH, deltaH);
+	if (16*deltaH > 9*deltaW) {
+		virtualDeltaW = deltaW;
+		virtualDeltaH = deltaW * 9 / 16;
+	} else {
+		virtualDeltaW = deltaH * 16 / 9;
+		virtualDeltaH = deltaH;
+	}
 	float sumW = rect.right + rect.left;
 	float sumH = rect.top + rect.bottom;
-	Vec4 vecVPM[4] = { Vec4(deltaW / 2, 0, 0, sumW / 2), Vec4(0, deltaH / 2, 0, sumH / 2), Vec4(0, 0, 0.5, 0.5), Vec4(0, 0, 0, 1) };
+	Vec4 vecVPM[4] = { Vec4(virtualDeltaW / 2, 0, 0, sumW / 2), Vec4(0, virtualDeltaH / 2, 0, sumH / 2), Vec4(0, 0, 0.5, 0.5), Vec4(0, 0, 0, 1) };
 	this->m_renderer.setWindowMatrix(Mat4(vecVPM));
 	m_renderer.drawWireframe(pdc, &model->getGeometry());
 }
