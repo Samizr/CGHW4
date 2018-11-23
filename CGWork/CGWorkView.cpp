@@ -751,9 +751,9 @@ void CCGWorkView::transform(Direction direction)
 
 	case (ID_ACTION_SCALE):
 		if (m_bIsViewSpace)
-			model->scaleViewSpace(sceneAxis, direction * scalingQuota);
+			model->scaleViewSpace(sceneAxis, 1 + direction * scalingQuota);
 		else
-			model->scaleObjectSpace(sceneAxis, direction * scalingQuota);
+			model->scaleObjectSpace(sceneAxis,1 + direction * scalingQuota);
 		break;
 	}
 }
