@@ -29,7 +29,7 @@ static char THIS_FILE[] = __FILE__;
 
 // Static Functions:
 static void testModel(CDC* pDC, const CRect& rect);
-
+static AXIS sceneAxisTranslator(int guiID);
 
 
 // Use this macro to display text messages in the status bar.
@@ -301,7 +301,9 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	GetClientRect(&r);
 	CDC *pDCToUse = /*m_pDC*/m_pDbDC;
 
-	testModel(m_pDbDC, r);
+	//testModel(m_pDbDC, r);
+
+	scene.draw(pDC, r);
 
 	if (pDCToUse != m_pDC)
 	{
@@ -633,6 +635,16 @@ void CCGWorkView::testButtons() {
 #include "Mat4.h"
 #include "LinePlotter.h"
 
+AXIS sceneAxisTranslator(int guiID)
+{
+	switch (guiID) {
+	case ID_AXIS_X: return XAXIS;
+	case ID_AXIS_Y: return YAXIS;
+	case ID_AXIS_Z: return ZAXIS;
+	}
+}
+
+
 static void testModel(CDC* pDC, const CRect& rect) {
 
 	Geometry geometry = ::loadedGeometry;
@@ -681,7 +693,6 @@ static void testModel(CDC* pDC, const CRect& rect) {
 }
 
 
-
 void CCGWorkView::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	m_bAllowTransformations = true;
@@ -718,26 +729,31 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 void CCGWorkView::transform(Direction direction)
 {
 	//ROTATION
-	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_X && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_Y && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_Z && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_X && direction == NEGATIVE) {}
-	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_Y && direction == NEGATIVE) {}
-	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_Z && direction == NEGATIVE) {}
-	//TRANSLATION:
-	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_X && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_Y && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_Z && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_X && direction == NEGATIVE) {}
-	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_Y && direction == NEGATIVE) {}
-	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_Z && direction == NEGATIVE) {}
-	//SCALING:
-	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_X && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_Y && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_Z && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_X && direction == NEGATIVE) {}
-	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_Y && direction == NEGATIVE) {}
-	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_Z && direction == NEGATIVE) {}
+	AXIS sceneAxis = sceneAxisTranslator(m_nAxis);
+	Model model = scene.getActiveModel();
+	switch (m_nAction) {
+
+	case (ID_ACTION_ROTATE) : 
+		if (m_bIsViewSpace)
+			model.rotateViewSpace(sceneAxis, direction * rotationQuota);
+		else
+			model.rotateObjectSpace(sceneAxis, direction * rotationQuota);
+		break;
+	
+	case (ID_ACTION_TRANSLATE):
+		if (m_bIsViewSpace)
+			model.translateViewSpace(sceneAxis, direction * translationQuota);
+		else
+			model.translateObjectSpace(sceneAxis, direction * translationQuota);
+		break;
+
+	case (ID_ACTION_SCALE):
+		if (m_bIsViewSpace)
+			model.scaleViewSpace(sceneAxis, direction * scalingQuota);
+		else
+			model.scaleObjectSpace(sceneAxis, direction * scalingQuota);
+		break;
+	}
 }
 
 

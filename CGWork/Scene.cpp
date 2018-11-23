@@ -61,6 +61,5 @@ Scene::Scene(Renderer& renderer){
 	this->activeModel = -1;
 }
 
-
 int Scene::cameraIdGenerator = 0;
 int Scene::modelIdGenerator = 0;
