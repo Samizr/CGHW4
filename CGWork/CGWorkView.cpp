@@ -139,9 +139,9 @@ CCGWorkView::CCGWorkView() :
 	m_clrNormals = INITIAL_NORMAL_COLOR;
 
 	// Transformations Quantitive Setup:
-	rotationQuota = 1;
-	translationQuota = 1;
-	scalingQuota = 1;
+	translationQuota = 0.9;
+	rotationQuota = 1.2;
+	scalingQuota = 0.5;
 
 	//Scene initilization:
 	auto newCamera = new Camera();
@@ -761,8 +761,14 @@ void CCGWorkView::transform(Direction direction)
 
 void CCGWorkView::OnOptionsSetsensitivityvariables()
 {
-	VariableSetterDialog VSDialog;
+	VariableSetterDialog VSDialog(rotationMin, rotationMax, translationMin, translationMax, scalingMin, scalingMax);
 	if (VSDialog.DoModal() == IDOK) {
+		rotationMax = VSDialog.rotationMax;
+		rotationMin = VSDialog.rotationMin;
+		translationMax = VSDialog.translationMax;
+		translationMin = VSDialog.translationMin;
+		scalingMax = VSDialog.scalingMax;
+		scalingMin = VSDialog.scalingMax;
 		rotationQuota = VSDialog.rotationMax - VSDialog.rotationMin;
 		translationQuota = VSDialog.translationMax - VSDialog.translationMin;
 		scalingQuota = VSDialog.scalingMax - VSDialog.scalingMin;

@@ -104,7 +104,7 @@ Mat4 Mat4::Rotate(int axis, float theta) {
 		break;
 	case 2: 
 		rows[0] = Vec4(cosTheta, -sinTheta, 0, 0);
-		rows[1] = Vec4(sinTheta, 0, cosTheta, 0);
+		rows[1] = Vec4(sinTheta, cosTheta, 0, 0);
 		break;
 	}
 	return Mat4(rows);
