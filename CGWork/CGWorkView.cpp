@@ -21,7 +21,6 @@ static char THIS_FILE[] = __FILE__;
 #include "PngWrapper.h"
 #include "iritSkel.h"
 #include "MouseSensitivityDialog.h"
-#include "VariableSetterDialog.h"
 
 
 // For Status Bar access
@@ -104,7 +103,6 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
-	ON_COMMAND(ID_OPTIONS_SETSENSITIVITYVARIABLES, &CCGWorkView::OnOptionsSetsensitivityvariables)
 END_MESSAGE_MAP()
 
 
@@ -751,26 +749,9 @@ void CCGWorkView::transform(Direction direction)
 
 	case (ID_ACTION_SCALE):
 		if (m_bIsViewSpace)
-			model->scaleViewSpace(sceneAxis, direction * scalingQuota);
+			model->scaleViewSpace(sceneAxis, (1 + direction) * scalingQuota);
 		else
-			model->scaleObjectSpace(sceneAxis, direction * scalingQuota);
+			model->scaleObjectSpace(sceneAxis, (1 + direction) * scalingQuota);
 		break;
-	}
-}
-
-
-void CCGWorkView::OnOptionsSetsensitivityvariables()
-{
-	VariableSetterDialog VSDialog(rotationMin, rotationMax, translationMin, translationMax, scalingMin, scalingMax);
-	if (VSDialog.DoModal() == IDOK) {
-		rotationMax = VSDialog.rotationMax;
-		rotationMin = VSDialog.rotationMin;
-		translationMax = VSDialog.translationMax;
-		translationMin = VSDialog.translationMin;
-		scalingMax = VSDialog.scalingMax;
-		scalingMin = VSDialog.scalingMax;
-		rotationQuota = VSDialog.rotationMax - VSDialog.rotationMin;
-		translationQuota = VSDialog.translationMax - VSDialog.translationMin;
-		scalingQuota = VSDialog.scalingMax - VSDialog.scalingMin;
 	}
 }
