@@ -33,40 +33,40 @@ void Model::prependToTransformation(const Mat4& matrix) {
 	this->mTransform = matrix * this->mTransform;
 }
 
-void Model::translateObjectSpace(int axis, float amount) {
+void Model::translateObjectSpace(AXIS axis, float amount) {
 	Vec4 translateVector;
 	translateVector[axis] = amount;
 	Mat4 matrix = Mat4::Translate(translateVector);
 	this->appendToTransformation(matrix);
 }
 
-void Model::translateViewSpace(int axis, float amount) {
+void Model::translateViewSpace(AXIS axis, float amount) {
 	Vec4 translateVector;
 	translateVector[axis] = amount;
 	Mat4 matrix = Mat4::Translate(translateVector);
 	this->prependToTransformation(matrix);
 }
 
-void Model::scaleObjectSpace(int axis, float amount) {
+void Model::scaleObjectSpace(AXIS axis, float amount) {
 	Vec4 scaleVector(1, 1, 1, 1);
 	scaleVector[axis] = amount;
 	Mat4 matrix = Mat4::Translate(scaleVector);
 	this->appendToTransformation(matrix);
 }
 
-void Model::scaleViewSpace(int axis, float amount) { 
+void Model::scaleViewSpace(AXIS axis, float amount) { 
 	Vec4 scaleVector(1, 1, 1, 1);
 	scaleVector[axis] = amount;
 	Mat4 matrix = Mat4::Translate(scaleVector);
 	this->prependToTransformation(matrix);
 }
 
-void Model::rotateObjectSpace(int axis, float theta) {
+void Model::rotateObjectSpace(AXIS axis, float theta) {
 	Mat4 matrix = Mat4::Rotate(axis, theta);
 	this->appendToTransformation(matrix);
 }
 
-void Model::rotateViewSpace(int axis, float theta) {
+void Model::rotateViewSpace(AXIS axis, float theta) {
 	Mat4 matrix = Mat4::Rotate(axis, theta);
 	this->prependToTransformation(matrix);
 }

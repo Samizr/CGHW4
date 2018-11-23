@@ -13,6 +13,10 @@
 #include "Mat4.h"
 #include "Geometry.h"
 
+enum AXIS {
+	XAXIS = 0, YAXIS = 1, ZAXIS = 2
+};
+
 class Model {
 protected:
 	Geometry geometry;
@@ -24,11 +28,11 @@ public:
 	void setTransformation(const Mat4& matrix);
 	void appendToTransformation(const Mat4& matrix);
 	void prependToTransformation(const Mat4& matrix);
-	void rotateObjectSpace(int axis, float theta);
-	void translateObjectSpace(int axis, float amount);
-	void scaleObjectSpace(int axis, float amount);
-	void rotateViewSpace(int axis, float theta);
-	void translateViewSpace(int axis, float amount);
-	void scaleViewSpace(int axis, float amount);
+	void rotateObjectSpace(AXIS axis, float theta);
+	void translateObjectSpace(AXIS axis, float amount);
+	void scaleObjectSpace(AXIS axis, float amount);
+	void rotateViewSpace(AXIS axis, float theta);
+	void translateViewSpace(AXIS axis, float amount);
+	void scaleViewSpace(AXIS axis, float amount);
 };
 #endif /* Model_h */
