@@ -56,7 +56,7 @@ void Scene::draw(CDC* pdc, CRect rect) {
 	Model* model = models[activeModel];
 	Camera* camera = cameras[activeCamera];
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
-	this->m_renderer.setProjectionMatrix(camera->getTransformationMatrix());
+	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
 	this->m_renderer.setObjectWorldMatrix(model->getTransformationMatrix());
 	float deltaW = rect.right - rect.left;
 	float deltaH = rect.top - rect.bottom;

@@ -13,7 +13,7 @@
 Renderer::Renderer() {
 	float deltaX = 16;
 	float deltaY = 9;
-	float deltaZ = 3;
+	float deltaZ = 6;
 	float sumX = 0;
 	float sumY = 0;
 	float sumZ = 0;

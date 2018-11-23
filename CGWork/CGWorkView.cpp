@@ -122,6 +122,7 @@ void auxSolidCone(GLdouble radius, GLdouble height) {
 CCGWorkView::CCGWorkView() :
 	scene(renderer)
 {
+
 	//Set default values
 	m_nAxis = ID_AXIS_X;
 	m_nAction = ID_ACTION_ROTATE;
@@ -303,7 +304,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 
 	//testModel(m_pDbDC, r);
 
-	scene.draw(pDC, r);
+	scene.draw(pDCToUse, r);
 
 	if (pDCToUse != m_pDC)
 	{
@@ -711,16 +712,16 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	CView::OnMouseMove(nFlags, point);
 
-	if (!m_bAllowTransformations) {
-		return;
-	}
-	else if (m_lnLastXPos > point.x) {
-		transform(POSITIVE);
-	}
-	else if (m_lnLastXPos < point.x) {
-		transform(NEGATIVE);
-	}
-	m_lnLastXPos = point.x;
+	//if (!m_bAllowTransformations) {
+	//	return;
+	//}
+	//else if (m_lnLastXPos > point.x) {
+	//	transform(POSITIVE);
+	//}
+	//else if (m_lnLastXPos < point.x) {
+	//	transform(NEGATIVE);
+	//}
+	//m_lnLastXPos = point.x;
 
 }
 
@@ -737,7 +738,7 @@ void CCGWorkView::transform(Direction direction)
 
 	case (ID_ACTION_ROTATE) : 
 		if (m_bIsViewSpace)
-			model->appendToTransformationrotateViewSpace(sceneAxis, direction * rotationQuota);
+			model->rotateViewSpace(sceneAxis, direction * rotationQuota);
 		else
 			model->rotateObjectSpace(sceneAxis, direction * rotationQuota);
 		break;
