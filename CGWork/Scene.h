@@ -28,10 +28,10 @@ public:
 	Scene(Renderer& renderer);
 	int addModel(Model* model);
 	int addCamera(Camera* camera);
-	Model& getModel(int id);
-	Camera& getCamera(int id);
-	Model& getActiveModel();
-	Camera& getActiveCamera();
+	Model* getModel(int id);
+	Camera* getCamera(int id);
+	Model* getActiveModel();
+	Camera* getActiveCamera();
 	void draw(CDC* pdc, CRect rect);
 };
 

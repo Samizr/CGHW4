@@ -21,20 +21,32 @@ int Scene::addCamera(Camera* camera){
 	return cameraIdGenerator++;
 }
 
-Model& Scene::getModel(int id) {
-	return *models[id];
+Model* Scene::getModel(int id) {
+	if (models.find(id) == models.end()) {
+		return nullptr;
+	}
+	return models[id];
 }
 
-Camera & Scene::getCamera(int id) {
-	return *cameras[id];
+Camera* Scene::getCamera(int id) {
+	if (cameras.find(id) == cameras.end()) {
+		return nullptr;
+	}
+	return cameras[id];
 }
 
-Model & Scene::getActiveModel() {
-	return *models[activeModel];
+Model* Scene::getActiveModel() {
+	if (activeModel == -1) {
+		return nullptr;
+	}
+	return models[activeModel];
 }
 
-Camera& Scene::getActiveCamera() {
-	return *cameras[activeCamera];
+Camera* Scene::getActiveCamera() {
+	if (activeCamera == -1) {
+		return nullptr;
+	}
+	return cameras[activeCamera];
 }
 
 void Scene::draw(CDC* pdc, CRect rect) {
