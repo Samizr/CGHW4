@@ -136,9 +136,9 @@ CCGWorkView::CCGWorkView() :
 	m_clrNormals = INITIAL_NORMAL_COLOR;
 
 	// Transformations Quantitive Setup:
-	translationQuota = 0.9;
-	rotationQuota = 1.2;
-	scalingQuota = 0.5;
+	translationQuota = 9;
+	rotationQuota = 12;
+	scalingQuota = 1;
 
 	//Scene initilization:
 	auto newCamera = new Camera();
@@ -687,23 +687,23 @@ void CCGWorkView::transform(Direction direction)
 
 	case (ID_ACTION_ROTATE) : 
 		if (m_bIsViewSpace)
-			model->rotateViewSpace(sceneAxis, direction * rotationQuota);
+			model->rotateViewSpace(sceneAxis, direction * rotationQuota * m_nRotationSensetivity/100);
 		else
-			model->rotateObjectSpace(sceneAxis, direction * rotationQuota);
+			model->rotateObjectSpace(sceneAxis, direction * rotationQuota * m_nRotationSensetivity/100);
 		break;
 	
 	case (ID_ACTION_TRANSLATE):
 		if (m_bIsViewSpace)
-			model->translateViewSpace(sceneAxis, direction * translationQuota);
+			model->translateViewSpace(sceneAxis, direction * translationQuota * m_nTranslationSensetivity/100);
 		else
-			model->translateObjectSpace(sceneAxis, direction * translationQuota);
+			model->translateObjectSpace(sceneAxis, direction * translationQuota * m_nTranslationSensetivity/100);
 		break;
 
 	case (ID_ACTION_SCALE):
 		if (m_bIsViewSpace)
-			model->scaleViewSpace(sceneAxis, (1 + direction) * scalingQuota);
+			model->scaleViewSpace(sceneAxis, (1 + direction) * 0.5 /*scalingQuota * m_nScaleSensetivity/100*/);
 		else
-			model->scaleObjectSpace(sceneAxis, (1 + direction) * scalingQuota);
+			model->scaleObjectSpace(sceneAxis, (1 + direction) * 0.5 /*scalingQuota * m_nScaleSensetivity/100*/);
 		break;
 	}
 }
