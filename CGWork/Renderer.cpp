@@ -19,6 +19,7 @@ Renderer::Renderer() {
 	float sumZ = 0;
 	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, 2 / deltaZ, -sumZ / deltaZ), Vec4(0, 0, 0, 1) };
 	normalizationMatrix = Mat4(vecNM);
+	withBounding = false;
 }
 
 void Renderer::drawWireframe(CDC * pDc, Geometry * geometry, COLORREF clr) {
@@ -33,8 +34,22 @@ void Renderer::drawWireframe(CDC * pDc, Geometry * geometry, COLORREF clr) {
 		p2 = finalMatrix * p2;
 		plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDc, clr);
 	}
+
+	if (withBounding) {
+		drawBoundingBox(pDc, geometry, clr);
+	}
 }
 
+static void drawBoundingBox(CDC * pDc, Geometry * geometry, COLORREF clr) {
+	float mtop, mbottom, mfar, mnear, mright, mleft;
+	mtop = geometry->getMaxY();
+	mbottom = geometry->getMinY();
+	mfar = geometry->getMaxZ();
+	mnear = geometry->getMinZ();
+	mright = geometry->getMaxX();
+	mleft = geometry->getMinY();
+	Vec4 nearFace[4] = {Vec4()}
+}
 void Renderer::setObjectWorldMatrix(Mat4 &matrix) {
 	objectWorldMatrix = matrix;
 }
@@ -49,4 +64,12 @@ void Renderer::setProjectionMatrix(Mat4 &matrix) {
 
 void Renderer::setWindowMatrix(Mat4 &matrix) {
 	windowMatrix = matrix;
+}
+
+void Renderer::disableBoundingBox() {
+	withBounding = false;
+}
+
+void Renderer::enableBoundingBox() {
+	withBounding = true;
 }

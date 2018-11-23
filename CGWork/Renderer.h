@@ -20,6 +20,7 @@ class Renderer {
 	Mat4 projectionMatrix;
 	Mat4 normalizationMatrix;
 	Mat4 windowMatrix;
+	bool withBounding;
 public:
 	Renderer();
 	void drawWireframe(CDC* pDc, Geometry* geometry, COLORREF clr);
@@ -27,5 +28,7 @@ public:
 	void setCameraMatrix(Mat4& matrix);
 	void setProjectionMatrix(Mat4& matrix);
 	void setWindowMatrix(Mat4& matrix);
+	void disableBoundingBox();
+	void enableBoundingBox();
 };
 #endif /* Renderer_h */
