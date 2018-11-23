@@ -10,7 +10,6 @@
 #define IDD_MOUSESENSETIVITY_DLG        141
 #define IDD_DIALOG1                     143
 #define IDD_PERSPECTIVEPARS_DLG         143
-#define IDD_VARIABLESETTER              145
 #define IDC_LIGHT_SPACE                 1010
 #define IDC_RADIO_LIGHT1                1017
 #define IDC_RADIO_LIGHT2                1018
@@ -42,14 +41,7 @@
 #define IDC_MATERIAL_SPECULAR           1042
 #define IDC_SCALING_SLIDER              1042
 #define IDC_EDIT1                       1063
-#define IDC_ROTATIONMIN                 1063
 #define IDC_RICHEDIT21                  1064
-#define IDC_ROTATIONMAX                 1064
-#define IDC_ROTATIONMIN2                1065
-#define IDC_TRANSLATIONMIN              1067
-#define IDC_TRANSLATIONMAX              1068
-#define IDC_SCALINGMIN                  1069
-#define IDC_SCALINGMAX                  1070
 #define ID_FILE_LOAD                    32771
 #define ID_VIEW_ORTHOGRAPHIC            32772
 #define ID_VIEW_PERSPECTIVE             32773

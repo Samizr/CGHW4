@@ -67,12 +67,6 @@ private:
 	void transform(Direction direction);
 
 	//Sensetivity test debug configuration:
-	float rotationMax;
-	float rotationMin;
-	float translationMax;
-	float translationMin;
-	float scalingMax;
-	float scalingMin;
 	float rotationQuota;
 	float translationQuota;
 	float scalingQuota;
