@@ -643,10 +643,10 @@ static void testModel(CDC* pDC, const CRect& rect) {
 	float sumY = 0; //geometry.getMaxY() + geometry.getMinY();
 	float sumZ = 0; //geometry.getMaxZ() + geometry.getMinZ();
 	float deltaW = rect.right - rect.left;
-	float deltaH = rect.top - rect.bottom;
+	float deltaH = rect.bottom - rect.top;
 	float virtualDeltaW = min(deltaH, deltaH);
 	float virtualDeltaH = min(deltaH, deltaH);
-	if (deltaH > deltaW) {
+	if (16*deltaH > 9*deltaW) {
 		virtualDeltaW = deltaW;
 		virtualDeltaH = deltaW * 9 / 16;
 	} else {
@@ -658,7 +658,7 @@ static void testModel(CDC* pDC, const CRect& rect) {
 	
 
 	Vec4 vecWM[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
-	Vec4 vecCM[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
+	Vec4 vecCM[4] = { Vec4(1, 0, 0, 0), Vec4(0, -1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
 	Vec4 vecPM[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 0, 0), Vec4(0, 0, 0, 1) };
 	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, 2 / deltaZ, -sumZ / deltaZ), Vec4(0, 0, 0, 1) };
 
