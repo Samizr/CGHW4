@@ -48,3 +48,7 @@ void Scene::draw(CDC* pdc, CRect rect) {
 Scene::Scene(Renderer& renderer){
 	this->m_renderer = renderer;
 }
+
+
+int Scene::cameraIdGenerator = 0;
+int Scene::modelIdGenerator = 0;

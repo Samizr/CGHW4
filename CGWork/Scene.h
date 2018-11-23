@@ -33,6 +33,4 @@ public:
 	void draw(CDC* pdc, CRect rect);
 };
 
-int Scene::cameraIdGenerator = 0;
-int Scene::modelIdGenerator = 0;
 #endif /* Scene_h */
