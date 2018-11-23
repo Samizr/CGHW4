@@ -644,14 +644,13 @@ AXIS sceneAxisTranslator(int guiID)
 	}
 }
 
-
 static void testModel(CDC* pDC, const CRect& rect) {
 
 	Geometry geometry = ::loadedGeometry;
-	float deltaX = 16;//geometry.getMaxX() - geometry.getMinX();
-	float deltaY = 9;//geometry.getMaxY() - geometry.getMinY();
-	float deltaZ = 6;//  geometry.getMaxZ() - geometry.getMinZ();
-	float sumX = 0; //geometry.getMaxX() + geometry.getMinX();
+	float deltaX = 16; //geometry.getMaxX() - geometry.getMinX();
+	float deltaY = 9;  //geometry.getMaxY() - geometry.getMinY();
+	float deltaZ = 6;  //geometry.getMaxZ() - geometry.getMinZ();
+	float sumX = 0;	 //geometry.getMaxX() + geometry.getMinX();
 	float sumY = 0; //geometry.getMaxY() + geometry.getMinY();
 	float sumZ = 0; //geometry.getMaxZ() + geometry.getMinZ();
 	float deltaW = rect.right - rect.left;
@@ -728,30 +727,33 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 //Parses the requested transformation and requests the correct transformation:
 void CCGWorkView::transform(Direction direction)
 {
-	//ROTATION
+
+	Model* model = scene.getActiveModel();
+	if (model == nullptr) {
+		return;
+	}
 	AXIS sceneAxis = sceneAxisTranslator(m_nAxis);
-	Model model = scene.getActiveModel();
 	switch (m_nAction) {
 
 	case (ID_ACTION_ROTATE) : 
 		if (m_bIsViewSpace)
-			model.rotateViewSpace(sceneAxis, direction * rotationQuota);
+			model->appendToTransformationrotateViewSpace(sceneAxis, direction * rotationQuota);
 		else
-			model.rotateObjectSpace(sceneAxis, direction * rotationQuota);
+			model->rotateObjectSpace(sceneAxis, direction * rotationQuota);
 		break;
 	
 	case (ID_ACTION_TRANSLATE):
 		if (m_bIsViewSpace)
-			model.translateViewSpace(sceneAxis, direction * translationQuota);
+			model->translateViewSpace(sceneAxis, direction * translationQuota);
 		else
-			model.translateObjectSpace(sceneAxis, direction * translationQuota);
+			model->translateObjectSpace(sceneAxis, direction * translationQuota);
 		break;
 
 	case (ID_ACTION_SCALE):
 		if (m_bIsViewSpace)
-			model.scaleViewSpace(sceneAxis, direction * scalingQuota);
+			model->scaleViewSpace(sceneAxis, direction * scalingQuota);
 		else
-			model.scaleObjectSpace(sceneAxis, direction * scalingQuota);
+			model->scaleObjectSpace(sceneAxis, direction * scalingQuota);
 		break;
 	}
 }
