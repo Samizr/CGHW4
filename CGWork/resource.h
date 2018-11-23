@@ -45,6 +45,7 @@
 #define IDC_ROTATIONMIN                 1063
 #define IDC_RICHEDIT21                  1064
 #define IDC_ROTATIONMAX                 1064
+#define IDC_ROTATIONMIN2                1065
 #define IDC_TRANSLATIONMIN              1067
 #define IDC_TRANSLATIONMAX              1068
 #define IDC_SCALINGMIN                  1069

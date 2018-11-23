@@ -19,17 +19,20 @@ private:
 	float _zCoord;
 	float _wCoord;
 
-
 public:
 	Vec4();
 	Vec4(float xCoord, float yCoord, float zCoord, float wCoord);
 	Vec4 operator+(const Vec4& other) const;
+	Vec4 operator-(const Vec4& other) const;
 	Vec4 operator*(const float& a) const;
 	// inner multiplication.
 	Vec4 operator*(const Vec4& other) const;
 	// multiplication of row and col. useful for matrix calculations
 	float operator^(const Vec4& other) const;
+	// cross product
+	Vec4 crossProduct(const Vec4& other) const;
 	float& operator[](const int& i);
+	Vec4 normalize();
 	float xCoord();
 	float yCoord();
 	float zCoord();

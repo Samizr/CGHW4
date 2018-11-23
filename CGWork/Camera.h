@@ -17,10 +17,13 @@ class Camera {
 	Mat4 projection;
 
 public:
+	Camera();
 	void setTransformation(const Mat4& T);
 	void setProjection(const Mat4& T);
 	void LookAt(Vec4& eye, Vec4& at, Vec4& up);
 	void Ortho();
 	void Perspective();
+	Mat4 getTransformationMatrix();
+	Mat4 getProjectionMatrix();
 };
 #endif /* Camera_h */

@@ -10,13 +10,22 @@
 #define Renderer_h
 
 #include <stdio.h>
-#include "Model.h"
 #include "Geometry.h"
+#include "stdafx.h"
+#include "Mat4.h"
 
 class Renderer {
-
-	void drawWireframe(Geometry* model) {
-
-	}
+	Mat4 objectWorldMatrix;
+	Mat4 cameraMatrix;
+	Mat4 projectionMatrix;
+	Mat4 normalizationMatrix;
+	Mat4 windowMatrix;
+public:
+	Renderer();
+	void drawWireframe(CDC* pDc, Geometry* geometry);
+	void setObjectWorldMatrix(Mat4& matrix);
+	void setCameraMatrix(Mat4& matrix);
+	void setProjectionMatrix(Mat4& matrix);
+	void setWindowMatrix(Mat4& matrix);
 };
 #endif /* Renderer_h */

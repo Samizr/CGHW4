@@ -8,6 +8,14 @@
 
 #include "Camera.h"
 
+
+
+Camera::Camera() {
+	this->cTransform = Mat4::Identity();
+	this->projection = Mat4::Identity();
+	this->projection[2][2] = 0; // sets it to Orthogonal view.
+}
+
 void Camera::setTransformation(const Mat4& T) {
 	this->cTransform = T;
 }
@@ -17,7 +25,13 @@ void Camera::setProjection(const Mat4& T) {
 }
 
 void Camera::LookAt(Vec4& eye, Vec4& at, Vec4& up) {
-
+	// implementation as seen in the slides.
+	Vec4 n = (eye - at).normalize();
+	Vec4 u = up.crossProduct(n).normalize();
+	Vec4 v = n.crossProduct(u).normalize();
+	Vec4 t = Vec4(0, 0, 0, 1);
+	Mat4 c = Mat4(u, v, n, t);
+	cTransform = c * Mat4::Translate(eye * (-1));
 }
 
 void Camera::Ortho() {
@@ -27,4 +41,12 @@ void Camera::Ortho() {
 
 void Camera::Perspective() {
 	// TODO implement.
+}
+
+Mat4 Camera::getTransformationMatrix() {
+	return cTransform;
+}
+
+Mat4 Camera::getProjectionMatrix() {
+	return projection;
 }
