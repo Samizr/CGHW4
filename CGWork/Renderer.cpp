@@ -21,7 +21,7 @@ Renderer::Renderer() {
 	normalizationMatrix = Mat4(vecNM);
 }
 
-void Renderer::drawWireframe(CDC * pDc, Geometry * geometry) {
+void Renderer::drawWireframe(CDC * pDc, Geometry * geometry, COLORREF clr) {
 
 	// for each edge in the geometry, do your thing.
 	Mat4 finalMatrix =(windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
@@ -31,7 +31,7 @@ void Renderer::drawWireframe(CDC * pDc, Geometry * geometry) {
 		Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
 		p1 = finalMatrix * p1;
 		p2 = finalMatrix * p2;
-		plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDc);
+		plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDc, clr);
 	}
 }
 

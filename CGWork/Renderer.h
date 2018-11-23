@@ -22,7 +22,7 @@ class Renderer {
 	Mat4 windowMatrix;
 public:
 	Renderer();
-	void drawWireframe(CDC* pDc, Geometry* geometry);
+	void drawWireframe(CDC* pDc, Geometry* geometry, COLORREF clr);
 	void setObjectWorldMatrix(Mat4& matrix);
 	void setCameraMatrix(Mat4& matrix);
 	void setProjectionMatrix(Mat4& matrix);

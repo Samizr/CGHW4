@@ -25,7 +25,6 @@ class Scene {
 	static int cameraIdGenerator;
 	static int modelIdGenerator;
 public:
-	Scene();
 	Scene(Renderer& renderer);
 	int addModel(Model* model);
 	int addCamera(Camera* camera);
@@ -33,7 +32,7 @@ public:
 	Camera* getCamera(int id);
 	Model* getActiveModel();
 	Camera* getActiveCamera();
-	void draw(CDC* pdc, CRect rect);
+	void draw(CDC* pdc, CRect rect, COLORREF clr);
 };
 
 #endif /* Scene_h */

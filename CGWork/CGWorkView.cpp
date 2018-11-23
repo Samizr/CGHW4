@@ -27,7 +27,6 @@ static char THIS_FILE[] = __FILE__;
 #include "MainFrm.h"
 
 // Static Functions:
-static void testModel(CDC* pDC, const CRect& rect);
 static AXIS sceneAxisTranslator(int guiID);
 
 
@@ -300,8 +299,8 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	CDC *pDCToUse = /*m_pDC*/m_pDbDC;
 
 	//testModel(m_pDbDC, r);
-	pDCToUse->FillSolidRect(&r, INITIAL_BACKGROUND_COLOR);
-	scene.draw(pDCToUse, r);
+	pDCToUse->FillSolidRect(&r, m_clrBackground);
+	scene.draw(pDCToUse, r, m_clrLines);
 
 	if (pDCToUse != m_pDC)
 	{
@@ -639,53 +638,6 @@ AXIS sceneAxisTranslator(int guiID)
 	case ID_AXIS_X: return XAXIS;
 	case ID_AXIS_Y: return YAXIS;
 	case ID_AXIS_Z: return ZAXIS;
-	}
-}
-
-static void testModel(CDC* pDC, const CRect& rect) {
-
-	Geometry geometry = ::loadedGeometry;
-	float deltaX = 16; //geometry.getMaxX() - geometry.getMinX();
-	float deltaY = 9;  //geometry.getMaxY() - geometry.getMinY();
-	float deltaZ = 6;  //geometry.getMaxZ() - geometry.getMinZ();
-	float sumX = 0;	 //geometry.getMaxX() + geometry.getMinX();
-	float sumY = 0; //geometry.getMaxY() + geometry.getMinY();
-	float sumZ = 0; //geometry.getMaxZ() + geometry.getMinZ();
-	float deltaW = rect.right - rect.left;
-	float deltaH = rect.bottom - rect.top;
-	float virtualDeltaW = min(deltaH, deltaH);
-	float virtualDeltaH = min(deltaH, deltaH);
-	if (16*deltaH > 9*deltaW) {
-		virtualDeltaW = deltaW;
-		virtualDeltaH = deltaW * 9 / 16;
-	} else {
-		virtualDeltaW = deltaH * 16 / 9;
-		virtualDeltaH = deltaH;
-	}
-	float sumW = rect.right + rect.left;
-	float sumH = rect.top + rect.bottom;
-	
-
-	Vec4 vecWM[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
-	Vec4 vecCM[4] = { Vec4(1, 0, 0, 0), Vec4(0, -1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
-	Vec4 vecPM[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 0, 0), Vec4(0, 0, 0, 1) };
-	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, 2 / deltaZ, -sumZ / deltaZ), Vec4(0, 0, 0, 1) };
-
-	Vec4 vecVPM[4] = { Vec4(virtualDeltaW / 2, 0, 0, sumW / 2), Vec4(0, virtualDeltaH / 2, 0, sumH / 2), Vec4(0, 0, 0.5, 0.5), Vec4(0, 0, 0, 1) };
-
-	Mat4 worldMatrix(vecWM), cameraMatrix(vecCM), projectionMatrix(vecPM), normalizingMatrix(vecNM);
-	Mat4 viewPortMatrix(vecVPM);
-	Mat4 finalMatrix = ((((viewPortMatrix * normalizingMatrix) * projectionMatrix) * cameraMatrix) * worldMatrix);
-
-
-	for (Edge* edge : geometry.getEdges()) {
-		Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
-		Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
-
-		p1 = finalMatrix * p1;
-		p2 = finalMatrix * p2;
-
-		plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDC);
 	}
 }
 
