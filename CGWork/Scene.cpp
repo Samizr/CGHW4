@@ -10,7 +10,6 @@
 
 int Scene::addModel(Model* model){
 	//TODO make sure vector function called insert.
-
 	this->models[modelIdGenerator] = model;
 	activeModel = modelIdGenerator;
 	return modelIdGenerator++;
