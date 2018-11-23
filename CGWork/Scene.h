@@ -25,6 +25,7 @@ class Scene {
 	static int cameraIdGenerator;
 	static int modelIdGenerator;
 public:
+	Scene();
 	Scene(Renderer& renderer);
 	int addModel(Model* model);
 	int addCamera(Camera* camera);

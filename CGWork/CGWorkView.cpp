@@ -303,7 +303,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 
 	//testModel(m_pDbDC, r);
 
-	scene.draw(pDC, r);
+	scene.draw(pDCToUse, r);
 
 	if (pDCToUse != m_pDC)
 	{
@@ -709,7 +709,7 @@ void CCGWorkView::OnLButtonUp(UINT nFlags, CPoint point)
 
 void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 {
-	CView::OnMouseMove(nFlags, point);
+	/*CView::OnMouseMove(nFlags, point);
 
 	if (!m_bAllowTransformations) {
 		return;
@@ -721,7 +721,7 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 		transform(NEGATIVE);
 	}
 	m_lnLastXPos = point.x;
-
+	*/
 }
 
 //Parses the requested transformation and requests the correct transformation:
@@ -737,7 +737,7 @@ void CCGWorkView::transform(Direction direction)
 
 	case (ID_ACTION_ROTATE) : 
 		if (m_bIsViewSpace)
-			model->appendToTransformationrotateViewSpace(sceneAxis, direction * rotationQuota);
+			model->rotateViewSpace(sceneAxis, direction * rotationQuota);
 		else
 			model->rotateObjectSpace(sceneAxis, direction * rotationQuota);
 		break;
