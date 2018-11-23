@@ -117,7 +117,6 @@ BEGIN
     BEGIN
         MENUITEM "Perspective Control...",      ID_OPTIONS_PERSPECTIVECONTROL
         MENUITEM "Mouse Sensitivity...",        ID_OPTIONS_MOUSESENSITIVITY
-        MENUITEM "Set Sensitivity Variables...", ID_OPTIONS_SETSENSITIVITYVARIABLES
         MENUITEM SEPARATOR
         MENUITEM "Object Color...",             ID_LINECOLOR
         MENUITEM "Background Color...",         ID_BACKGROUNDCOLOR
