@@ -62,7 +62,7 @@ private:
 	bool m_bAllowTransformations;	//Set when transformations are allowed
 	LONG m_lnLastXPos;				//Stores the x pos of the last place the mouse visited
 	enum Direction {
-		POSITIVE, NEGATIVE
+		POSITIVE = -1, NEGATIVE = 1
 	};
 	void transform(Direction direction);
 
