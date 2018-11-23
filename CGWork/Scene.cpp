@@ -38,6 +38,9 @@ Camera& Scene::getActiveCamera() {
 }
 
 void Scene::draw(CDC* pdc, CRect rect) {
+	if (activeModel == -1 || activeCamera == -1) {
+		return;
+	}
 	Model* model = models[activeModel];
 	Camera* camera = cameras[activeCamera];
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
@@ -54,6 +57,8 @@ void Scene::draw(CDC* pdc, CRect rect) {
 
 Scene::Scene(Renderer& renderer){
 	this->m_renderer = renderer;
+	this->activeCamera = -1;
+	this->activeModel = -1;
 }
 
 
