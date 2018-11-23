@@ -302,7 +302,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	CDC *pDCToUse = /*m_pDC*/m_pDbDC;
 
 	//testModel(m_pDbDC, r);
-
+	pDCToUse->FillSolidRect(&r, INITIAL_BACKGROUND_COLOR);
 	scene.draw(pDCToUse, r);
 
 	if (pDCToUse != m_pDC)
@@ -709,7 +709,7 @@ void CCGWorkView::OnLButtonUp(UINT nFlags, CPoint point)
 
 void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 {
-	/*CView::OnMouseMove(nFlags, point);
+	CView::OnMouseMove(nFlags, point);
 
 	if (!m_bAllowTransformations) {
 		return;
@@ -721,7 +721,7 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 		transform(NEGATIVE);
 	}
 	m_lnLastXPos = point.x;
-	*/
+	Invalidate();
 }
 
 //Parses the requested transformation and requests the correct transformation:
