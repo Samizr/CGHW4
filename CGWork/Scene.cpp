@@ -30,6 +30,14 @@ Camera & Scene::getCamera(int id) {
 	return *cameras[id];
 }
 
+Model & Scene::getActiveModel() {
+	return *models[activeModel];
+}
+
+Camera& Scene::getActiveCamera() {
+	return *cameras[activeCamera];
+}
+
 void Scene::draw(CDC* pdc, CRect rect) {
 	Model* model = models[activeModel];
 	Camera* camera = cameras[activeCamera];
