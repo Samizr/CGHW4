@@ -82,6 +82,14 @@ void Scene::draw(CDC* pdc, CRect rect, COLORREF clr) {
 	m_renderer.drawWireframe(pdc, &model->getGeometry(), clr);
 }
 
+void Scene::enableBoundingBox() {
+	m_renderer.enableBoundingBox();
+}
+
+void Scene::disableBoundingBox() {
+	m_renderer.disableBoundingBox();
+}
+
 Scene::Scene(Renderer& renderer){
 	this->m_renderer = renderer;
 	this->activeCamera = -1;
