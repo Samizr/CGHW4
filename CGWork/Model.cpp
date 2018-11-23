@@ -50,14 +50,14 @@ void Model::translateViewSpace(AXIS axis, float amount) {
 void Model::scaleObjectSpace(AXIS axis, float amount) {
 	Vec4 scaleVector(1, 1, 1, 1);
 	scaleVector[axis] = amount;
-	Mat4 matrix = Mat4::Translate(scaleVector);
+	Mat4 matrix = Mat4::Scale(scaleVector);
 	this->appendToTransformation(matrix);
 }
 
 void Model::scaleViewSpace(AXIS axis, float amount) { 
 	Vec4 scaleVector(1, 1, 1, 1);
 	scaleVector[axis] = amount;
-	Mat4 matrix = Mat4::Translate(scaleVector);
+	Mat4 matrix = Mat4::Scale(scaleVector);
 	this->prependToTransformation(matrix);
 }
 
