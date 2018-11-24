@@ -33,8 +33,6 @@ public:
 
 private:
 
-	void adjustScalingQuota();
-
 	//Parameters that define the drawing and viewing of the objects:
 	int m_nAxis;				// Axis of Action, X Y or Z
 	int m_nAction;				// Rotate, Translate, Scale

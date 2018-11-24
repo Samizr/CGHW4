@@ -158,11 +158,6 @@ CCGWorkView::CCGWorkView() :
 	m_pDbDC = NULL;
 }
 
-void CCGWorkView::adjustScalingQuota()
-{
-
-}
-
 CCGWorkView::~CCGWorkView()
 {
 }
