@@ -8,8 +8,9 @@
 
 #include "Renderer.h"
 #include "LinePlotter.h"
-
+#include <math.h>
 static void drawBoundingBox(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
+static void drawCenterAxis(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
 
 // this sets all the matricies to be identity;
 Renderer::Renderer() {
@@ -36,10 +37,11 @@ void Renderer::drawWireframe(CDC * pDc, Geometry * geometry, COLORREF clr) {
 		p2 = finalMatrix * p2;
 		plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDc, clr);
 	}
-
 	if (withBounding) {
 		drawBoundingBox(pDc, geometry, clr, finalMatrix);
 	}
+	drawCenterAxis(pDc, geometry, clr, finalMatrix);
+	
 }
 
 static void drawBoundingBox(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatrix) {
@@ -77,6 +79,23 @@ static void drawBoundingBox(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 f
 			}
 		}
 	}
+}
+void drawCenterAxis(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatrix) {
+	float deltaXNorm = pow(geometry->getMaxX() - geometry->getMinX(), 2);
+	float deltaYNorm = pow(geometry->getMaxY() - geometry->getMinY(), 2);
+	float deltaZNorm = pow(geometry->getMaxZ() - geometry->getMinZ(), 2);
+	float normalizedSize = sqrt(deltaXNorm + deltaYNorm + deltaZNorm) / 10;
+	float centerX = (geometry->getMinX() + geometry->getMaxX()) / 2;
+	float centerY = (geometry->getMinY() + geometry->getMaxY()) / 2;
+	float centerZ = (geometry->getMinZ() + geometry->getMaxZ()) / 2;
+	Vec4 p0, p1, p2, p3;
+	p0 = finalMatrix * Vec4(centerX, centerY, centerZ, 1);
+	p1 = finalMatrix * Vec4(centerX + normalizedSize, centerY, centerZ, 1);
+	p2 = finalMatrix * Vec4(centerX, centerY + normalizedSize, centerZ, 1);
+	p3 = finalMatrix * Vec4(centerX, centerY, centerZ+ normalizedSize, 1);
+	plotLine(p0.xCoord(), p0.yCoord(), p1.xCoord(), p1.yCoord(), pDc, RGB(255, 0, 0));
+	plotLine(p0.xCoord(), p0.yCoord(), p2.xCoord(), p2.yCoord(), pDc, RGB(0, 255, 0));
+	plotLine(p0.xCoord(), p0.yCoord(), p3.xCoord(), p3.yCoord(), pDc, RGB(0, 0, 255));
 }
 void Renderer::setObjectWorldMatrix(Mat4 &matrix) {
 	objectWorldMatrix = matrix;
