@@ -29,7 +29,6 @@ static char THIS_FILE[] = __FILE__;
 // Static Functions:
 static AXIS sceneAxisTranslator(int guiID);
 
-
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
 
@@ -130,15 +129,15 @@ CCGWorkView::CCGWorkView() :
 	m_bIsViewSpace = true;
 	m_nTranslationSensetivity = INITIAL_SENSITIVITY;
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
-	m_nScaleSensetivity = INITIAL_SENSITIVITY;
+	m_nScaleSensetivity = INITIAL_SENSITIVITY/5;
 	m_clrBackground = INITIAL_BACKGROUND_COLOR;
 	m_clrLines = INITIAL_OBJECT_COLOR;
 	m_clrNormals = INITIAL_NORMAL_COLOR;
 
 	// Transformations Quantitive Setup:
 	translationQuota = 9;
-	rotationQuota = 12;
-	scalingQuota = 1;
+	rotationQuota = 8;
+	scalingQuota = 0.8;
 
 	//Scene initilization:
 	auto newCamera = new Camera();
@@ -157,6 +156,11 @@ CCGWorkView::CCGWorkView() :
 	m_lights[LIGHT_ID_1].enabled = true;
 	m_pDbBitMap = NULL;
 	m_pDbDC = NULL;
+}
+
+void CCGWorkView::adjustScalingQuota()
+{
+
 }
 
 CCGWorkView::~CCGWorkView()
@@ -549,7 +553,7 @@ void CCGWorkView::OnOptionsNormalscolor()
 void CCGWorkView::OnOptionsMousesensitivity()
 {
 	//Dialog initiation
-	MouseSensitivityDialog MSDialog(m_nTranslationSensetivity, m_nRotationSensetivity, m_nScaleSensetivity);;
+	MouseSensitivityDialog MSDialog(m_nTranslationSensetivity, m_nRotationSensetivity, m_nScaleSensetivity);
 
 	//Dialog values retrival 
 	if (MSDialog.DoModal() == IDOK) {
@@ -622,12 +626,6 @@ void CCGWorkView::OnTimer(UINT_PTR nIDEvent)
 
 //////////////////////////////////////////TESTING & DEBUG FUNCTIONS////////////////////////////////////////////////////////
 
-void CCGWorkView::testButtons() {
-	CDC *pDCToUse = m_pDbDC;
-	CRect r;
-	GetClientRect(&r);
-
-}
 
 #include "Mat4.h"
 #include "LinePlotter.h"
@@ -683,27 +681,33 @@ void CCGWorkView::transform(Direction direction)
 		return;
 	}
 	AXIS sceneAxis = sceneAxisTranslator(m_nAxis);
+	float adjustedQuota;
 	switch (m_nAction) {
 
 	case (ID_ACTION_ROTATE) : 
+		adjustedQuota = direction * rotationQuota * m_nRotationSensetivity / 100;
 		if (m_bIsViewSpace)
-			model->rotateViewSpace(sceneAxis, direction * rotationQuota * m_nRotationSensetivity/100);
+			model->rotateViewSpace(sceneAxis, adjustedQuota);
 		else
-			model->rotateObjectSpace(sceneAxis, direction * rotationQuota * m_nRotationSensetivity/100);
+			model->rotateObjectSpace(sceneAxis, adjustedQuota);
 		break;
 	
-	case (ID_ACTION_TRANSLATE):
+	case (ID_ACTION_TRANSLATE):		
+		adjustedQuota = direction * rotationQuota * m_nRotationSensetivity / 100;
 		if (m_bIsViewSpace)
-			model->translateViewSpace(sceneAxis, direction * translationQuota * m_nTranslationSensetivity/100);
+			model->translateViewSpace(sceneAxis, adjustedQuota);
 		else
-			model->translateObjectSpace(sceneAxis, direction * translationQuota * m_nTranslationSensetivity/100);
+			model->translateObjectSpace(sceneAxis, adjustedQuota);
 		break;
 
 	case (ID_ACTION_SCALE):
+		adjustedQuota = (direction == NEGATIVE ? 1 / scalingQuota : scalingQuota);
 		if (m_bIsViewSpace)
-			model->scaleViewSpace(sceneAxis, (1 + direction) * 0.5 /*scalingQuota * m_nScaleSensetivity/100*/);
+			model->scaleViewSpace(sceneAxis, adjustedQuota);
 		else
-			model->scaleObjectSpace(sceneAxis, (1 + direction) * 0.5 /*scalingQuota * m_nScaleSensetivity/100*/);
+			model->scaleObjectSpace(sceneAxis,  adjustedQuota);
+		scalingQuota *= (direction == NEGATIVE ? (float)101/100 : (float)99/100);
+		cout << "Current Scaling Quota :" << scalingQuota << endl;
 		break;
 	}
 }

@@ -10,9 +10,9 @@ class MouseSensitivityDialog : public CDialogEx
 public:
 	MouseSensitivityDialog(CWnd* pParent = nullptr);   // standard constructor
 	MouseSensitivityDialog(int in_translationSensitivity, int in_rotationSensitivity, int in_scalingSensitivity, CWnd* pParent = nullptr);   // standard constructor
-	int getTranslationSensitivity();
-	int getRotationSensitivity();
-	int getScalingSensitivity();
+	float getTranslationSensitivity();
+	float getRotationSensitivity();
+	float getScalingSensitivity();
 	virtual ~MouseSensitivityDialog();
 
 // Dialog Data
