@@ -9,10 +9,12 @@
 #include "Renderer.h"
 #include "LinePlotter.h"
 
+static void drawBoundingBox(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
+
 // this sets all the matricies to be identity;
 Renderer::Renderer() {
-	float deltaX = 16;
-	float deltaY = 9;
+	float deltaX = 24;
+	float deltaY = 13.5;
 	float deltaZ = 6;
 	float sumX = 0;
 	float sumY = 0;
@@ -36,19 +38,45 @@ void Renderer::drawWireframe(CDC * pDc, Geometry * geometry, COLORREF clr) {
 	}
 
 	if (withBounding) {
-		drawBoundingBox(pDc, geometry, clr);
+		drawBoundingBox(pDc, geometry, clr, finalMatrix);
 	}
 }
 
-static void drawBoundingBox(CDC * pDc, Geometry * geometry, COLORREF clr) {
+static void drawBoundingBox(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatrix) {
 	float mtop, mbottom, mfar, mnear, mright, mleft;
-	mtop = geometry->getMaxY();
-	mbottom = geometry->getMinY();
-	mfar = geometry->getMaxZ();
-	mnear = geometry->getMinZ();
-	mright = geometry->getMaxX();
-	mleft = geometry->getMinY();
-	Vec4 nearFace[4] = {Vec4()}
+	float xVals[2] = {geometry->getMinX(), geometry->getMaxX()};
+	float yVals[2] = {geometry->getMinY(), geometry->getMaxY()};
+	float zVals[2] = {geometry->getMinZ(), geometry->getMaxZ()};
+	int p = 0;
+	Vec4 points[8];
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 2; j++) {
+			for (int k = 0; k < 2; k++) {
+				Vec4 point = Vec4(xVals[i], yVals[j], zVals[k], 1);
+				points[p] = point;
+				p++;
+			}
+		}
+	}
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			int similarPlanes = 0;
+			if (points[i].xCoord() == points[j].xCoord()) {
+				similarPlanes++;
+			}
+			if (points[i].yCoord() == points[j].yCoord()) {
+				similarPlanes++;
+			}
+			if (points[i].zCoord() == points[j].zCoord()) {
+				similarPlanes++;
+			}
+			if (similarPlanes == 2) {
+				Vec4 p1 = finalMatrix * points[i];
+				Vec4 p2 = finalMatrix * points[j];
+				plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDc, clr);
+			}
+		}
+	}
 }
 void Renderer::setObjectWorldMatrix(Mat4 &matrix) {
 	objectWorldMatrix = matrix;

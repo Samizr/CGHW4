@@ -391,6 +391,12 @@ void CCGWorkView::OnUpdateViewPerspective(CCmdUI* pCmdUI)
 void CCGWorkView::OnViewBoxFrame()
 {
 	m_bBoxFrame = !m_bBoxFrame;
+	if (m_bBoxFrame) {
+		scene.enableBoundingBox();
+	}
+	else {
+		scene.disableBoundingBox();
+	}
 	Invalidate();
 }
 
