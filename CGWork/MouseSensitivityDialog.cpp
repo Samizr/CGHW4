@@ -14,7 +14,7 @@ MouseSensitivityDialog::MouseSensitivityDialog(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MOUSESENSETIVITY_DLG, pParent)
 	, translationSensitivity(10)
 	, rotationSensitivity(10)
-	, scalingSensitivity(10)
+	, scalingSensitivity(2)
 {
 }
 
@@ -29,17 +29,17 @@ MouseSensitivityDialog::MouseSensitivityDialog(int in_translationSensitivity, in
 
 }
 
-int MouseSensitivityDialog::getTranslationSensitivity()
+float MouseSensitivityDialog::getTranslationSensitivity()
 {
 	return translationSensitivity;
 }
 
-int MouseSensitivityDialog::getRotationSensitivity()
+float MouseSensitivityDialog::getRotationSensitivity()
 {
 	return rotationSensitivity;
 }
 
-int MouseSensitivityDialog::getScalingSensitivity()
+float MouseSensitivityDialog::getScalingSensitivity()
 {
 	return scalingSensitivity;
 }
@@ -72,7 +72,7 @@ BOOL MouseSensitivityDialog::OnInitDialog()
 	// TODO:  Add extra initialization here
 	t_control.SetRange(1, 70);
 	r_control.SetRange(1, 70);
-	s_control.SetRange(1, 100);
+	s_control.SetRange(1, 5);
 	t_control.SetPos(translationSensitivity);
 	r_control.SetPos(rotationSensitivity);
 	s_control.SetPos(scalingSensitivity);

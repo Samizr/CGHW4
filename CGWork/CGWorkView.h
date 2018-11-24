@@ -32,7 +32,8 @@ public:
 public:
 
 private:
-	void testButtons(); //TODO: DEBUG PURPOSES ONLY, REMOVE WHEN DONE
+
+	void adjustScalingQuota();
 
 	//Parameters that define the drawing and viewing of the objects:
 	int m_nAxis;				// Axis of Action, X Y or Z
@@ -43,9 +44,9 @@ private:
 	bool m_bPolyNormals;			//Polygon normals activation
 	bool m_bVertexNormals;			//Vertex normals activation
 	bool m_bBoxFrame;				//Bounding box activation
-	int m_nTranslationSensetivity;   //Mouse sensetivity for translation
-	int m_nRotationSensetivity;		//Mouse sensetivity for rotation
-	int m_nScaleSensetivity;		//Mouse sensetivity for scaling
+	float m_nTranslationSensetivity;   //Mouse sensetivity for translation
+	float m_nRotationSensetivity;		//Mouse sensetivity for rotation
+	float m_nScaleSensetivity;		//Mouse sensetivity for scaling
 	COLORREF m_clrLines;			//Current line color
 	COLORREF m_clrBackground;		//Current background color
 	COLORREF m_clrNormals;			//Current normal color
