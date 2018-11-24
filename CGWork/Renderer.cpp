@@ -11,6 +11,7 @@
 #include <math.h>
 static void drawBoundingBox(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
 static void drawCenterAxis(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
+static void drawPolygonNormals(CDC * pDc, Geometry * geometry/*, COLOREF clr*/, Mat4 finalMatrix, Mat4 worldMatrix);
 
 // this sets all the matricies to be identity;
 Renderer::Renderer() {
@@ -23,24 +24,28 @@ Renderer::Renderer() {
 	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, 2 / deltaZ, -sumZ / deltaZ), Vec4(0, 0, 0, 1) };
 	normalizationMatrix = Mat4(vecNM);
 	withBounding = false;
+	withPolygonNormals = false;
 }
 
-void Renderer::drawWireframe(CDC * pDc, Geometry * geometry, COLORREF clr) {
+void Renderer::drawWireframe(CDC * pDC, Geometry * geometry, COLORREF clr) {
 
 	// for each edge in the geometry, do your thing.
-	Mat4 finalMatrix =(windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 
 	for (Edge* edge : geometry->getEdges()) {
 		Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
 		Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
 		p1 = finalMatrix * p1;
 		p2 = finalMatrix * p2;
-		plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDc, clr);
+		plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDC, clr);
 	}
 	if (withBounding) {
-		drawBoundingBox(pDc, geometry, clr, finalMatrix);
+		drawBoundingBox(pDC, geometry, clr, finalMatrix);
 	}
-	drawCenterAxis(pDc, geometry, clr, finalMatrix);
+	if (withPolygonNormals) {
+		drawPolygonNormals(pDC, geometry, finalMatrix, Mat4::Identity());
+	}
+	drawCenterAxis(pDC, geometry, clr, finalMatrix);
 	
 }
 
@@ -97,6 +102,40 @@ void drawCenterAxis(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatr
 	plotLine(p0.xCoord(), p0.yCoord(), p2.xCoord(), p2.yCoord(), pDc, RGB(0, 255, 0));
 	plotLine(p0.xCoord(), p0.yCoord(), p3.xCoord(), p3.yCoord(), pDc, RGB(0, 0, 255));
 }
+void drawPolygonNormals(CDC * pDc, Geometry * geometry, Mat4 finalMatrix, Mat4 worldMatrix)
+{
+	std::list<Face> faces = geometry->getFaces();
+	for (Face& face : faces) {
+		for (Edge& edge : face.edges) {
+			Vec4 p1(edge.getA()->xCoord(), edge.getA()->yCoord(), edge.getA()->zCoord(), 0);
+			Vec4 p2(edge.getB()->xCoord(), edge.getB()->yCoord(), edge.getB()->zCoord(), 0);
+			p1 = worldMatrix * p1;
+			p2 = worldMatrix * p2;
+			Vertex* newV1 = new Vertex(p1[0], p1[1], p1[2]);
+			Vertex* newV2 = new Vertex(p2[0], p2[1], p2[2]);
+			Edge newEdge(newV1, newV2);
+			edge = newEdge;
+		}
+		std::vector<Edge> edgesCopy = face.edges;
+		//if (edgesCopy.size() > 3) {
+			Vec4 p1(edgesCopy[0].getA()->xCoord(), edgesCopy[0].getA()->yCoord(), edgesCopy[0].getA()->zCoord(), 1);
+			Vec4 p2(edgesCopy[1].getA()->xCoord(), edgesCopy[1].getA()->yCoord(), edgesCopy[1].getA()->zCoord(), 1);
+			Vec4 p3(edgesCopy[1].getB()->xCoord(), edgesCopy[1].getB()->yCoord(), edgesCopy[1].getB()->zCoord(), 1);
+			p1 = finalMatrix * p1;
+			p2 = finalMatrix * p2;
+			p3 = finalMatrix * p3;
+			face.updateMidpoint((p1 + p2 + p3)*0.333);
+			face.updateNormalDirection();
+			face.updateTarget();
+	}
+
+	for (Face face : faces) {
+		for (Edge edge : face.getEdges()) {
+			Normal normal = face.getNormal();
+			plotLine(normal.midpoint.xCoord(), normal.midpoint.yCoord(), normal.target.xCoord(), normal.target.yCoord(), pDc, RGB(0, 255, 0));
+		}
+	}
+}
 void Renderer::setObjectWorldMatrix(Mat4 &matrix) {
 	objectWorldMatrix = matrix;
 }
@@ -119,4 +158,14 @@ void Renderer::disableBoundingBox() {
 
 void Renderer::enableBoundingBox() {
 	withBounding = true;
+}
+
+void Renderer::disablePolygonNormals()
+{
+	withPolygonNormals = false;
+}
+
+void Renderer::enablePolygonNormals()
+{
+	withPolygonNormals = true;
 }

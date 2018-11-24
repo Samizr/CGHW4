@@ -418,6 +418,12 @@ void CCGWorkView::OnUpdateActionViewSpace(CCmdUI * pCmdUI)
 void CCGWorkView::OnViewPolyNormals()
 {
 	m_bPolyNormals = !m_bPolyNormals;
+	if (m_bPolyNormals) {
+		scene.enablePolygonNormals();
+	}
+	else {
+		scene.disablePolygonNormals();
+	}
 	Invalidate();
 }
 

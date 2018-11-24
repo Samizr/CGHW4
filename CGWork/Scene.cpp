@@ -58,12 +58,12 @@ void Scene::draw(CDC* pdc, CRect rect, COLORREF clr) {
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
 	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
 	this->m_renderer.setObjectWorldMatrix(model->getTransformationMatrix());
-	float deltaX = 16; //geometry.getMaxX() - geometry.getMinX();
-	float deltaY = 9;  //geometry.getMaxY() - geometry.getMinY();
-	float deltaZ = 6;  //geometry.getMaxZ() - geometry.getMinZ();
-	float sumX = 0;	 //geometry.getMaxX() + geometry.getMinX();
-	float sumY = 0; //geometry.getMaxY() + geometry.getMinY();
-	float sumZ = 0; //geometry.getMaxZ() + geometry.getMinZ();
+	float deltaX = 16;
+	float deltaY = 9;  
+	float deltaZ = 6;  
+	float sumX = 0;	 
+	float sumY = 0; 
+	float sumZ = 0; 
 	float deltaW = rect.right - rect.left;
 	float deltaH = rect.bottom - rect.top;
 	float virtualDeltaW = min(deltaH, deltaH);
@@ -82,9 +82,20 @@ void Scene::draw(CDC* pdc, CRect rect, COLORREF clr) {
 	m_renderer.drawWireframe(pdc, &model->getGeometry(), clr);
 }
 
+void Scene::disablePolygonNormals()
+{ 
+	m_renderer.disablePolygonNormals();
+}
+
+void Scene::enablePolygonNormals()
+{
+	m_renderer.enablePolygonNormals();
+}
+
 void Scene::enableBoundingBox() {
 	m_renderer.enableBoundingBox();
 }
+
 
 void Scene::disableBoundingBox() {
 	m_renderer.disableBoundingBox();

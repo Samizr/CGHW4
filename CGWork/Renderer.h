@@ -21,6 +21,7 @@ class Renderer {
 	Mat4 normalizationMatrix;
 	Mat4 windowMatrix;
 	bool withBounding;
+	bool withPolygonNormals;
 public:
 	Renderer();
 	void drawWireframe(CDC* pDc, Geometry* geometry, COLORREF clr);
@@ -30,5 +31,7 @@ public:
 	void setWindowMatrix(Mat4& matrix);
 	void disableBoundingBox();
 	void enableBoundingBox();
+	void disablePolygonNormals();
+	void enablePolygonNormals();
 };
 #endif /* Renderer_h */

@@ -11,6 +11,7 @@
 Model::Model(Geometry& geometry) {
 	this->geometry = geometry;
 	this->mTransform = Mat4::Identity();
+	//this->geometry.
 }
 
 Geometry& Model::getGeometry(){
