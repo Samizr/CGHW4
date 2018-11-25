@@ -15,6 +15,8 @@
 #include "ip_cnvrt.h"
 #include "symb_lib.h"
 #include "Geometry.h"
+#include "Face.h"
+
 
 extern Geometry loadedGeometry;
 

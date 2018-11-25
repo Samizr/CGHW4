@@ -434,7 +434,7 @@ typedef struct CagdPolygonStruct {
 	    CagdPType Pt;	/* Polygon is either triangle or rectangle. */
 	    CagdVType Nrml;
 	    CagdUVType UV;
-	} Polygon[4];
+	} Face[4];
 	struct {
 	    /* Polygonal strip can have arbitrary # of polygons. */
 	    CagdPType FirstPt[2];	     /* Base line - the first edge. */

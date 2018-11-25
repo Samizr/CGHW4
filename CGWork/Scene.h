@@ -35,6 +35,8 @@ public:
 	void draw(CDC* pdc, CRect rect, COLORREF clr);
 	void disableBoundingBox();
 	void enableBoundingBox();
+	void disablePolygonNormals();
+	void enablePolygonNormals();
 };
 
 #endif /* Scene_h */

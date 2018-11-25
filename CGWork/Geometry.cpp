@@ -1,8 +1,10 @@
 #include "Geometry.h"
 #include <limits>
+#include <math.h>
 
 static float max(float a, float b);
 static float min(float a, float b);
+static Normal getNormal(const Face& face);
 
 Geometry::Geometry() {
 	maxX = std::numeric_limits<float>::min();
@@ -21,6 +23,11 @@ Geometry::~Geometry() {
 void Geometry::addEdge(Edge* edge) {
 	this->edges.push_back(edge);
 	loaded = true;
+}
+
+void Geometry::addFace(const Face& face)
+{
+	faces.push_back(face);
 }
 
 void Geometry::addVertex(Vertex* vertex) {
@@ -42,6 +49,12 @@ std::set<Vertex*> Geometry::getVertices()
 {
 	return this->verticies;
 }
+
+std::list<Face> Geometry::getFaces()
+{
+	return faces;
+}
+
 
 float Geometry::getMaxX()
 {
@@ -73,6 +86,8 @@ float Geometry::getMinZ()
 	return minZ;
 }
 
+// Static Function Implementations:
+
 static float max(float a, float b) {
 	return a > b ? a : b;
 }
@@ -80,3 +95,4 @@ static float max(float a, float b) {
 static float min(float a, float b) {
 	return a < b ? a : b;
 }
+
