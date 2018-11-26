@@ -123,7 +123,7 @@ void drawPolygonNormals(CDC * pDc, Geometry * geometry, Mat4 finalMatrix, Mat4 w
 			p2 = finalMatrix * p2;
 			p3 = finalMatrix * p3;
 		if (isQuadrilateral) {
-			Vec4(edgesCopy[2].getB()->xCoord(), edgesCopy[2].getB()->yCoord(), edgesCopy[2].getB()->zCoord(), 1);
+			p4 = Vec4(edgesCopy[2].getB()->xCoord(), edgesCopy[2].getB()->yCoord(), edgesCopy[2].getB()->zCoord(), 1);
 			p4 = finalMatrix * p4;
 			finalP = (p1 + p2 + p3 + p4) * 0.25;
 		}

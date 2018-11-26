@@ -215,10 +215,6 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 		/* Close the polygon. */
 	}
 	/* Close the object. */
-	int x = 0;
-	while (x != 1) {
-		x++;
-	}
 	return true;
 }
 

@@ -24,22 +24,20 @@ Normal & Face::getNormal()
 	return normal;
 }
 
-void Face::updateNormalDirection()
-{
-	if (edges.size() >= 3) {
-		float xU = edges[0].getA()->xCoord() - edges[0].getB()->xCoord();
-		float yU = edges[0].getA()->yCoord() - edges[0].getB()->yCoord();
-		float zU = edges[0].getA()->zCoord() - edges[0].getB()->zCoord();
-		float xV = edges[1].getA()->xCoord() - edges[1].getB()->xCoord();
-		float yV = edges[1].getA()->yCoord() - edges[1].getB()->yCoord();
-		float zV = edges[1].getA()->zCoord() - edges[1].getB()->zCoord();
-		Vec4 A(xU, yU, zU, 0);
-		Vec4 B(xV, yV, zV, 0);
-		//Vec4 midpoint = Vec4(edges[0].getA()->xCoord(), edges[0].getA()->yCoord(), edges[0].getA()->zCoord(), 0);//(xMid, yMid, zMid, 0);
-		Vec4 direction = B.crossProduct(A);
-		direction = direction.normalize();
-		this->normal = Normal(normal.midpoint, direction);
-	}
+void Face::updateNormalDirection() {
+	float xU = edges[0].getA()->xCoord() - edges[0].getB()->xCoord();
+	float yU = edges[0].getA()->yCoord() - edges[0].getB()->yCoord();
+	float zU = edges[0].getA()->zCoord() - edges[0].getB()->zCoord();
+	float xV = edges[1].getA()->xCoord() - edges[1].getB()->xCoord();
+	float yV = edges[1].getA()->yCoord() - edges[1].getB()->yCoord();
+	float zV = edges[1].getA()->zCoord() - edges[1].getB()->zCoord();
+	Vec4 A(xU, yU, zU, 1);
+	Vec4 B(xV, yV, zV, 1);
+	//Vec4 midpoint = Vec4(edges[0].getA()->xCoord(), edges[0].getA()->yCoord(), edges[0].getA()->zCoord(), 0);//(xMid, yMid, zMid, 0);
+	Vec4 direction = A.crossProduct(B);
+	direction = direction.normalize();
+	this->normal = Normal(normal.midpoint, direction);
+
 }
 
 void Face::updateMidpoint(Vec4 newMidpoint)

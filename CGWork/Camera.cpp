@@ -53,7 +53,7 @@ void Camera::Perspective() {
 	float alpha = -(mNear + mFar) / (mFar - mNear);
 	float beta = (2 * mNear * mFar) / (mNear - mFar);
 	//Vec4 perspectiveVectors[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, alpha, beta), Vec4(0, 0, -1, 0) };
-	Vec4 perspectiveVectors[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, -1/10, 0) };
+	Vec4 perspectiveVectors[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, -1, 0) };
 	//Vec4 reScaleVectors[4] = { Vec4(-0.666, 0, 0, 0), Vec4(0, -1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
 	this->projection = Mat4(perspectiveVectors);// *Mat4(reScaleVectors);
 }
