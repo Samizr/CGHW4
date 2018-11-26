@@ -208,6 +208,7 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 			previous = current;
 			previousVertex = currentVertex;
 			current = current->Pnext;
+
 		} while (current != NULL && previous != PPolygon->PVertex);
 		loadedGeometry.addFace(face);
 		// Added By Firas END.

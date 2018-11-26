@@ -643,6 +643,7 @@ AXIS sceneAxisTranslator(int guiID)
 	case ID_AXIS_X: return XAXIS;
 	case ID_AXIS_Y: return YAXIS;
 	case ID_AXIS_Z: return ZAXIS;
+	default: throw std::bad_exception();
 	}
 }
 
