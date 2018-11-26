@@ -113,24 +113,30 @@ void drawPolygonNormals(CDC * pDc, Geometry * geometry, Mat4 finalMatrix, Mat4 w
 			edge = newEdge;
 		}
 		std::vector<Edge> edgesCopy = face.edges;
-		//if (edgesCopy.size() > 3) {
-			Vec4 p1(edgesCopy[0].getA()->xCoord(), edgesCopy[0].getA()->yCoord(), edgesCopy[0].getA()->zCoord(), 1);
-			Vec4 p2(edgesCopy[1].getA()->xCoord(), edgesCopy[1].getA()->yCoord(), edgesCopy[1].getA()->zCoord(), 1);
-			Vec4 p3(edgesCopy[1].getB()->xCoord(), edgesCopy[1].getB()->yCoord(), edgesCopy[1].getB()->zCoord(), 1);
+		bool isQuadrilateral = (edgesCopy.size() == 3);
+		Vec4 finalP;
+		Vec4 p1(edgesCopy[0].getA()->xCoord(), edgesCopy[0].getA()->yCoord(), edgesCopy[0].getA()->zCoord(), 1);
+		Vec4 p2(edgesCopy[1].getA()->xCoord(), edgesCopy[1].getA()->yCoord(), edgesCopy[1].getA()->zCoord(), 1);
+		Vec4 p3(edgesCopy[1].getB()->xCoord(), edgesCopy[1].getB()->yCoord(), edgesCopy[1].getB()->zCoord(), 1);
+		Vec4 p4;
 			p1 = finalMatrix * p1;
 			p2 = finalMatrix * p2;
 			p3 = finalMatrix * p3;
-			face.updateMidpoint((p1 + p2 + p3)*0.333);
+		if (isQuadrilateral) {
+			Vec4(edgesCopy[2].getB()->xCoord(), edgesCopy[2].getB()->yCoord(), edgesCopy[2].getB()->zCoord(), 1);
+			p4 = finalMatrix * p4;
+			finalP = (p1 + p2 + p3 + p4) * 0.25;
+		}
+		else {
+			finalP = (p1 + p2 + p3) * 0.3333;
+		}
+			face.updateMidpoint(finalP);
 			face.updateNormalDirection();
 			face.updateTarget();
-	}
-
-	for (Face face : faces) {
-		for (Edge edge : face.getEdges()) {
 			Normal normal = face.getNormal();
 			plotLine(normal.midpoint.xCoord(), normal.midpoint.yCoord(), normal.target.xCoord(), normal.target.yCoord(), pDc, RGB(0, 255, 0));
-		}
 	}
+
 }
 void Renderer::setObjectWorldMatrix(Mat4 &matrix) {
 	objectWorldMatrix = matrix;
