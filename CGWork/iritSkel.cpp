@@ -191,7 +191,8 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 		// Added By Firas BEGIN.
 		IPVertexStruct *previous = PPolygon->PVertex;
 		IPVertexStruct *current = PPolygon->PVertex->Pnext;
-		Vertex* firstVertex = new Vertex(previous->Coord[0], previous->Coord[1], previous->Coord[2]);;
+		Face face;
+		Vertex* firstVertex = new Vertex(previous->Coord[0], previous->Coord[1], previous->Coord[2]);
 		Vertex* previousVertex = firstVertex;
 		loadedGeometry.addVertex(previousVertex);
 		do {
@@ -199,23 +200,21 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 			if (current == PPolygon->PVertex) {
 				delete(currentVertex);
 				loadedGeometry.addEdge(new Edge(previousVertex, firstVertex));
+				face.addEdge(Edge(previousVertex, firstVertex));
 				break;
 			}
 			loadedGeometry.addEdge(new Edge(previousVertex, currentVertex));
+			face.addEdge(Edge(previousVertex, currentVertex));
 			previous = current;
 			previousVertex = currentVertex;
 			current = current->Pnext;
+
 		} while (current != NULL && previous != PPolygon->PVertex);
-
+		loadedGeometry.addFace(face);
 		// Added By Firas END.
-
 		/* Close the polygon. */
 	}
 	/* Close the object. */
-	int x = 0;
-	while (x != 1) {
-		x++;
-	}
 	return true;
 }
 

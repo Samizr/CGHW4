@@ -210,8 +210,10 @@
     <ClCompile Include="MaterialDlg.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="MouseSensitivityDialog.cpp" />
+    <ClCompile Include="Normal.cpp" />
     <ClCompile Include="PerspectiveParametersDialog.cpp" />
     <ClCompile Include="PngWrapper.cpp" />
+    <ClCompile Include="Face.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="StdAfx.cpp">
@@ -226,7 +228,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</BrowseInformation>
     </ClCompile>
-    <ClCompile Include="VariableSetterDialog.cpp" />
     <ClCompile Include="Vec4.cpp" />
     <ClCompile Include="Vertex.cpp" />
   </ItemGroup>
@@ -249,8 +250,10 @@
     <ClInclude Include="MaterialDlg.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="MouseSensitivityDialog.h" />
+    <ClInclude Include="Normal.h" />
     <ClInclude Include="PerspectiveParametersDialog.h" />
     <ClInclude Include="PngWrapper.h" />
+    <ClInclude Include="Face.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scene.h" />
@@ -279,7 +282,6 @@
     <ClInclude Include="..\include\triv_lib.h" />
     <ClInclude Include="..\include\trng_lib.h" />
     <ClInclude Include="..\include\user_lib.h" />
-    <ClInclude Include="VariableSetterDialog.h" />
     <ClInclude Include="Vec4.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>

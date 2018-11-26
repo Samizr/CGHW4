@@ -84,7 +84,10 @@
     <ClCompile Include="LinePlotter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VariableSetterDialog.cpp">
+    <ClCompile Include="Face.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Normal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -235,7 +238,10 @@
     <ClInclude Include="LinePlotter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VariableSetterDialog.h">
+    <ClInclude Include="Face.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Normal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

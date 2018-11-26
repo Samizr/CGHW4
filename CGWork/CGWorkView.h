@@ -13,24 +13,25 @@
 #include "gl\gl.h"    // Include the standard CGWork  headers
 #include "gl\glu.h"   // Add the utility library
 
-
+#include "Scene.h"
 #include "Light.h"
+#include <vector>
 
+using std::vector;
 class CCGWorkView : public CView
 {
 protected: // create from serialization only
 	CCGWorkView();
 	DECLARE_DYNCREATE(CCGWorkView)
 
-// Attributes
+	// Attributes
 public:
 	CCGWorkDoc* GetDocument();
 
-// Operations
+	// Operations
 public:
 
 private:
-	void testButtons(); //TODO: DEBUG PURPOSES ONLY, REMOVE WHEN DONE
 
 	//Parameters that define the drawing and viewing of the objects:
 	int m_nAxis;				// Axis of Action, X Y or Z
@@ -41,26 +42,33 @@ private:
 	bool m_bPolyNormals;			//Polygon normals activation
 	bool m_bVertexNormals;			//Vertex normals activation
 	bool m_bBoxFrame;				//Bounding box activation
-	int m_nTranslationSensetivity;   //Mouse sensetivity for translation
-	int m_nRotationSensetivity;		//Mouse sensetivity for rotation
-	int m_nScaleSensetivity;		//Mouse sensetivity for scaling
+	float m_nTranslationSensetivity;   //Mouse sensetivity for translation
+	float m_nRotationSensetivity;		//Mouse sensetivity for rotation
+	float m_nScaleSensetivity;		//Mouse sensetivity for scaling
 	COLORREF m_clrLines;			//Current line color
 	COLORREF m_clrBackground;		//Current background color
 	COLORREF m_clrNormals;			//Current normal color
 	CString m_strItdFileName;		// file name of IRIT data
-	//Scene scene;
+
+	//Scene, cameras, models and related objects:
+	Renderer renderer;
+	Scene scene;
+	vector<int> cameraIDs;
+	vector<int> modelIDs;
+
+
 	//Mouse movement control section:
 	bool m_bAllowTransformations;	//Set when transformations are allowed
 	LONG m_lnLastXPos;				//Stores the x pos of the last place the mouse visited
 	enum Direction {
-		POSITIVE, NEGATIVE
+		POSITIVE = -1, NEGATIVE = 1
 	};
 	void transform(Direction direction);
+
 	//Sensetivity test debug configuration:
 	float rotationQuota;
 	float translationQuota;
 	float scalingQuota;
-
 
 	//Parameters not related for HW2 Implementation:
 	double m_lMaterialAmbient;		// The Ambient in the scene
@@ -75,10 +83,10 @@ private:
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CCGWorkView)
-	public:
+public:
 	virtual void OnDraw(CDC* pDC);  // overridden to draw this view
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	protected:
+protected:
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -106,7 +114,7 @@ protected:
 	HBITMAP m_pDbBitMap;
 	CDC* m_pDbDC;
 
-// Generated message map functions
+	// Generated message map functions
 protected:
 	//{{AFX_MSG(CCGWorkView)
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
@@ -173,7 +181,9 @@ public:
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp
 inline CCGWorkDoc* CCGWorkView::GetDocument()
-   { return (CCGWorkDoc*)m_pDocument; }
+{
+	return (CCGWorkDoc*)m_pDocument;
+}
 #endif
 
 /////////////////////////////////////////////////////////////////////////////

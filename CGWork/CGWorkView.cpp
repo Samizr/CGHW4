@@ -21,16 +21,13 @@ static char THIS_FILE[] = __FILE__;
 #include "PngWrapper.h"
 #include "iritSkel.h"
 #include "MouseSensitivityDialog.h"
-#include "VariableSetterDialog.h"
 
 
 // For Status Bar access
 #include "MainFrm.h"
 
 // Static Functions:
-static void testModel(CDC* pDC, const CRect& rect);
-
-
+static AXIS sceneAxisTranslator(int guiID);
 
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
@@ -78,7 +75,7 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_UPDATE_COMMAND_UI(ID_ACTION_SCALE, OnUpdateActionScale)
 	ON_UPDATE_COMMAND_UI(ID_VIEWSPACE, OnUpdateActionViewSpace)
 	ON_UPDATE_COMMAND_UI(ID_OBJECTSPACE, OnUpdateActionObjectSpace)
-	
+
 	//TOOLBAR - Axis Function Mapping
 	ON_COMMAND(ID_AXIS_X, OnAxisX)
 	ON_COMMAND(ID_AXIS_Y, OnAxisY)
@@ -104,27 +101,27 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
-	ON_COMMAND(ID_OPTIONS_SETSENSITIVITYVARIABLES, &CCGWorkView::OnOptionsSetsensitivityvariables)
 END_MESSAGE_MAP()
 
 
 // A patch to fix GLaux disappearance from VS2005 to VS2008
 void auxSolidCone(GLdouble radius, GLdouble height) {
-        GLUquadric *quad = gluNewQuadric();
-        gluQuadricDrawStyle(quad, GLU_FILL);
-        gluCylinder(quad, radius, 0.0, height, 20, 20);
-        gluDeleteQuadric(quad);
+	GLUquadric *quad = gluNewQuadric();
+	gluQuadricDrawStyle(quad, GLU_FILL);
+	gluCylinder(quad, radius, 0.0, height, 20, 20);
+	gluDeleteQuadric(quad);
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView construction/destruction
 
-CCGWorkView::CCGWorkView()
+CCGWorkView::CCGWorkView() :
+	scene(renderer)
 {
 	//Set default values
 	m_nAxis = ID_AXIS_X;
 	m_nAction = ID_ACTION_ROTATE;
-	m_nView = ID_VIEW_ORTHOGRAPHIC;	
+	m_nView = ID_VIEW_ORTHOGRAPHIC;
 	m_bIsPerspective = false;
 	m_bBoxFrame = false;
 	m_bPolyNormals = false;
@@ -132,17 +129,22 @@ CCGWorkView::CCGWorkView()
 	m_bIsViewSpace = true;
 	m_nTranslationSensetivity = INITIAL_SENSITIVITY;
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
-	m_nScaleSensetivity = INITIAL_SENSITIVITY;
+	m_nScaleSensetivity = INITIAL_SENSITIVITY/5;
 	m_clrBackground = INITIAL_BACKGROUND_COLOR;
 	m_clrLines = INITIAL_OBJECT_COLOR;
 	m_clrNormals = INITIAL_NORMAL_COLOR;
-//	scene.addCamera(1);
-	//Camera cam = scene.getCamera(1);
 
-	//cam.lookat
-	rotationQuota = 1;
-	translationQuota = 1;
-	scalingQuota = 1;
+	// Transformations Quantitive Setup:
+	translationQuota = 9;
+	rotationQuota = 8;
+	scalingQuota = 0.8;
+
+	//Scene initilization:
+	auto newCamera = new Camera();
+	newCamera->Ortho();
+	newCamera->LookAt(Vec4(0, 0, 8, 1), Vec4(0, 0, 0, 1), Vec4(0, 1, 0, 1));
+	cameraIDs.push_back(scene.addCamera(newCamera));
+	
 
 	//Shading Related
 	m_nLightShading = ID_LIGHT_SHADING_FLAT;
@@ -152,7 +154,7 @@ CCGWorkView::CCGWorkView()
 	m_nMaterialCosineFactor = 32;
 
 	//init the first light to be enabled
-	m_lights[LIGHT_ID_1].enabled=true;
+	m_lights[LIGHT_ID_1].enabled = true;
 	m_pDbBitMap = NULL;
 	m_pDbDC = NULL;
 }
@@ -201,7 +203,7 @@ BOOL CCGWorkView::PreCreateWindow(CREATESTRUCT& cs)
 	return CView::PreCreateWindow(cs);
 }
 
-int CCGWorkView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
+int CCGWorkView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CView::OnCreate(lpCreateStruct) == -1)
 		return -1;
@@ -215,8 +217,8 @@ int CCGWorkView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 BOOL CCGWorkView::InitializeCGWork()
 {
 	m_pDC = new CClientDC(this);
-	
-	if ( NULL == m_pDC ) { // failure to get DC
+
+	if (NULL == m_pDC) { // failure to get DC
 		::AfxMessageBox(CString("Couldn't get a valid DC."));
 		return FALSE;
 	}
@@ -226,7 +228,7 @@ BOOL CCGWorkView::InitializeCGWork()
 	m_pDbDC = new CDC();
 	m_pDbDC->CreateCompatibleDC(m_pDC);
 	SetTimer(1, 1, NULL);
-	m_pDbBitMap = CreateCompatibleBitmap(m_pDC->m_hDC, r.right, r.bottom);	
+	m_pDbBitMap = CreateCompatibleBitmap(m_pDC->m_hDC, r.right, r.bottom);
 	m_pDbDC->SelectObject(m_pDbBitMap);
 	return TRUE;
 }
@@ -234,11 +236,11 @@ BOOL CCGWorkView::InitializeCGWork()
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView message handlers
 
-void CCGWorkView::OnSize(UINT nType, int cx, int cy) 
+void CCGWorkView::OnSize(UINT nType, int cx, int cy)
 {
 	CView::OnSize(nType, cx, cy);
 
-	if ( 0 >= cx || 0 >= cy ) {
+	if (0 >= cx || 0 >= cy) {
 		return;
 	}
 
@@ -248,19 +250,19 @@ void CCGWorkView::OnSize(UINT nType, int cx, int cy)
 
 	// compute the aspect ratio
 	// this will keep all dimension scales equal
-	m_AspectRatio = (GLdouble)m_WindowWidth/(GLdouble)m_WindowHeight;
+	m_AspectRatio = (GLdouble)m_WindowWidth / (GLdouble)m_WindowHeight;
 
 	CRect r;
 	GetClientRect(&r);
 	DeleteObject(m_pDbBitMap);
-	m_pDbBitMap = CreateCompatibleBitmap(m_pDC->m_hDC, r.right, r.bottom);	
+	m_pDbBitMap = CreateCompatibleBitmap(m_pDC->m_hDC, r.right, r.bottom);
 	m_pDbDC->SelectObject(m_pDbBitMap);
 }
 
 
 BOOL CCGWorkView::SetupViewingFrustum(void)
 {
-    return TRUE;
+	return TRUE;
 }
 
 // This viewing projection gives us a constant aspect ration. This is done by
@@ -270,12 +272,12 @@ BOOL CCGWorkView::SetupViewingOrthoConstAspect(void)
 	return TRUE;
 }
 
-BOOL CCGWorkView::OnEraseBkgnd(CDC* pDC) 
+BOOL CCGWorkView::OnEraseBkgnd(CDC* pDC)
 {
 	// Windows will clear the window with the background color every time your window 
 	// is redrawn, and then CGWork will clear the viewport with its own background color.
 
-	
+
 	return true;
 }
 
@@ -296,27 +298,26 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	GetClientRect(&r);
 	CDC *pDCToUse = /*m_pDC*/m_pDbDC;
 
-	Geometry g = ::loadedGeometry;
-	if (g.loaded)
-		testModel(m_pDbDC, r);
-	
+	//testModel(m_pDbDC, r);
+	pDCToUse->FillSolidRect(&r, m_clrBackground);
+	scene.draw(pDCToUse, r, m_clrLines);
 
-	if (pDCToUse != m_pDC) 
+	if (pDCToUse != m_pDC)
 	{
 		m_pDC->BitBlt(r.left, r.top, r.Width(), r.Height(), pDCToUse, r.left, r.top, SRCCOPY);
 	}
-	
+
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView CGWork Finishing and clearing...
 
-void CCGWorkView::OnDestroy() 
+void CCGWorkView::OnDestroy()
 {
 	CView::OnDestroy();
 
 	// delete the DC
-	if ( m_pDC ) {
+	if (m_pDC) {
 		delete m_pDC;
 	}
 
@@ -335,26 +336,25 @@ void CCGWorkView::RenderScene() {
 }
 
 
-void CCGWorkView::OnFileLoad() 
+void CCGWorkView::OnFileLoad()
 {
-	TCHAR szFilters[] = _T ("IRIT Data Files (*.itd)|*.itd|All Files (*.*)|*.*||");
+	TCHAR szFilters[] = _T("IRIT Data Files (*.itd)|*.itd|All Files (*.*)|*.*||");
 
-	CFileDialog dlg(TRUE, _T("itd"), _T("*.itd"), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY ,szFilters);
+	CFileDialog dlg(TRUE, _T("itd"), _T("*.itd"), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters);
 
-	if (dlg.DoModal () == IDOK) {
+	if (dlg.DoModal() == IDOK) {
 		m_strItdFileName = dlg.GetPathName();		// Full path and filename
 		PngWrapper p;
-		
+
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 		// Open the file and read it.
-		// VERSION 5 - Currently works with one camera and one model.
+
 		// Does not reload the model if requested.
-		//Model newModel(::loadedGeometry);
-//		scene.addModel(newModel);
-		Geometry g = ::loadedGeometry;
+		auto newModel = new Model(::loadedGeometry);
+		modelIDs.push_back(scene.addModel(newModel));
 
 		Invalidate();	// force a WM_PAINT for drawing.
-	} 
+	}
 
 }
 
@@ -364,26 +364,30 @@ void CCGWorkView::OnFileLoad()
 // Note: that all the following Message Handlers act in a similar way.
 // Each control or command has two functions associated with it.
 
-void CCGWorkView::OnViewOrthographic() 
+void CCGWorkView::OnViewOrthographic()
 {
 	m_nView = ID_VIEW_ORTHOGRAPHIC;
 	m_bIsPerspective = false;
+	Camera* activeCamera = scene.getActiveCamera();
+	activeCamera->Ortho();
 	Invalidate();		// redraw using the new view.
 }
 
-void CCGWorkView::OnUpdateViewOrthographic(CCmdUI* pCmdUI) 
+void CCGWorkView::OnUpdateViewOrthographic(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(m_nView == ID_VIEW_ORTHOGRAPHIC);
 }
 
-void CCGWorkView::OnViewPerspective() 
+void CCGWorkView::OnViewPerspective()
 {
 	m_nView = ID_VIEW_PERSPECTIVE;
 	m_bIsPerspective = true;
+	Camera* activeCamera = scene.getActiveCamera();
+	activeCamera->Perspective();
 	Invalidate();
 }
 
-void CCGWorkView::OnUpdateViewPerspective(CCmdUI* pCmdUI) 
+void CCGWorkView::OnUpdateViewPerspective(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(m_nView == ID_VIEW_PERSPECTIVE);
 }
@@ -391,6 +395,12 @@ void CCGWorkView::OnUpdateViewPerspective(CCmdUI* pCmdUI)
 void CCGWorkView::OnViewBoxFrame()
 {
 	m_bBoxFrame = !m_bBoxFrame;
+	if (m_bBoxFrame) {
+		scene.enableBoundingBox();
+	}
+	else {
+		scene.disableBoundingBox();
+	}
 	Invalidate();
 }
 
@@ -413,6 +423,12 @@ void CCGWorkView::OnUpdateActionViewSpace(CCmdUI * pCmdUI)
 void CCGWorkView::OnViewPolyNormals()
 {
 	m_bPolyNormals = !m_bPolyNormals;
+	if (m_bPolyNormals) {
+		scene.enablePolygonNormals();
+	}
+	else {
+		scene.disablePolygonNormals();
+	}
 	Invalidate();
 }
 
@@ -435,22 +451,22 @@ void CCGWorkView::OnUpdateViewVertexNormals(CCmdUI * pCmdUI)
 
 // ACTION HANDLERS ///////////////////////////////////////////
 
-void CCGWorkView::OnActionRotate() 
+void CCGWorkView::OnActionRotate()
 {
 	m_nAction = ID_ACTION_ROTATE;
 }
 
-void CCGWorkView::OnUpdateActionRotate(CCmdUI* pCmdUI) 
+void CCGWorkView::OnUpdateActionRotate(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(m_nAction == ID_ACTION_ROTATE);
 }
 
-void CCGWorkView::OnActionTranslate() 
+void CCGWorkView::OnActionTranslate()
 {
 	m_nAction = ID_ACTION_TRANSLATE;
 }
 
-void CCGWorkView::OnUpdateActionTranslate(CCmdUI* pCmdUI) 
+void CCGWorkView::OnUpdateActionTranslate(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(m_nAction == ID_ACTION_TRANSLATE);
 }
@@ -482,7 +498,7 @@ void CCGWorkView::OnUpdateActionObjectSpace(CCmdUI * pCmdUI)
 // Gets calles when the X button is pressed or when the Axis->X menu is selected.
 // The only thing we do here is set the ChildView member variable m_nAxis to the 
 // selected axis.
-void CCGWorkView::OnAxisX() 
+void CCGWorkView::OnAxisX()
 {
 	m_nAxis = ID_AXIS_X;
 }
@@ -491,27 +507,27 @@ void CCGWorkView::OnAxisX()
 // The control is responsible for its redrawing.
 // It sets itself disabled when the action is a Scale action.
 // It sets itself Checked if the current axis is the X axis.
-void CCGWorkView::OnUpdateAxisX(CCmdUI* pCmdUI) 
+void CCGWorkView::OnUpdateAxisX(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(m_nAxis == ID_AXIS_X);
 }
 
-void CCGWorkView::OnAxisY() 
+void CCGWorkView::OnAxisY()
 {
 	m_nAxis = ID_AXIS_Y;
 }
 
-void CCGWorkView::OnUpdateAxisY(CCmdUI* pCmdUI) 
+void CCGWorkView::OnUpdateAxisY(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(m_nAxis == ID_AXIS_Y);
 }
 
-void CCGWorkView::OnAxisZ() 
+void CCGWorkView::OnAxisZ()
 {
 	m_nAxis = ID_AXIS_Z;
 }
 
-void CCGWorkView::OnUpdateAxisZ(CCmdUI* pCmdUI) 
+void CCGWorkView::OnUpdateAxisZ(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(m_nAxis == ID_AXIS_Z);
 }
@@ -549,7 +565,7 @@ void CCGWorkView::OnOptionsNormalscolor()
 void CCGWorkView::OnOptionsMousesensitivity()
 {
 	//Dialog initiation
-	MouseSensitivityDialog MSDialog(m_nTranslationSensetivity, m_nRotationSensetivity, m_nScaleSensetivity);;
+	MouseSensitivityDialog MSDialog(m_nTranslationSensetivity, m_nRotationSensetivity, m_nScaleSensetivity);
 
 	//Dialog values retrival 
 	if (MSDialog.DoModal() == IDOK) {
@@ -562,46 +578,46 @@ void CCGWorkView::OnOptionsMousesensitivity()
 
 // LIGHT SHADING HANDLERS ///////////////////////////////////////////
 
-void CCGWorkView::OnLightShadingFlat() 
+void CCGWorkView::OnLightShadingFlat()
 {
 	m_nLightShading = ID_LIGHT_SHADING_FLAT;
 }
 
-void CCGWorkView::OnUpdateLightShadingFlat(CCmdUI* pCmdUI) 
+void CCGWorkView::OnUpdateLightShadingFlat(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(m_nLightShading == ID_LIGHT_SHADING_FLAT);
 }
 
-void CCGWorkView::OnLightShadingGouraud() 
+void CCGWorkView::OnLightShadingGouraud()
 {
 	m_nLightShading = ID_LIGHT_SHADING_GOURAUD;
 }
 
-void CCGWorkView::OnUpdateLightShadingGouraud(CCmdUI* pCmdUI) 
+void CCGWorkView::OnUpdateLightShadingGouraud(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(m_nLightShading == ID_LIGHT_SHADING_GOURAUD);
 }
 
 // LIGHT SETUP HANDLER ///////////////////////////////////////////
 
-void CCGWorkView::OnLightConstants() 
+void CCGWorkView::OnLightConstants()
 {
 	CLightDialog dlg;
 
-	for (int id=LIGHT_ID_1;id<MAX_LIGHT;id++)
-	{	    
-	    dlg.SetDialogData((LightID)id,m_lights[id]);
-	}
-	dlg.SetDialogData(LIGHT_ID_AMBIENT,m_ambientLight);
-
-	if (dlg.DoModal() == IDOK) 
+	for (int id = LIGHT_ID_1; id < MAX_LIGHT; id++)
 	{
-	    for (int id=LIGHT_ID_1;id<MAX_LIGHT;id++)
-	    {
-		m_lights[id] = dlg.GetDialogData((LightID)id);
-	    }
-	    m_ambientLight = dlg.GetDialogData(LIGHT_ID_AMBIENT);
-	}	
+		dlg.SetDialogData((LightID)id, m_lights[id]);
+	}
+	dlg.SetDialogData(LIGHT_ID_AMBIENT, m_ambientLight);
+
+	if (dlg.DoModal() == IDOK)
+	{
+		for (int id = LIGHT_ID_1; id < MAX_LIGHT; id++)
+		{
+			m_lights[id] = dlg.GetDialogData((LightID)id);
+		}
+		m_ambientLight = dlg.GetDialogData(LIGHT_ID_AMBIENT);
+	}
 	Invalidate();
 }
 
@@ -622,59 +638,19 @@ void CCGWorkView::OnTimer(UINT_PTR nIDEvent)
 
 //////////////////////////////////////////TESTING & DEBUG FUNCTIONS////////////////////////////////////////////////////////
 
-void CCGWorkView::testButtons() {
-	CDC *pDCToUse = m_pDbDC;
-	CRect r;
-	GetClientRect(&r);
-
-}
 
 #include "Mat4.h"
 #include "LinePlotter.h"
 
-static void testModel(CDC* pDC, const CRect& rect) {
-	
-	Geometry geometry = ::loadedGeometry;
-	float deltaX = geometry.getMaxX() - geometry.getMinX();
-	float deltaY = geometry.getMaxY() - geometry.getMinY();
-	float deltaZ = geometry.getMaxZ() - geometry.getMinZ();
-	float sumX = geometry.getMaxX() + geometry.getMinX();
-	float sumY = geometry.getMaxY() + geometry.getMinY();
-	float sumZ = geometry.getMaxZ() + geometry.getMinZ();
-	float deltaW = rect.right - rect.left;
-	float deltaH = rect.top - rect.bottom;
-	float sumW = rect.right + rect.left;
-	float sumH = rect.top + rect.bottom;
-	
-	Vec4 vecWM[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
-	Vec4 vecCM[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
-	Vec4 vecPM[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 0, 0), Vec4(0, 0, 0, 1) };
-	Vec4 vecNM[4] = { Vec4(2/deltaX, 0, 0, -sumX/deltaX), Vec4(0, 2/deltaY, 0, -sumY/deltaY), Vec4(0, 0, 2/deltaZ, -sumZ/deltaZ), Vec4(0, 0, 0, 1) };
-
-	Vec4 vecVPM[4] = { Vec4(deltaW/2, 0, 0, sumW/2), Vec4(0, deltaH/2, 0, sumH/2), Vec4(0, 0, 0.5, 0.5), Vec4(0, 0, 0, 1) };
-
-	Mat4 worldMatrix(vecWM), cameraMatrix(vecCM), projectionMatrix(vecPM), normalizingMatrix(vecNM);
-	Mat4 viewPortMatrix(vecVPM);
-	Mat4 finalMatrix = ((((viewPortMatrix * normalizingMatrix) * projectionMatrix) * cameraMatrix) * worldMatrix);
-
-
-	for (Edge* edge : geometry.getEdges()) {
-		Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
-		Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
-
-		p1 = finalMatrix * p1;
-		p2 = finalMatrix * p2;
-
-		//float r1 = width * (p1.xCoord() + 1) / 2;
-		//float r2 = width * (p2.xCoord() + 1) / 2;
-		//float s1 = height * (p1.yCoord() + 1) / 2;
-		//float s2 = height * (p2.yCoord() + 1) / 2;
-
-		//plotLine(r1, s1, r2, s2, pDC);
-		plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDC);
+AXIS sceneAxisTranslator(int guiID)
+{
+	switch (guiID) {
+	case ID_AXIS_X: return XAXIS;
+	case ID_AXIS_Y: return YAXIS;
+	case ID_AXIS_Z: return ZAXIS;
+	default: throw std::bad_exception();
 	}
 }
-
 
 
 void CCGWorkView::OnLButtonDown(UINT nFlags, CPoint point)
@@ -695,7 +671,7 @@ void CCGWorkView::OnLButtonUp(UINT nFlags, CPoint point)
 void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	CView::OnMouseMove(nFlags, point);
-	
+
 	if (!m_bAllowTransformations) {
 		return;
 	}
@@ -706,42 +682,45 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 		transform(NEGATIVE);
 	}
 	m_lnLastXPos = point.x;
-
+	Invalidate();
 }
 
 //Parses the requested transformation and requests the correct transformation:
 void CCGWorkView::transform(Direction direction)
 {
-	//ROTATION
-	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_X && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_Y && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_Z && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_X && direction == NEGATIVE) {}
-	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_Y && direction == NEGATIVE) {}
-	if (m_nAction == ID_ACTION_ROTATE && m_nAxis == ID_AXIS_Z && direction == NEGATIVE) {}
-	//TRANSLATION:
-	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_X && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_Y && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_Z && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_X && direction == NEGATIVE) {}
-	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_Y && direction == NEGATIVE) {}
-	if (m_nAction == ID_ACTION_TRANSLATE && m_nAxis == ID_AXIS_Z && direction == NEGATIVE) {}
-	//SCALING:
-	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_X && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_Y && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_Z && direction == POSITIVE) {}
-	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_X && direction == NEGATIVE) {}
-	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_Y && direction == NEGATIVE) {}
-	if (m_nAction == ID_ACTION_SCALE && m_nAxis == ID_AXIS_Z && direction == NEGATIVE) {}
-}
 
+	Model* model = scene.getActiveModel();
+	if (model == nullptr) {
+		return;
+	}
+	AXIS sceneAxis = sceneAxisTranslator(m_nAxis);
+	float adjustedQuota;
+	switch (m_nAction) {
 
-void CCGWorkView::OnOptionsSetsensitivityvariables()
-{
-	VariableSetterDialog VSDialog;
-	if (VSDialog.DoModal() == IDOK) {
-		rotationQuota = VSDialog.rotationMax - VSDialog.rotationMin;
-		translationQuota = VSDialog.translationMax - VSDialog.translationMin;
-		scalingQuota = VSDialog.scalingMax - VSDialog.scalingMin;
+	case (ID_ACTION_ROTATE) : 
+		adjustedQuota = direction * rotationQuota * m_nRotationSensetivity / 100;
+		if (m_bIsViewSpace)
+			model->rotateViewSpace(sceneAxis, adjustedQuota);
+		else
+			model->rotateObjectSpace(sceneAxis, adjustedQuota);
+		break;
+	
+	case (ID_ACTION_TRANSLATE):		
+		adjustedQuota = direction * rotationQuota * m_nRotationSensetivity / 100;
+		if (m_bIsViewSpace)
+			model->translateViewSpace(sceneAxis, adjustedQuota);
+		else
+			model->translateObjectSpace(sceneAxis, adjustedQuota);
+		break;
+
+	case (ID_ACTION_SCALE):
+		adjustedQuota = (direction == NEGATIVE ? 1 / scalingQuota : scalingQuota);
+		if (m_bIsViewSpace)
+			model->scaleViewSpace(sceneAxis, adjustedQuota);
+		else
+			model->scaleObjectSpace(sceneAxis,  adjustedQuota);
+		scalingQuota *= (direction == NEGATIVE ? (float)101/100 : (float)99/100);
+		cout << "Current Scaling Quota :" << scalingQuota << endl;
+		break;
 	}
 }
