@@ -142,6 +142,7 @@ CCGWorkView::CCGWorkView() :
 	//Scene initilization:
 	auto newCamera = new Camera();
 	newCamera->Ortho();
+	newCamera->LookAt(Vec4(0, 0, 8, 1), Vec4(0, 0, 0, 1), Vec4(0, 1, 0, 1));
 	cameraIDs.push_back(scene.addCamera(newCamera));
 	
 
@@ -367,6 +368,8 @@ void CCGWorkView::OnViewOrthographic()
 {
 	m_nView = ID_VIEW_ORTHOGRAPHIC;
 	m_bIsPerspective = false;
+	Camera* activeCamera = scene.getActiveCamera();
+	activeCamera->Ortho();
 	Invalidate();		// redraw using the new view.
 }
 
@@ -379,6 +382,8 @@ void CCGWorkView::OnViewPerspective()
 {
 	m_nView = ID_VIEW_PERSPECTIVE;
 	m_bIsPerspective = true;
+	Camera* activeCamera = scene.getActiveCamera();
+	activeCamera->Perspective();
 	Invalidate();
 }
 

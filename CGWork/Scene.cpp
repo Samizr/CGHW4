@@ -58,8 +58,8 @@ void Scene::draw(CDC* pdc, CRect rect, COLORREF clr) {
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
 	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
 	this->m_renderer.setObjectWorldMatrix(model->getTransformationMatrix());
-	float deltaX = 16;
-	float deltaY = 9;  
+	float deltaX = 24;
+	float deltaY = 13.5;  
 	float deltaZ = 6;  
 	float sumX = 0;	 
 	float sumY = 0; 

@@ -74,14 +74,15 @@ float Vec4::wCoord() {
 }
 
 Vec4 Vec4::normalize() {
-	float size = sqrt(pow(_xCoord, 2) + pow(_yCoord, 2) + pow(_zCoord, 2) + pow(_wCoord, 2));
-	return Vec4(_xCoord / size, _yCoord / size, _zCoord / size, _wCoord / size);
+	float size = sqrt(pow(_xCoord, 2) + pow(_yCoord, 2) + pow(_zCoord, 2));
+	return Vec4(_xCoord / size, _yCoord / size, _zCoord / size, 1);
 }
 
 Vec4 Vec4::crossProduct(const Vec4& other) const {
 	Vec4 returnVector;
-	returnVector._xCoord = this->_yCoord * other._zCoord - this->_zCoord * other._yCoord;
-	returnVector._yCoord = (-1) * (this->_xCoord * other._zCoord - this->_zCoord * other._xCoord);
-	returnVector._zCoord = this->_xCoord * other._yCoord - this->_yCoord * other._xCoord;
+	returnVector._xCoord = (this->_yCoord * other._zCoord) - (this->_zCoord * other._yCoord);
+	returnVector._yCoord = (this->_zCoord * other._xCoord) - (this->_xCoord * other._zCoord);
+	returnVector._zCoord = (this->_xCoord * other._yCoord) - (this->_yCoord * other._xCoord);
+	returnVector._wCoord = 1;
 	return returnVector;
 }

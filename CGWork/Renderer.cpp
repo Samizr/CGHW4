@@ -15,29 +15,24 @@ static void drawPolygonNormals(CDC * pDc, Geometry * geometry/*, COLOREF clr*/, 
 
 // this sets all the matricies to be identity;
 Renderer::Renderer() {
-	float deltaX = 24;
-	float deltaY = 13.5;
-	float deltaZ = 6;
-	float sumX = 0;
-	float sumY = 0;
-	float sumZ = 0;
-	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, 2 / deltaZ, -sumZ / deltaZ), Vec4(0, 0, 0, 1) };
-	normalizationMatrix = Mat4(vecNM);
+	
 	withBounding = false;
 	withPolygonNormals = false;
 }
 
+
+
 void Renderer::drawWireframe(CDC * pDC, Geometry * geometry, COLORREF clr) {
 
 	// for each edge in the geometry, do your thing.
-	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+	Mat4 finalMatrix = (windowMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix)));
 
 	for (Edge* edge : geometry->getEdges()) {
 		Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
 		Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
 		p1 = finalMatrix * p1;
 		p2 = finalMatrix * p2;
-		plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDC, clr);
+		plotLine(p1.xCoord() / p1.wCoord(), p1.yCoord() / p1.wCoord(), p2.xCoord() / p2.wCoord(), p2.yCoord() / p2.wCoord(), pDC, clr);
 	}
 	if (withBounding) {
 		drawBoundingBox(pDC, geometry, clr, finalMatrix);
@@ -80,7 +75,8 @@ static void drawBoundingBox(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 f
 			if (similarPlanes == 2) {
 				Vec4 p1 = finalMatrix * points[i];
 				Vec4 p2 = finalMatrix * points[j];
-				plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), pDc, clr);
+				
+				plotLine(p1.xCoord() / p1.wCoord(), p1.yCoord() / p1.wCoord(), p2.xCoord() / p2.wCoord(), p2.yCoord() / p2.wCoord(), pDc, clr);
 			}
 		}
 	}
