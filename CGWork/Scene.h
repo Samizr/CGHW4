@@ -37,6 +37,8 @@ public:
 	void enableBoundingBox();
 	void disablePolygonNormals();
 	void enablePolygonNormals();
+	void enableVertexNormals();
+	void disableVertexNormals();
 };
 
 #endif /* Scene_h */

@@ -92,6 +92,14 @@ void Scene::enablePolygonNormals()
 	m_renderer.enablePolygonNormals();
 }
 
+void Scene::enableVertexNormals() {
+	this->m_renderer.enableVertexNormals();
+}
+
+void Scene::disableVertexNormals() {
+	this->m_renderer.disableVertexNormals();
+}
+
 void Scene::enableBoundingBox() {
 	m_renderer.enableBoundingBox();
 }

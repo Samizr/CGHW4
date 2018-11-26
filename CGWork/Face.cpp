@@ -4,7 +4,7 @@ Face::Face()
 {
 }
 
-Face::Face(Edge firstEdge, Edge secondEdge, Edge thirdEdge, Edge fourthEdge)
+Face::Face(Edge* firstEdge, Edge* secondEdge, Edge* thirdEdge, Edge* fourthEdge)
 {
 	edges.push_back(firstEdge);
 	edges.push_back(secondEdge);
@@ -14,7 +14,7 @@ Face::Face(Edge firstEdge, Edge secondEdge, Edge thirdEdge, Edge fourthEdge)
 	updateNormalDirection();
 }
 
-void Face::addEdge(Edge edge)
+void Face::addEdge(Edge* edge)
 {
 	edges.push_back(edge);
 }
@@ -25,12 +25,12 @@ Normal & Face::getNormal()
 }
 
 void Face::updateNormalDirection() {
-	float xU = edges[0].getA()->xCoord() - edges[0].getB()->xCoord();
-	float yU = edges[0].getA()->yCoord() - edges[0].getB()->yCoord();
-	float zU = edges[0].getA()->zCoord() - edges[0].getB()->zCoord();
-	float xV = edges[1].getA()->xCoord() - edges[1].getB()->xCoord();
-	float yV = edges[1].getA()->yCoord() - edges[1].getB()->yCoord();
-	float zV = edges[1].getA()->zCoord() - edges[1].getB()->zCoord();
+	float xU = edges[0]->getA()->xCoord() - edges[0]->getB()->xCoord();
+	float yU = edges[0]->getA()->yCoord() - edges[0]->getB()->yCoord();
+	float zU = edges[0]->getA()->zCoord() - edges[0]->getB()->zCoord();
+	float xV = edges[1]->getA()->xCoord() - edges[1]->getB()->xCoord();
+	float yV = edges[1]->getA()->yCoord() - edges[1]->getB()->yCoord();
+	float zV = edges[1]->getA()->zCoord() - edges[1]->getB()->zCoord();
 	Vec4 A(xU, yU, zU, 1);
 	Vec4 B(xV, yV, zV, 1);
 	//Vec4 midpoint = Vec4(edges[0].getA()->xCoord(), edges[0].getA()->yCoord(), edges[0].getA()->zCoord(), 0);//(xMid, yMid, zMid, 0);
@@ -40,8 +40,7 @@ void Face::updateNormalDirection() {
 
 }
 
-void Face::updateMidpoint(Vec4 newMidpoint)
-{
+void Face::updateMidpoint(Vec4 newMidpoint) {
 	normal.midpoint = newMidpoint;
 }
 
@@ -56,9 +55,24 @@ void Face::setNormal(Normal newNormal)
 	normal = newNormal;
 }
 
-vector<Edge> Face::getEdges()
+vector<Edge*> Face::getEdges()
 {
-	return vector<Edge>(edges);
+	return vector<Edge*>(edges);
+}
+
+Vec4 Face::calculateNormal(Mat4 transformationMatrix) {
+	float xU = edges[0]->getB()->xCoord() - edges[0]->getA()->xCoord();
+	float yU = edges[0]->getB()->yCoord() - edges[0]->getA()->yCoord();
+	float zU = edges[0]->getB()->zCoord() - edges[0]->getA()->zCoord();
+	float xV = edges[1]->getA()->xCoord() - edges[1]->getB()->xCoord();
+	float yV = edges[1]->getA()->yCoord() - edges[1]->getB()->yCoord();
+	float zV = edges[1]->getA()->zCoord() - edges[1]->getB()->zCoord();
+	Vec4 A(xU, yU, zU, 1);
+	Vec4 B(xV, yV, zV, 1);
+	A = transformationMatrix * A;
+	B = transformationMatrix * B;
+	Vec4 crossProduct = A.crossProduct(B);
+	return crossProduct.normalize();
 }
 
 

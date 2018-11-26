@@ -57,19 +57,24 @@ float& Vec4::operator[](const int& i) {
 	}
 }
 
-float Vec4::xCoord() {
+bool Vec4::operator==(const Vec4 vec) const
+{
+	return vec.xCoord() == xCoord() && vec.yCoord() == yCoord() && vec.zCoord() == zCoord() && vec.wCoord() == wCoord();
+}
+
+float Vec4::xCoord() const{
 	return this->_xCoord;
 }
 
-float Vec4::yCoord() {
+float Vec4::yCoord() const{
 	return this->_yCoord;
 }
 
-float Vec4::zCoord() {
+float Vec4::zCoord() const{
 	return this->_zCoord;
 }
 
-float Vec4::wCoord() {
+float Vec4::wCoord() const{
 	return this->_wCoord;
 }
 

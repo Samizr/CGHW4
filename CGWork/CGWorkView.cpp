@@ -21,13 +21,16 @@ static char THIS_FILE[] = __FILE__;
 #include "PngWrapper.h"
 #include "iritSkel.h"
 #include "MouseSensitivityDialog.h"
-
+#include "FinenessControlDialog.h"
 
 // For Status Bar access
 #include "MainFrm.h"
 
 // Static Functions:
 static AXIS sceneAxisTranslator(int guiID);
+
+// External Variabls:
+
 
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
@@ -101,6 +104,7 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
+	ON_COMMAND(ID_OPTIONS_FINENESSCONTROL, &CCGWorkView::OnOptionsFinenesscontrol)
 END_MESSAGE_MAP()
 
 
@@ -440,6 +444,12 @@ void CCGWorkView::OnUpdateViewPolyNormals(CCmdUI * pCmdUI)
 void CCGWorkView::OnViewVertexNormals()
 {
 	m_bVertexNormals = !m_bVertexNormals;
+	if (m_bVertexNormals) {
+		scene.enableVertexNormals();
+	}
+	else {
+		scene.disableVertexNormals();
+	}
 	Invalidate();
 }
 
@@ -723,4 +733,9 @@ void CCGWorkView::transform(Direction direction)
 		cout << "Current Scaling Quota :" << scalingQuota << endl;
 		break;
 	}
+}
+
+void CCGWorkView::OnOptionsFinenesscontrol()
+{
+	FinenessControlDialog FCDialog(::CGSkelFFCStates.FineNess);
 }

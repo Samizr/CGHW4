@@ -117,6 +117,7 @@ BEGIN
     BEGIN
         MENUITEM "Perspective Control...",      ID_OPTIONS_PERSPECTIVECONTROL
         MENUITEM "Mouse Sensitivity...",        ID_OPTIONS_MOUSESENSITIVITY
+        MENUITEM "FineNess Control",            ID_OPTIONS_FINENESSCONTROL
         MENUITEM SEPARATOR
         MENUITEM "Object Color...",             ID_LINECOLOR
         MENUITEM "Background Color...",         ID_BACKGROUNDCOLOR
@@ -269,6 +270,18 @@ BEGIN
     LTEXT           "High",IDC_STATIC,188,33,15,8
 END
 
+IDD_FINENESSCONTROL_DLG DIALOGEX 0, 0, 161, 97
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Fineness Control Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,50,76,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,104,76,50,14
+    EDITTEXT        IDC_FINENESSVALUE,77,43,40,14,ES_AUTOHSCROLL
+    GROUPBOX        "Fineness Control",IDC_STATIC,29,18,99,51
+    LTEXT           "Fineness:",IDC_STATIC,35,46,32,8
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -347,6 +360,14 @@ BEGIN
         TOPMARGIN, 12
         BOTTOMMARGIN, 189
     END
+
+    IDD_FINENESSCONTROL_DLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 154
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 90
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -378,6 +399,11 @@ END
 //
 
 IDD_MOUSESENSETIVITY_DLG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_FINENESSCONTROL_DLG AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

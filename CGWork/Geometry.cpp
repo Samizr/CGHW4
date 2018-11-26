@@ -21,24 +21,50 @@ Geometry::~Geometry() {
 }
 
 void Geometry::addEdge(Edge* edge) {
-	this->edges.push_back(edge);
-	loaded = true;
+	if (this->getEdge(edge->getA(), edge->getB()) == nullptr) {
+		this->edges.push_back(edge);
+		loaded = true;
+	}
 }
 
-void Geometry::addFace(const Face& face)
+void Geometry::addFace(Face* face)
 {
 	faces.push_back(face);
 }
 
-void Geometry::addVertex(Vertex* vertex) {
-	maxX = max(vertex->xCoord(), maxX);
-	maxY = max(vertex->yCoord(), maxY);
-	maxZ = max(vertex->zCoord(), maxZ);
-	minX = min(vertex->xCoord(), minX);
-	minY = min(vertex->yCoord(), minY);
-	minZ = min(vertex->zCoord(), minZ);
-	this->verticies.insert(vertex);
+Vertex * Geometry::getVertex(float x, float y, float z)
+{
+	auto it = vertexMap.find(Vec4(x, y, z, 0));
+	if (it == vertexMap.end()) {
+		return nullptr;
+	}
+	else {
+		return (*it).second;
+	}
 }
+
+Edge * Geometry::getEdge(Vertex * x, Vertex * y) {
+	//for (Edge* edge : edges) {
+	//	if (edge->getA() == x && edge->getB() == y) {
+	//		return edge;
+	//	}
+	//}
+	return nullptr;
+}
+
+void Geometry::addVertex(Vertex* vertex) {
+	if (this->getVertex(vertex->xCoord(), vertex->yCoord(), vertex->zCoord()) == nullptr) {
+		maxX = max(vertex->xCoord(), maxX);
+		maxY = max(vertex->yCoord(), maxY);
+		maxZ = max(vertex->zCoord(), maxZ);
+		minX = min(vertex->xCoord(), minX);
+		minY = min(vertex->yCoord(), minY);
+		minZ = min(vertex->zCoord(), minZ);
+		this->verticies.insert(vertex);
+	}
+}
+
+
 
 std::list<Edge*> Geometry::getEdges()
 {
@@ -50,8 +76,7 @@ std::set<Vertex*> Geometry::getVertices()
 	return this->verticies;
 }
 
-std::list<Face> Geometry::getFaces()
-{
+std::list<Face*> Geometry::getFaces() {
 	return faces;
 }
 
@@ -86,6 +111,11 @@ float Geometry::getMinZ()
 	return minZ;
 }
 
+size_t Geometry::PointHash::operator()(const Vec4 point)
+{
+	return (int)(137 * point.xCoord() + 149 * point.yCoord() + 163 * point.zCoord());
+}
+
 // Static Function Implementations:
 
 static float max(float a, float b) {
@@ -95,4 +125,3 @@ static float max(float a, float b) {
 static float min(float a, float b) {
 	return a < b ? a : b;
 }
-

@@ -18,7 +18,9 @@
 #include "Face.h"
 
 
+extern IPFreeformConvStateStruct CGSkelFFCStates;
 extern Geometry loadedGeometry;
+
 
 bool CGSkelProcessIritDataFiles(CString &FileNames, int NumFiles);
 void CGSkelDumpOneTraversedObject(IPObjectStruct *PObj, IrtHmgnMatType Mat, void *Data);

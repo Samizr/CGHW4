@@ -22,6 +22,7 @@ class Renderer {
 	Mat4 windowMatrix;
 	bool withBounding;
 	bool withPolygonNormals;
+	bool withVertexNormals;
 public:
 	Renderer();
 	void drawWireframe(CDC* pDc, Geometry* geometry, COLORREF clr);
@@ -33,5 +34,7 @@ public:
 	void enableBoundingBox();
 	void disablePolygonNormals();
 	void enablePolygonNormals();
+	void enableVertexNormals();
+	void disableVertexNormals();
 };
 #endif /* Renderer_h */

@@ -12,12 +12,15 @@
 static void drawBoundingBox(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
 static void drawCenterAxis(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
 static void drawPolygonNormals(CDC * pDc, Geometry * geometry/*, COLOREF clr*/, Mat4 finalMatrix, Mat4 worldMatrix);
+void drawVertexNormals(CDC * pDc, Geometry * geometry, Mat4 windowMatrix, Mat4 transformationMatrix);
+
 
 // this sets all the matricies to be identity;
 Renderer::Renderer() {
 	
 	withBounding = false;
 	withPolygonNormals = false;
+	withVertexNormals = false;
 }
 
 
@@ -39,6 +42,9 @@ void Renderer::drawWireframe(CDC * pDC, Geometry * geometry, COLORREF clr) {
 	}
 	if (withPolygonNormals) {
 		drawPolygonNormals(pDC, geometry, finalMatrix, Mat4::Identity());
+	}
+	if (withVertexNormals) {
+		drawVertexNormals(pDC, geometry, windowMatrix * projectionMatrix, ((cameraMatrix * objectWorldMatrix)));
 	}
 	drawCenterAxis(pDC, geometry, clr, finalMatrix);
 	
@@ -98,42 +104,61 @@ void drawCenterAxis(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatr
 	plotLine(p0.xCoord(), p0.yCoord(), p2.xCoord(), p2.yCoord(), pDc, RGB(0, 255, 0));
 	plotLine(p0.xCoord(), p0.yCoord(), p3.xCoord(), p3.yCoord(), pDc, RGB(0, 0, 255));
 }
+
+
+void drawVertexNormals(CDC * pDc, Geometry * geometry, Mat4 windowMatrix, Mat4 transformationMatrix) {
+	for (Vertex* vertex : geometry->getVertices()) {
+		Vec4 normalSum = Vec4();
+		for (Face* face : vertex->getFaces()) {
+			normalSum = normalSum + face->calculateNormal(transformationMatrix);
+		}
+		normalSum[3] = 0;
+		Vec4 vertexCoordinates = Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
+		Vec4 finalNormal = (transformationMatrix * vertexCoordinates) + ((normalSum.normalize() * (1.0 / vertex->getFaces().size()))).normalize();
+		finalNormal[3] = 1;
+		Vec4 onScreenPoint1, onScreenPoint2;
+		onScreenPoint1 = windowMatrix * (transformationMatrix * vertexCoordinates);
+		onScreenPoint2 = (windowMatrix * finalNormal) ;
+		plotLine(onScreenPoint1.xCoord(), onScreenPoint1.yCoord(), onScreenPoint2.xCoord(), onScreenPoint2.yCoord(), pDc, RGB(0, 255, 0));
+	}
+}
+
 void drawPolygonNormals(CDC * pDc, Geometry * geometry, Mat4 finalMatrix, Mat4 worldMatrix)
 {
-	std::list<Face> faces = geometry->getFaces();
-	for (Face& face : faces) {
-		for (Edge& edge : face.edges) {
-			Vec4 p1(edge.getA()->xCoord(), edge.getA()->yCoord(), edge.getA()->zCoord(), 0);
-			Vec4 p2(edge.getB()->xCoord(), edge.getB()->yCoord(), edge.getB()->zCoord(), 0);
+	std::list<Face*> faces = geometry->getFaces();
+	for (Face* face : faces) {
+		for (Edge* edge : face->edges) {
+			Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 0);
+			Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 0);
 			p1 = worldMatrix * p1;
 			p2 = worldMatrix * p2;
 			Vertex* newV1 = new Vertex(p1[0], p1[1], p1[2]);
 			Vertex* newV2 = new Vertex(p2[0], p2[1], p2[2]);
-			Edge newEdge(newV1, newV2);
+			Edge* newEdge = new Edge(newV1, newV2);
 			edge = newEdge;
 		}
-		std::vector<Edge> edgesCopy = face.edges;
+		std::vector<Edge*> edgesCopy = face->edges;
 		bool isQuadrilateral = (edgesCopy.size() == 3);
 		Vec4 finalP;
-		Vec4 p1(edgesCopy[0].getA()->xCoord(), edgesCopy[0].getA()->yCoord(), edgesCopy[0].getA()->zCoord(), 1);
-		Vec4 p2(edgesCopy[1].getA()->xCoord(), edgesCopy[1].getA()->yCoord(), edgesCopy[1].getA()->zCoord(), 1);
-		Vec4 p3(edgesCopy[1].getB()->xCoord(), edgesCopy[1].getB()->yCoord(), edgesCopy[1].getB()->zCoord(), 1);
+		Vec4 p1(edgesCopy[0]->getA()->xCoord(), edgesCopy[0]->getA()->yCoord(), edgesCopy[0]->getA()->zCoord(), 1);
+		Vec4 p2(edgesCopy[1]->getA()->xCoord(), edgesCopy[1]->getA()->yCoord(), edgesCopy[1]->getA()->zCoord(), 1);
+		Vec4 p3(edgesCopy[1]->getB()->xCoord(), edgesCopy[1]->getB()->yCoord(), edgesCopy[1]->getB()->zCoord(), 1);
 		Vec4 p4;
 			p1 = finalMatrix * p1;
 			p2 = finalMatrix * p2;
 			p3 = finalMatrix * p3;
 		if (isQuadrilateral) {
-			p4 = Vec4(edgesCopy[2].getB()->xCoord(), edgesCopy[2].getB()->yCoord(), edgesCopy[2].getB()->zCoord(), 1);
+			p4 = Vec4(edgesCopy[2]->getB()->xCoord(), edgesCopy[2]->getB()->yCoord(), edgesCopy[2]->getB()->zCoord(), 1);
 			p4 = finalMatrix * p4;
 			finalP = (p1 + p2 + p3 + p4) * 0.25;
 		}
 		else {
 			finalP = (p1 + p2 + p3) * 0.3333;
 		}
-			face.updateMidpoint(finalP);
-			face.updateNormalDirection();
-			face.updateTarget();
-			Normal normal = face.getNormal();
+			face->updateMidpoint(finalP);
+			face->updateNormalDirection();
+			face->updateTarget();
+			Normal normal = face->getNormal();
 			plotLine(normal.midpoint.xCoord(), normal.midpoint.yCoord(), normal.target.xCoord(), normal.target.yCoord(), pDc, RGB(0, 255, 0));
 	}
 
@@ -170,4 +195,12 @@ void Renderer::disablePolygonNormals()
 void Renderer::enablePolygonNormals()
 {
 	withPolygonNormals = true;
+}
+
+void Renderer::enableVertexNormals() {
+	this->withVertexNormals = true;
+}
+
+void Renderer::disableVertexNormals() {
+	this->withVertexNormals = false;
 }

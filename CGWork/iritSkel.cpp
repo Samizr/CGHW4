@@ -22,7 +22,7 @@ IPFreeformConvStateStruct CGSkelFFCState = {
 	SYMB_CRV_APPROX_UNIFORM,  /* CrvApproxMethod */
 	FALSE,   /* ShowIntrnal */
 	FALSE,   /* CubicCrvsAprox */
-	20,      /* Polygonal FineNess */
+	1000,      /* Polygonal FineNess */
 	FALSE,   /* ComputeUV */
 	TRUE,    /* ComputeNrml */
 	FALSE,   /* FourPerFlat */
@@ -191,20 +191,27 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 		// Added By Firas BEGIN.
 		IPVertexStruct *previous = PPolygon->PVertex;
 		IPVertexStruct *current = PPolygon->PVertex->Pnext;
-		Face face;
-		Vertex* firstVertex = new Vertex(previous->Coord[0], previous->Coord[1], previous->Coord[2]);
+		Face* face = new Face();
+		Vertex* firstVertex = loadedGeometry.getVertex(previous->Coord[0], previous->Coord[1], previous->Coord[2]);
+		if (firstVertex == nullptr) {
+			firstVertex = new Vertex(previous->Coord[0], previous->Coord[1], previous->Coord[2]);
+			loadedGeometry.addVertex(firstVertex);
+		}
+		firstVertex->addFace(face);
 		Vertex* previousVertex = firstVertex;
-		loadedGeometry.addVertex(previousVertex);
 		do {
-			Vertex* currentVertex = new Vertex(current->Coord[0], current->Coord[1], current->Coord[2]);
-			if (current == PPolygon->PVertex) {
-				delete(currentVertex);
-				loadedGeometry.addEdge(new Edge(previousVertex, firstVertex));
-				face.addEdge(Edge(previousVertex, firstVertex));
-				break;
+			Vertex* currentVertex = loadedGeometry.getVertex(current->Coord[0], current->Coord[1], current->Coord[2]);
+			if (currentVertex == nullptr) {
+				currentVertex = new Vertex(current->Coord[0], current->Coord[1], current->Coord[2]);
+				loadedGeometry.addVertex(currentVertex);
 			}
-			loadedGeometry.addEdge(new Edge(previousVertex, currentVertex));
-			face.addEdge(Edge(previousVertex, currentVertex));
+			Edge* edgeToAdd = loadedGeometry.getEdge(previousVertex, currentVertex);
+			if (edgeToAdd == nullptr) {
+				edgeToAdd = new Edge(previousVertex, currentVertex);
+				loadedGeometry.addEdge(edgeToAdd);
+			}
+			face->addEdge(edgeToAdd);
+			currentVertex->addFace(face);
 			previous = current;
 			previousVertex = currentVertex;
 			current = current->Pnext;

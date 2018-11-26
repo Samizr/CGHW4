@@ -192,6 +192,7 @@
       <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</BrowseInformation>
     </ClCompile>
     <ClCompile Include="Edge.cpp" />
+    <ClCompile Include="FinenessControlDialog.cpp" />
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="iritSkel.cpp" />
     <ClCompile Include="LightDialog.cpp" />
@@ -240,7 +241,9 @@
     <ClInclude Include="CGWorkDoc.h" />
     <ClInclude Include="CGWorkView.h" />
     <ClInclude Include="Edge.h" />
+    <ClInclude Include="FinenessControlDialog.h" />
     <ClInclude Include="Geometry.h" />
+    <ClInclude Include="GeometryUtils.h" />
     <ClInclude Include="iritSkel.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightDialog.h" />

@@ -13,6 +13,14 @@ Vertex::Vertex(float x, float y, float z) {
 	this->_zCoord = z;
 }
 
+void Vertex::addFace(Face * face) {
+	this->faces.push_back(face);
+}
+
+vector<Face*> Vertex::getFaces() {
+	return faces;
+}
+
 float Vertex::xCoord() {
 	return this->_xCoord;
 }

@@ -84,10 +84,13 @@
     <ClCompile Include="LinePlotter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Face.cpp">
+    <ClCompile Include="Normal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Normal.cpp">
+    <ClCompile Include="Face.cpp">
+      <Filter>Source Files\Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="FinenessControlDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -242,6 +245,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Normal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FinenessControlDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -32,11 +32,12 @@ public:
 	// cross product
 	Vec4 crossProduct(const Vec4& other) const;
 	float& operator[](const int& i);
+	bool operator==(const Vec4 vec) const;
 	Vec4 normalize();
-	float xCoord();
-	float yCoord();
-	float zCoord();
-	float wCoord();
+	float xCoord() const;
+	float yCoord() const;
+	float zCoord() const;
+	float wCoord() const;
 };
 
 #endif /* vec4_h */
