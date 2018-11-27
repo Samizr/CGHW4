@@ -11,52 +11,11 @@ Face::Face(Edge* firstEdge, Edge* secondEdge, Edge* thirdEdge, Edge* fourthEdge)
 	edges.push_back(thirdEdge);
 	edges.push_back(fourthEdge);
 
-	updateNormalDirection();
 }
 
 void Face::addEdge(Edge* edge)
 {
 	edges.push_back(edge);
-}
-
-Normal & Face::getNormal()
-{
-	return normal;
-}
-
-void Face::updateNormalDirection() {
-	float xA = edges[0]->getA()->xCoord() - edges[0]->getB()->xCoord();
-	float yA = edges[0]->getA()->yCoord() - edges[0]->getB()->yCoord();
-	float zA = edges[0]->getA()->zCoord() - edges[0]->getB()->zCoord();
-	float xB = edges[1]->getB()->xCoord() - edges[0]->getB()->xCoord();
-	float yB = edges[1]->getB()->yCoord() - edges[0]->getB()->yCoord();
-	float zB = edges[1]->getB()->zCoord() - edges[0]->getB()->zCoord();
-	Vec4 A(xA, yA, zA, 1);
-	Vec4 B(xB, yB, zB, 1);
-	Vec4 direction = A.crossProduct(B);
-	direction = direction.normalize();
-	this->normal = Normal(normal.midpoint, direction);
-
-}
-
-void Face::updateMidpoint(Vec4 newMidpoint) {
-	normal.midpoint = newMidpoint;
-}
-
-void Face::updateTarget()
-{
-	normal.target = Vec4(normal.midpoint.xCoord() + 14*normal.direction.xCoord(), normal.midpoint.yCoord() + 
-		14*normal.direction.yCoord(), normal.midpoint.zCoord() + 14*normal.direction.zCoord(), 0);
-}
-
-void Face::setNormal(Normal newNormal)
-{
-	normal = newNormal;
-}
-
-vector<Edge*> Face::getEdges()
-{
-	return vector<Edge*>(edges);
 }
 
 Vec4 Face::calculateNormal(Mat4 transformationMatrix) {

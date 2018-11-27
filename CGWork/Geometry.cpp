@@ -4,7 +4,6 @@
 
 static float max(float a, float b);
 static float min(float a, float b);
-static Normal getNormal(const Face& face);
 
 Geometry::Geometry() {
 	maxX = std::numeric_limits<float>::min();

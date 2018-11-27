@@ -211,7 +211,6 @@
     <ClCompile Include="MaterialDlg.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="MouseSensitivityDialog.cpp" />
-    <ClCompile Include="Normal.cpp" />
     <ClCompile Include="PerspectiveParametersDialog.cpp" />
     <ClCompile Include="PngWrapper.cpp" />
     <ClCompile Include="Face.cpp" />
@@ -243,7 +242,6 @@
     <ClInclude Include="Edge.h" />
     <ClInclude Include="FinenessControlDialog.h" />
     <ClInclude Include="Geometry.h" />
-    <ClInclude Include="GeometryUtils.h" />
     <ClInclude Include="iritSkel.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightDialog.h" />
@@ -253,7 +251,6 @@
     <ClInclude Include="MaterialDlg.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="MouseSensitivityDialog.h" />
-    <ClInclude Include="Normal.h" />
     <ClInclude Include="PerspectiveParametersDialog.h" />
     <ClInclude Include="PngWrapper.h" />
     <ClInclude Include="Face.h" />

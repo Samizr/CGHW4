@@ -11,9 +11,10 @@
 #include <math.h>
 static void drawBoundingBox(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
 static void drawCenterAxis(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
-static void drawPolygonNormals(CDC * pDc, Geometry * geometry/*, COLOREF clr*/, Mat4 finalMatrix, Mat4 worldMatrix);
-void drawVertexNormals(CDC * pDc, Geometry * geometry, Mat4 windowMatrix, Mat4 transformationMatrix);
+static void drawPolygonNormals(CDC * pDc, Geometry * geometry/*, COLOREF clr*/, Mat4 finalMatrix, Mat4 transformationMatrix);
+static void drawVertexNormals(CDC * pDc, Geometry * geometry, Mat4 finalMatrix, Mat4 transformationMatrix);
 
+#define NORMAL_LENGTH_FACTOR 13
 
 // this sets all the matricies to be identity;
 Renderer::Renderer() {
@@ -44,7 +45,7 @@ void Renderer::drawWireframe(CDC * pDC, Geometry * geometry, COLORREF clr) {
 		drawPolygonNormals(pDC, geometry, finalMatrix, objectWorldMatrix);
 	}
 	if (withVertexNormals) {
-		drawVertexNormals(pDC, geometry, windowMatrix * projectionMatrix, ((cameraMatrix * objectWorldMatrix)));
+		drawVertexNormals(pDC, geometry, finalMatrix, objectWorldMatrix);
 	}
 	drawCenterAxis(pDC, geometry, clr, finalMatrix);
 	
@@ -106,19 +107,15 @@ void drawCenterAxis(CDC * pDc, Geometry * geometry, COLORREF clr, Mat4 finalMatr
 }
 
 
-void drawVertexNormals(CDC * pDc, Geometry * geometry, Mat4 windowMatrix, Mat4 transformationMatrix) {
+void drawVertexNormals(CDC * pDc, Geometry * geometry, Mat4 finalMatrix, Mat4 transformationMatrix) {
 	for (Vertex* vertex : geometry->getVertices()) {
 		Vec4 normalSum = Vec4();
 		for (Face* face : vertex->getFaces()) {
 			normalSum = normalSum + face->calculateNormal(transformationMatrix);
 		}
-		normalSum[3] = 0;
-		Vec4 vertexCoordinates = Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
-		Vec4 finalNormal = (transformationMatrix * vertexCoordinates) + ((normalSum.normalize() * (1.0 / vertex->getFaces().size()))).normalize();
-		finalNormal[3] = 1;
-		Vec4 onScreenPoint1, onScreenPoint2;
-		onScreenPoint1 = windowMatrix * (transformationMatrix * vertexCoordinates);
-		onScreenPoint2 = (windowMatrix * finalNormal) ;
+		Vec4 finalNormal = ((normalSum.normalize() * (1.0 / vertex->getFaces().size()))).normalize();
+		Vec4 onScreenPoint1 = finalMatrix * Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
+		Vec4 onScreenPoint2 = onScreenPoint1 + finalNormal * NORMAL_LENGTH_FACTOR;
 		plotLine(onScreenPoint1.xCoord(), onScreenPoint1.yCoord(), onScreenPoint2.xCoord(), onScreenPoint2.yCoord(), pDc, RGB(0, 255, 0));
 	}
 }
@@ -129,49 +126,11 @@ void drawPolygonNormals(CDC * pDc, Geometry * geometry, Mat4 finalMatrix, Mat4 t
 	for (Face* face : faces) {
 		Vec4 midpoint = face->calculateMidpoint(finalMatrix);
 		Vec4 normal = face->calculateNormal(transormationMatrix);
-		Vec4 target = midpoint + (normal * 14); //TODO: Define 14 as normal length factor, enable change perhaps in a dialog.
+		Vec4 target = midpoint + normal * NORMAL_LENGTH_FACTOR; 
 		plotLine(midpoint.xCoord(), midpoint.yCoord(), target.xCoord(), target.yCoord(), pDc, RGB(0, 255, 0));
 	}
 }
 
-
-	/*std::list<Face*> faces = geometry->getFaces();
-	for (Face* face : faces) {
-	std::vector<Edge*> edgesCopy = face->edges;
-		for (Edge* edge : face->edges) {
-			Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 0);
-			Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 0);
-			p1 = transormationMatrix * p1;
-			p2 = transormationMatrix * p2;
-			Vertex* newV1 = new Vertex(p1[0], p1[1], p1[2]);
-			Vertex* newV2 = new Vertex(p2[0], p2[1], p2[2]);
-			Edge* newEdge = new Edge(newV1, newV2);
-			*edge = *newEdge;
-		}
-		bool isQuadrilateral = (edgesCopy.size() == 3);
-		Vec4 finalP;
-		Vec4 p1(edgesCopy[0]->getA()->xCoord(), edgesCopy[0]->getA()->yCoord(), edgesCopy[0]->getA()->zCoord(), 1);
-		Vec4 p2(edgesCopy[1]->getA()->xCoord(), edgesCopy[1]->getA()->yCoord(), edgesCopy[1]->getA()->zCoord(), 1);
-		Vec4 p3(edgesCopy[1]->getB()->xCoord(), edgesCopy[1]->getB()->yCoord(), edgesCopy[1]->getB()->zCoord(), 1);
-		Vec4 p4;
-			p1 = finalMatrix * p1;
-			p2 = finalMatrix * p2;
-			p3 = finalMatrix * p3;
-		if (isQuadrilateral) {
-			p4 = Vec4(edgesCopy[2]->getB()->xCoord(), edgesCopy[2]->getB()->yCoord(), edgesCopy[2]->getB()->zCoord(), 1);
-			p4 = finalMatrix * p4;
-			finalP = (p1 + p2 + p3 + p4) * 0.25;
-		}
-		else {
-			finalP = (p1 + p2 + p3) * 0.3333;
-		}
-			face->updateMidpoint(finalP);
-			face->updateNormalDirection();
-			face->updateTarget();
-			Normal normal = face->getNormal();
-			plotLine(normal.midpoint.xCoord(), normal.midpoint.yCoord(), normal.target.xCoord(), normal.target.yCoord(), pDc, RGB(0, 255, 0));
-	}
-*/
 void Renderer::setObjectWorldMatrix(Mat4 &matrix) {
 	objectWorldMatrix = matrix;
 }

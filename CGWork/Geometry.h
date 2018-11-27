@@ -1,11 +1,10 @@
 #pragma once
-#include"Vertex.h"
-#include"Edge.h"
-#include<list>
-#include<set>
-#include"Face.h"
+#include "Vertex.h"
+#include "Edge.h"
+#include <list>
+#include <set>
+#include "Face.h"
 #include "Vec4.h"
-#include "Normal.h"
 #include <unordered_map>
 
 class Geometry
