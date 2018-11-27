@@ -127,12 +127,14 @@ void drawPolygonNormals(CDC * pDc, Geometry * geometry, Mat4 finalMatrix, Mat4 t
 {
 	std::list<Face*> faces = geometry->getFaces();
 	for (Face* face : faces) {
-		Vec4 normal = face->calculateNormal(transormationMatrix);
 		Vec4 midpoint = face->calculateMidpoint(finalMatrix);
+		Vec4 normal = face->calculateNormal(transormationMatrix);
 		Vec4 target = midpoint + (normal * 14); //TODO: Define 14 as normal length factor, enable change perhaps in a dialog.
 		plotLine(midpoint.xCoord(), midpoint.yCoord(), target.xCoord(), target.yCoord(), pDc, RGB(0, 255, 0));
 	}
 }
+
+
 	/*std::list<Face*> faces = geometry->getFaces();
 	for (Face* face : faces) {
 	std::vector<Edge*> edgesCopy = face->edges;

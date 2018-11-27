@@ -33,7 +33,7 @@ void Face::updateNormalDirection() {
 	float zB = edges[1]->getB()->zCoord() - edges[0]->getB()->zCoord();
 	Vec4 A(xA, yA, zA, 1);
 	Vec4 B(xB, yB, zB, 1);
-	Vec4 direction = B.crossProduct(A);
+	Vec4 direction = A.crossProduct(B);
 	direction = direction.normalize();
 	this->normal = Normal(normal.midpoint, direction);
 
@@ -70,21 +70,22 @@ Vec4 Face::calculateNormal(Mat4 transformationMatrix) {
 	Vec4 B(xV, yV, zV, 1);
 	A = transformationMatrix * A;
 	B = transformationMatrix * B;
-	Vec4 crossProduct = A.crossProduct(B);
+	Vec4 crossProduct = B.crossProduct(A);
 	return crossProduct.normalize();
 }
 
 Vec4 Face::calculateMidpoint(Mat4 finalMatrix)
 {
 	Vec4 midpoint(0,0,0,0);
+	float numOfVertices = edges.size() + 1;
 	//Add a the first vertex from each edge into the calculation:
 	for (Edge* edge : edges) {
-		midpoint = midpoint + finalMatrix * Vec4(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 0);
+		midpoint = midpoint + finalMatrix * Vec4(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
 	}
 	//Add the last vertex in the last edge into the calculation:
 	int lastEdge = edges.size() - 1;
-	midpoint = midpoint + finalMatrix * Vec4(edges[lastEdge]->getB()->xCoord(), edges[lastEdge]->getB()->yCoord(), edges[lastEdge]->getB()->zCoord(), 0);
-	midpoint = midpoint * (1 / edges.size());
+	midpoint = midpoint + finalMatrix * Vec4(edges[lastEdge]->getB()->xCoord(), edges[lastEdge]->getB()->yCoord(), edges[lastEdge]->getB()->zCoord(), 1);
+	midpoint = midpoint * (1 / numOfVertices);
 	return midpoint;
 }
 
