@@ -9,7 +9,6 @@
 
 class Geometry
 {
-	//class PointHash;
 	class PointHash {
 	public:
 		PointHash() = default;
@@ -19,7 +18,6 @@ class Geometry
 	std::unordered_map <Vec4, Vertex*, Geometry::PointHash> vertexMap;
 	std::list<Edge*> edges;
 	std::list<Face*> faces;
-	//std::list<Normal> normals;
 	float maxX, maxY, maxZ;
 	float minX, minY, minZ;
 
@@ -36,15 +34,15 @@ public:
 	std::set<Vertex*> getVertices();
 	std::list<Face*> getFaces();
 
-	//std::list<Normal>& getNormals();
-	//void updateNormals();
-
 	float getMaxX();
 	float getMaxY();
 	float getMaxZ();
 	float getMinX();
 	float getMinY();
 	float getMinZ();
+
+	//DEBJUG FUNCTION REMOVE:
+	bool findVertexCollisions();
 };
 
 

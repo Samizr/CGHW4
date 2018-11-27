@@ -33,12 +33,11 @@ void Geometry::addFace(Face* face)
 
 Vertex * Geometry::getVertex(float x, float y, float z)
 {
-	auto it = vertexMap.find(Vec4(x, y, z, 0));
-	if (it == vertexMap.end()) {
+	auto search = vertexMap.find(Vec4(x, y, z, 0));
+	if (search == vertexMap.end()) {
 		return nullptr;
-	}
-	else {
-		return (*it).second;
+	} else {
+		return (*search).second;
 	}
 }
 
@@ -60,6 +59,7 @@ void Geometry::addVertex(Vertex* vertex) {
 		minY = min(vertex->yCoord(), minY);
 		minZ = min(vertex->zCoord(), minZ);
 		this->verticies.insert(vertex);
+		vertexMap[Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 0)] = vertex;
 	}
 }
 
@@ -110,9 +110,24 @@ float Geometry::getMinZ()
 	return minZ;
 }
 
+bool Geometry::findVertexCollisions()
+{
+	bool returnVal = false;
+	int collisions = 0;
+	for (Vertex* v : verticies) {
+		for (Vertex* u : verticies) {
+			if (u != v && v->xCoord() == u->xCoord() && v->yCoord() == u->yCoord() && v->zCoord() == u->zCoord()) {
+				collisions++;
+
+			}
+		}
+	}
+	return returnVal;
+}
+
 size_t Geometry::PointHash::operator()(const Vec4 point)
 {
-	return (int)(137 * point.xCoord() + 149 * point.yCoord() + 163 * point.zCoord());
+	return (int)(137.0 * point.xCoord() + 149.0 * point.yCoord() + 163.0 * point.zCoord());
 }
 
 // Static Function Implementations:

@@ -665,6 +665,7 @@ AXIS sceneAxisTranslator(int guiID)
 
 void CCGWorkView::OnLButtonDown(UINT nFlags, CPoint point)
 {
+
 	m_bAllowTransformations = true;
 	m_lnLastXPos = point.x;
 	CView::OnLButtonDown(nFlags, point);
