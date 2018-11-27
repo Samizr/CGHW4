@@ -41,7 +41,7 @@ void Renderer::drawWireframe(CDC * pDC, Geometry * geometry, COLORREF clr) {
 		drawBoundingBox(pDC, geometry, clr, finalMatrix);
 	}
 	if (withPolygonNormals) {
-		drawPolygonNormals(pDC, geometry, finalMatrix, Mat4::Identity());
+		drawPolygonNormals(pDC, geometry, finalMatrix, objectWorldMatrix);
 	}
 	if (withVertexNormals) {
 		drawVertexNormals(pDC, geometry, windowMatrix * projectionMatrix, ((cameraMatrix * objectWorldMatrix)));
@@ -123,21 +123,29 @@ void drawVertexNormals(CDC * pDc, Geometry * geometry, Mat4 windowMatrix, Mat4 t
 	}
 }
 
-void drawPolygonNormals(CDC * pDc, Geometry * geometry, Mat4 finalMatrix, Mat4 worldMatrix)
+void drawPolygonNormals(CDC * pDc, Geometry * geometry, Mat4 finalMatrix, Mat4 transormationMatrix)
 {
 	std::list<Face*> faces = geometry->getFaces();
 	for (Face* face : faces) {
+		Vec4 normal = face->calculateNormal(transormationMatrix);
+		Vec4 midpoint = face->calculateMidpoint(finalMatrix);
+		Vec4 target = midpoint + (normal * 14); //TODO: Define 14 as normal length factor, enable change perhaps in a dialog.
+		plotLine(midpoint.xCoord(), midpoint.yCoord(), target.xCoord(), target.yCoord(), pDc, RGB(0, 255, 0));
+	}
+}
+	/*std::list<Face*> faces = geometry->getFaces();
+	for (Face* face : faces) {
+	std::vector<Edge*> edgesCopy = face->edges;
 		for (Edge* edge : face->edges) {
 			Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 0);
 			Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 0);
-			p1 = worldMatrix * p1;
-			p2 = worldMatrix * p2;
+			p1 = transormationMatrix * p1;
+			p2 = transormationMatrix * p2;
 			Vertex* newV1 = new Vertex(p1[0], p1[1], p1[2]);
 			Vertex* newV2 = new Vertex(p2[0], p2[1], p2[2]);
 			Edge* newEdge = new Edge(newV1, newV2);
-			edge = newEdge;
+			*edge = *newEdge;
 		}
-		std::vector<Edge*> edgesCopy = face->edges;
 		bool isQuadrilateral = (edgesCopy.size() == 3);
 		Vec4 finalP;
 		Vec4 p1(edgesCopy[0]->getA()->xCoord(), edgesCopy[0]->getA()->yCoord(), edgesCopy[0]->getA()->zCoord(), 1);
@@ -161,8 +169,7 @@ void drawPolygonNormals(CDC * pDc, Geometry * geometry, Mat4 finalMatrix, Mat4 w
 			Normal normal = face->getNormal();
 			plotLine(normal.midpoint.xCoord(), normal.midpoint.yCoord(), normal.target.xCoord(), normal.target.yCoord(), pDc, RGB(0, 255, 0));
 	}
-
-}
+*/
 void Renderer::setObjectWorldMatrix(Mat4 &matrix) {
 	objectWorldMatrix = matrix;
 }

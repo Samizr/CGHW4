@@ -737,5 +737,5 @@ void CCGWorkView::transform(Direction direction)
 
 void CCGWorkView::OnOptionsFinenesscontrol()
 {
-	FinenessControlDialog FCDialog(::CGSkelFFCStates.FineNess);
+//	FinenessControlDialog FCDialog(::CGSkelFFCStates.FineNess);
 }

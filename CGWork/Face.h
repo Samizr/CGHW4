@@ -9,8 +9,8 @@ class Face
 {
 private:
 	Normal normal;
-public:
 	vector<Edge*> edges; 
+public:
 	Face();
 	Face(Edge* firstEdge, Edge* secondEdge, Edge* thirdEdge, Edge* fourthEdge);
 	void addEdge(Edge* edge);
@@ -21,6 +21,7 @@ public:
 	void setNormal(Normal newNormal);
 	vector<Edge*> getEdges();
 	Vec4 calculateNormal(Mat4 transformationMatrix);
+	Vec4 calculateMidpoint(Mat4 finalMatrix);
 	~Face();
 };
 
