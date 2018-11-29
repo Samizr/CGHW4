@@ -28,6 +28,9 @@ static char THIS_FILE[] = __FILE__;
 
 // Static Functions:
 static AXIS sceneAxisTranslator(int guiID);
+static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
+static void setBackground(COLORREF* bitArray, CRect rect, COLORREF m_clrBackground);
+
 
 // External Variabls:
 
@@ -231,9 +234,12 @@ BOOL CCGWorkView::InitializeCGWork()
 	GetClientRect(&r);
 	m_pDbDC = new CDC();
 	m_pDbDC->CreateCompatibleDC(m_pDC);
-	SetTimer(1, 1, NULL);
 	m_pDbBitMap = CreateCompatibleBitmap(m_pDC->m_hDC, r.right, r.bottom);
 	m_pDbDC->SelectObject(m_pDbBitMap);
+	SetTimer(1, 1, NULL);
+	int h = r.bottom - r.top;
+	int w = r.right - r.left;
+	bitArray = new COLORREF[w * h];
 	return TRUE;
 }
 
@@ -301,14 +307,25 @@ void CCGWorkView::OnDraw(CDC* pDC)
 
 	GetClientRect(&r);
 	CDC *pDCToUse = /*m_pDC*/m_pDbDC;
+	int h = r.bottom - r.top;
+	int w = r.right - r.left;
+	initializeBMI(bminfo, r);
+	if (bitArray != nullptr) {
+		delete bitArray;
+		bitArray = new COLORREF[h * w];
+	}
 
 	//testModel(m_pDbDC, r);
-	pDCToUse->FillSolidRect(&r, m_clrBackground);
-	scene.draw(pDCToUse, r, m_clrLines);
+	setBackground(bitArray, r, m_clrBackground);
+	scene.draw(bitArray, r, m_clrLines);
+	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
 
 	if (pDCToUse != m_pDC)
 	{
-		m_pDC->BitBlt(r.left, r.top, r.Width(), r.Height(), pDCToUse, r.left, r.top, SRCCOPY);
+
+		//m_pDC->BitBlt(r.left, r.top, r.Width(), r.Height(), pDCToUse, r.left, r.top, SRCCOPY);
+		m_pDC->BitBlt(r.left, r.top, r.right, r.bottom, pDCToUse, r.left, r.top, SRCCOPY);
+
 	}
 
 }
@@ -644,10 +661,7 @@ void CCGWorkView::OnTimer(UINT_PTR nIDEvent)
 
 
 
-
-
-//////////////////////////////////////////TESTING & DEBUG FUNCTIONS////////////////////////////////////////////////////////
-
+//STATIC FUNCTIONS ////////////////////////////////////////////////
 
 #include "Mat4.h"
 #include "LinePlotter.h"
@@ -659,6 +673,30 @@ AXIS sceneAxisTranslator(int guiID)
 	case ID_AXIS_Y: return YAXIS;
 	case ID_AXIS_Z: return ZAXIS;
 	default: throw std::bad_exception();
+	}
+}
+
+void initializeBMI(BITMAPINFO& bminfo, CRect rect)
+{
+	bminfo.bmiHeader.biSize = sizeof(bminfo.bmiHeader);
+	bminfo.bmiHeader.biWidth = rect.right - rect.left;
+	bminfo.bmiHeader.biHeight = rect.bottom - rect.top;
+	bminfo.bmiHeader.biPlanes = 1;
+	bminfo.bmiHeader.biBitCount = 32;
+	bminfo.bmiHeader.biCompression = BI_RGB;
+	bminfo.bmiHeader.biSizeImage = 0;
+	bminfo.bmiHeader.biXPelsPerMeter = 1;
+	bminfo.bmiHeader.biYPelsPerMeter = 1;
+	bminfo.bmiHeader.biClrUsed = 0;
+	bminfo.bmiHeader.biClrImportant = 0;
+}
+
+void setBackground(COLORREF * bitArr, CRect rect, COLORREF m_clrBackground)
+{
+	for (int i = 0; i < rect.Width(); i++) {
+		for (int j = 0; j < rect.Height(); j++) {
+			bitArr[(i - rect.left) + ((rect.right - rect.left) * (j - rect.top))] = m_clrBackground;
+		}
 	}
 }
 
