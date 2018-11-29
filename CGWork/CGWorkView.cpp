@@ -29,8 +29,8 @@ static char THIS_FILE[] = __FILE__;
 // Static Functions:
 static AXIS sceneAxisTranslator(int guiID);
 static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
-static void setBackground(COLORREF* bitArray, CRect rect, COLORREF m_clrBackground);
-
+static void setBackground(COLORREF* bitArray, CRect rect, COLORREF clr);
+static COLORREF invertRB(COLORREF clr);
 
 // External Variabls:
 
@@ -315,6 +315,14 @@ void CCGWorkView::OnDraw(CDC* pDC)
 		bitArray = new COLORREF[h * w];
 	}
 
+	//for (int i = 0; i < r.Width(); i++) {
+	//	for (int j = 0; j < r.Height(); j++) {
+	//		bitArray[(i - r.left) + ((r.right - r.left) * (j - r.top))] = RGB(0, 128, 255);
+	//	}
+	//}
+
+
+
 	//testModel(m_pDbDC, r);
 	setBackground(bitArray, r, m_clrBackground);
 	scene.draw(bitArray, r, m_clrLines);
@@ -322,11 +330,11 @@ void CCGWorkView::OnDraw(CDC* pDC)
 
 	if (pDCToUse != m_pDC)
 	{
-
-		//m_pDC->BitBlt(r.left, r.top, r.Width(), r.Height(), pDCToUse, r.left, r.top, SRCCOPY);
 		m_pDC->BitBlt(r.left, r.top, r.right, r.bottom, pDCToUse, r.left, r.top, SRCCOPY);
-
 	}
+
+
+
 
 }
 
@@ -566,7 +574,7 @@ void CCGWorkView::OnOptionsLineColor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		m_clrLines = CD.GetColor();
+		m_clrLines = invertRB(CD.GetColor());
 		Invalidate();
 	}
 }
@@ -575,7 +583,7 @@ void CCGWorkView::OnOptionsBackgroundColor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		m_clrBackground = CD.GetColor();
+		m_clrBackground = invertRB(CD.GetColor());
 		Invalidate();
 	}
 }
@@ -584,7 +592,7 @@ void CCGWorkView::OnOptionsNormalscolor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		m_clrNormals = CD.GetColor();
+		m_clrNormals = invertRB(CD.GetColor());
 		Invalidate();
 	}
 }
@@ -689,15 +697,24 @@ void initializeBMI(BITMAPINFO& bminfo, CRect rect)
 	bminfo.bmiHeader.biYPelsPerMeter = 1;
 	bminfo.bmiHeader.biClrUsed = 0;
 	bminfo.bmiHeader.biClrImportant = 0;
+
 }
 
-void setBackground(COLORREF * bitArr, CRect rect, COLORREF m_clrBackground)
+void setBackground(COLORREF * bitArr, CRect rect, COLORREF clr)
 {
 	for (int i = 0; i < rect.Width(); i++) {
 		for (int j = 0; j < rect.Height(); j++) {
-			bitArr[(i - rect.left) + ((rect.right - rect.left) * (j - rect.top))] = m_clrBackground;
+			bitArr[(i - rect.left) + ((rect.right - rect.left) * (j - rect.top))] = clr;
 		}
 	}
+}
+
+COLORREF invertRB(COLORREF clr)
+{
+	int iRed = GetRValue(clr);
+	int iBlue = GetBValue(clr);
+	int iGreen = GetGValue(clr);
+	return RGB(iBlue, iGreen, iRed);
 }
 
 
@@ -769,7 +786,6 @@ void CCGWorkView::transform(Direction direction)
 		else
 			model->scaleObjectSpace(sceneAxis,  adjustedQuota);
 		scalingQuota *= (direction == NEGATIVE ? (float)101/100 : (float)99/100);
-		cout << "Current Scaling Quota :" << scalingQuota << endl;
 		break;
 	}
 }
