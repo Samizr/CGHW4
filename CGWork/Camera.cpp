@@ -38,7 +38,7 @@ void Camera::LookAt(Vec4& eye, Vec4& at, Vec4& up) {
 void Camera::Ortho() {
 	float deltaX = -24;
 	float deltaY = -13.5;
-	float deltaZ = 6;
+	float deltaZ = 24;
 	float sumX = 0;
 	float sumY = 0;
 	float sumZ = 0;
@@ -48,7 +48,7 @@ void Camera::Ortho() {
 
 void Camera::Perspective() {
 	float alpha, d;
-	alpha = -1;
+	alpha = -8;
 	d = 7;
 	//float alpha = -(mNear + mFar) / (mFar - mNear);
 	//float beta = (2 * mNear * mFar) / (mNear - mFar);
