@@ -36,34 +36,16 @@ void Camera::LookAt(Vec4& eye, Vec4& at, Vec4& up) {
 }
 
 void Camera::Ortho() {
-	float deltaX = -24;
-	float deltaY = -13.5;
-	float deltaZ = 24;
-	float sumX = 0;
-	float sumY = 0;
-	float sumZ = 0;
-	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, 2 / deltaZ, -sumZ / deltaZ), Vec4(0, 0, 0, 1) };
-	this->projection = Mat4(vecNM);
+	Vec4 normalizationVectors[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
+	this->projection = Mat4(normalizationVectors);
 }
 
 void Camera::Perspective() {
 	float alpha, d;
 	alpha = -8;
 	d = 7;
-	//float alpha = -(mNear + mFar) / (mFar - mNear);
-	//float beta = (2 * mNear * mFar) / (mNear - mFar);
-	//Vec4 perspectiveVectors[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, alpha, beta), Vec4(0, 0, -1, 0) };
-	//Vec4 perspectiveVectors[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, -1, 0) };
-	//Vec4 reScaleVectors[4] = { Vec4(-0.666, 0, 0, 0), Vec4(0, -1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
-	Vec4 perspectiveVectors[4] = {Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, d / (d - alpha), (-alpha * d) / (d - alpha)), Vec4(0, 0, 1 / d, 0)};
-	float deltaX = 24;
-	float deltaY = 13.5;
-	float deltaZ = 6;
-	float sumX = 0;
-	float sumY = 0;
-	float sumZ = 0;
-	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, 2 / deltaZ, -sumZ / deltaZ), Vec4(0, 0, 0, 1) };
-	this->projection = Mat4(vecNM) * Mat4(perspectiveVectors);// *Mat4(reScaleVectors);
+	Vec4 perspectiveVectors[4] = {Vec4(-1, 0, 0, 0), Vec4(0, -1, 0, 0), Vec4(0, 0, d / (d - alpha), (-alpha * d) / (d - alpha)), Vec4(0, 0, 1 / d, 0)};
+	this->projection = Mat4(perspectiveVectors);// *Mat4(reScaleVectors);
 }
 
 Mat4 Camera::getTransformationMatrix() {

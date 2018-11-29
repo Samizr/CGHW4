@@ -25,11 +25,20 @@ Renderer::Renderer() {
 }
 
 
+static Mat4 generateNormalizationMatrix(float deltaX, float deltaY, float deltaZ, float sumX, float sumY, float sumZ) {
+	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, 2 / deltaZ, -sumZ / deltaZ), Vec4(0, 0, 0, 1) };
+	return Mat4(vecNM);
+}
 
 void Renderer::drawWireframe(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry * geometry, COLORREF clr) {
 
 	// for each edge in the geometry, do your thing.
-	Mat4 finalMatrix = (windowMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix)));
+	float sumX, sumY, sumZ;
+	sumX = geometry->getMaxX() + geometry->getMinX();
+	sumY = geometry->getMaxY() + geometry->getMinY();
+	sumZ = geometry->getMaxZ() + geometry->getMinZ();
+	Mat4 normalizationMatrix = generateNormalizationMatrix(-24, -13.5, 24, 0, 0, 0);
+	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 
 	for (Edge* edge : geometry->getEdges()) {
 		Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
