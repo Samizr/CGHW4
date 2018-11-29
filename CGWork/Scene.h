@@ -32,7 +32,7 @@ public:
 	Camera* getCamera(int id);
 	Model* getActiveModel();
 	Camera* getActiveCamera();
-	void draw(CDC* pdc, CRect rect, COLORREF clr);
+	void draw(COLORREF* bitArr/*CDC* pdc*/, CRect rect, COLORREF clr);
 	void disableBoundingBox();
 	void enableBoundingBox();
 	void disablePolygonNormals();

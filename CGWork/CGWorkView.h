@@ -107,12 +107,14 @@ protected:
 
 	HGLRC    m_hRC;			// holds the Rendering Context
 	CDC*     m_pDC;			// holds the Device Context
+	BITMAPINFO bminfo;
 	int m_WindowWidth;		// hold the windows width
 	int m_WindowHeight;		// hold the windows height
 	double m_AspectRatio;		// hold the fixed Aspect Ration
 
 	HBITMAP m_pDbBitMap;
 	CDC* m_pDbDC;
+	COLORREF* bitArray;
 
 	// Generated message map functions
 protected:
