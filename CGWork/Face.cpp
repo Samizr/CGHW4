@@ -19,12 +19,12 @@ void Face::addEdge(Edge* edge)
 }
 
 Vec4 Face::calculateNormal(Mat4 transformationMatrix) {
-	float xU = edges[0]->getB()->xCoord() - edges[0]->getA()->xCoord();
-	float yU = edges[0]->getB()->yCoord() - edges[0]->getA()->yCoord();
-	float zU = edges[0]->getB()->zCoord() - edges[0]->getA()->zCoord();
-	float xV = edges[1]->getA()->xCoord() - edges[1]->getB()->xCoord();
-	float yV = edges[1]->getA()->yCoord() - edges[1]->getB()->yCoord();
-	float zV = edges[1]->getA()->zCoord() - edges[1]->getB()->zCoord();
+	float xU = edges[0]->getA()->xCoord() - edges[0]->getB()->xCoord();
+	float yU = edges[0]->getA()->yCoord() - edges[0]->getB()->yCoord();
+	float zU = edges[0]->getA()->zCoord() - edges[0]->getB()->zCoord();
+	float xV = edges[1]->getB()->xCoord() - edges[1]->getA()->xCoord();
+	float yV = edges[1]->getB()->yCoord() - edges[1]->getA()->yCoord();
+	float zV = edges[1]->getB()->zCoord() - edges[1]->getA()->zCoord();
 	Vec4 A(xU, yU, zU, 1);
 	Vec4 B(xV, yV, zV, 1);
 	A = transformationMatrix * A;

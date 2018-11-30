@@ -149,7 +149,7 @@ CCGWorkView::CCGWorkView() :
 	//Scene initilization:
 	auto newCamera = new Camera();
 	newCamera->Ortho();
-	newCamera->LookAt(Vec4(0, 0, 8, 1), Vec4(0, 0, 0, 1), Vec4(0, -1, 0, 1));
+	newCamera->LookAt(Vec4(0, 0, 8, 1), Vec4(0, 0, 0, 1), Vec4(0, 1, 0, 1));
 	cameraIDs.push_back(scene.addCamera(newCamera));
 	
 
