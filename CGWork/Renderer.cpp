@@ -11,8 +11,8 @@
 #include <math.h>
 static void drawBoundingBox(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
 static void drawCenterAxis(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
-static void drawPolygonNormals(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry * geometry/*, COLOREF clr*/, Mat4 finalMatrix, Mat4 transformationMatrix);
-static void drawVertexNormals(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry * geometry, Mat4 finalMatrix, Mat4 transformationMatrix);
+static void drawPolygonNormals(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry * geometry/*, COLOREF clr*/, Mat4 restMatrix, Mat4 transformationMatrix);
+static void drawVertexNormals(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 
 #define NORMAL_LENGTH_FACTOR 13
 
@@ -39,7 +39,7 @@ void Renderer::drawWireframe(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry 
 	sumZ = geometry->getMaxZ() + geometry->getMinZ();
 	Mat4 normalizationMatrix = generateNormalizationMatrix(24, 13.5, 24, sumX, 0, sumZ);
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
-
+	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
 	for (Edge* edge : geometry->getEdges()) {
 		Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
 		Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
@@ -51,10 +51,10 @@ void Renderer::drawWireframe(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry 
 		drawBoundingBox(bitArr, rect, geometry, clr, finalMatrix);
 	}
 	if (withPolygonNormals) {
-		drawPolygonNormals(bitArr, rect, geometry, finalMatrix, objectWorldMatrix);
+		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
 	if (withVertexNormals) {
-		drawVertexNormals(bitArr, rect, geometry, finalMatrix, objectWorldMatrix);
+		drawVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
 	drawCenterAxis(bitArr, rect, geometry, clr, finalMatrix);
 }
@@ -116,39 +116,47 @@ void drawCenterAxis(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry * geometr
 }
 
 
-void drawVertexNormals(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry * geometry, Mat4 finalMatrix, Mat4 transformationMatrix) {
+void drawVertexNormals(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix) {
 	for (Vertex* vertex : geometry->getVertices()) {
-		Vec4 normalSum = Vec4();
-		for (Face* face : vertex->getFaces()) {
-			normalSum = normalSum + face->calculateNormal(transformationMatrix);
-		}
-		Vec4 finalNormal = ((normalSum.normalize() * (1.0 / vertex->getFaces().size()))).normalize();
-		
-		Vec4 onScreenPoint1 = finalMatrix * Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
-		Mat4 normalScalingMatrix = Mat4::Scale(Vec4(NORMAL_LENGTH_FACTOR, NORMAL_LENGTH_FACTOR, NORMAL_LENGTH_FACTOR, 1));
-		Mat4 normalTranslationMatrix = Mat4::Translate(Vec4(onScreenPoint1.xCoord(), onScreenPoint1.yCoord(), onScreenPoint1.zCoord(), 1));
-		Vec4 onScreenPoint2 = normalTranslationMatrix * (normalScalingMatrix * finalNormal);
-		float p1Factor = onScreenPoint1.wCoord();
-		float p2Factor = onScreenPoint2.wCoord();
-		plotLine(onScreenPoint1.xCoord() / p1Factor, onScreenPoint1.yCoord() / p1Factor, onScreenPoint2.xCoord() / p2Factor, onScreenPoint2.yCoord() / p2Factor, bitArr, rect, RGB(0, 255, 0));
+		Vec4 currentVertex = transformationMatrix *  Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
+		Vec4 target = vertex->calculateNormalTarget(transformationMatrix);
+		currentVertex = restMatrix * currentVertex;
+		target = restMatrix * target;
+		float p1Factor = currentVertex.wCoord();
+		float p2Factor = target.wCoord();
+		plotLine(currentVertex.xCoord() / p1Factor, currentVertex.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, RGB(0, 255, 0));
 	}
 }
 
-void drawPolygonNormals(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry * geometry, Mat4 finalMatrix, Mat4 transormationMatrix)
+void drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix)
 {
 	std::list<Face*> faces = geometry->getFaces();
 	for (Face* face : faces) {
-		Vec4 midpoint = face->calculateMidpoint(finalMatrix);
-		Vec4 normal = face->calculateNormal(transormationMatrix);
-		Mat4 normalScalingMatrix = Mat4::Scale(Vec4(NORMAL_LENGTH_FACTOR, NORMAL_LENGTH_FACTOR, NORMAL_LENGTH_FACTOR, 1));
-		Mat4 normalTranslationMatrix = Mat4::Translate(Vec4(midpoint.xCoord(), midpoint.yCoord(), midpoint.zCoord(), 1));
-		Vec4 target = normalTranslationMatrix * (normalScalingMatrix * normal); 
+		Vec4 midpoint = transformationMatrix * face->calculateMidpoint();
+		Vec4 target = face->calculateNormalTarget(midpoint, transformationMatrix);
+		midpoint = restMatrix * midpoint;
+		target = restMatrix * target;
 		float p1Factor = midpoint.wCoord();
 		float p2Factor = target.wCoord();
 		plotLine(midpoint.xCoord() / p1Factor, midpoint.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, RGB(0, 255, 0));
-		
 	}
 }
+
+//void drawPolygonNormals(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry * geometry, Mat4 finalMatrix, Mat4 transormationMatrix)
+//{
+//	std::list<Face*> faces = geometry->getFaces();
+//	for (Face* face : faces) {
+//		Vec4 midpoint = face->calculateMidpoint(finalMatrix);
+//		Vec4 normal = face->calcuateNormal(transormationMatrix);
+//		Mat4 normalScalingMatrix = Mat4::Scale(Vec4(NORMAL_LENGTH_FACTOR, NORMAL_LENGTH_FACTOR, NORMAL_LENGTH_FACTOR, 1));
+//		Mat4 normalTranslationMatrix = Mat4::Translate(Vec4(midpoint.xCoord(), midpoint.yCoord(), midpoint.zCoord(), 1));
+//		Vec4 target = normalTranslationMatrix * (normalScalingMatrix * normal); 
+//		float p1Factor = midpoint.wCoord();
+//		float p2Factor = target.wCoord();
+//		plotLine(midpoint.xCoord() / p1Factor, midpoint.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, RGB(0, 255, 0));
+//		
+//	}
+//}
 
 void Renderer::setObjectWorldMatrix(Mat4 &matrix) {
 	objectWorldMatrix = matrix;

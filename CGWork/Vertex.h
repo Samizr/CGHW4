@@ -1,5 +1,7 @@
 #pragma once
 #include <vector>
+#include "Vec4.h"
+#include "Mat4.h"
 
 using std::vector;
 class Face;
@@ -13,6 +15,7 @@ public:
 	Vertex(float x, float y, float z);
 	void addFace(Face* face);
 	vector<Face*> getFaces();
+	Vec4 calculateNormalTarget(Mat4 transformationMatrix);
 	float xCoord();
 	float yCoord();
 	float zCoord();
