@@ -80,7 +80,7 @@ float Vec4::wCoord() const{
 
 Vec4 Vec4::normalize() {
 	float size = sqrt(pow(_xCoord, 2) + pow(_yCoord, 2) + pow(_zCoord, 2));
-	return Vec4(_xCoord / size, _yCoord / size, _zCoord / size, 1);
+	return Vec4(_xCoord / size, _yCoord / size, _zCoord / size, _wCoord);
 }
 
 Vec4 Vec4::crossProduct(const Vec4& other) const {
