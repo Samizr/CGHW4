@@ -21,19 +21,18 @@ vector<Face*> Vertex::getFaces() {
 	return faces;
 }
 
-Vec4 Vertex::calculateNormalTarget(Mat4 transformationMatrix)
+Vec4 Vertex::calculateVertexNormalTarget(Mat4 transformationMatrix)
 {
 	Vec4 targetSum = Vec4();
 	Vec4 vertexAsVector = transformationMatrix * Vec4(_xCoord, _yCoord, _zCoord, 1);
 	for (Face* face : faces) {
-		targetSum = targetSum + face->calculateNormalTarget(vertexAsVector, transformationMatrix);
+		targetSum = targetSum + face->calculateFaceNormalTarget(vertexAsVector, transformationMatrix);
 	}
-	targetSum[3] = 1;
-	Vec4 finalNormal = (targetSum * (1.0 / faces.size())).normalize();
+	Vec4 finalNormal = targetSum * (1.0 / faces.size());
+	//finalNormal = finalNormal.normalize();
 	finalNormal[3] = 1;
 	//Mat4 translate = Mat4::Translate(Vec4(targetSum.xCoord(), targetSum.yCoord(), targetSum.zCoord(), 1));
 	//Mat4 scaling = Mat4::Scale(Vec4(0.01, 0.01, 0.01, 1));
-
 	return finalNormal;
 }
 

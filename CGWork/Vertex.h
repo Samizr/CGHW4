@@ -15,7 +15,7 @@ public:
 	Vertex(float x, float y, float z);
 	void addFace(Face* face);
 	vector<Face*> getFaces();
-	Vec4 calculateNormalTarget(Mat4 transformationMatrix);
+	Vec4 calculateVertexNormalTarget(Mat4 transformationMatrix);
 	float xCoord();
 	float yCoord();
 	float zCoord();

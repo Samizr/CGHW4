@@ -142,8 +142,8 @@ CCGWorkView::CCGWorkView() :
 	m_clrNormals = INITIAL_NORMAL_COLOR;
 
 	// Transformations Quantitive Setup:
-	translationQuota = 9;
-	rotationQuota = 8;
+	translationQuota = 4;
+	rotationQuota = 1;
 	scalingQuota = 0.8;
 
 	//Scene initilization:
