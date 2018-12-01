@@ -45,9 +45,7 @@ private:
 	float m_nTranslationSensetivity;   //Mouse sensetivity for translation
 	float m_nRotationSensetivity;		//Mouse sensetivity for rotation
 	float m_nScaleSensetivity;		//Mouse sensetivity for scaling
-	COLORREF m_clrLines;			//Current line color
 	COLORREF m_clrBackground;		//Current background color
-	COLORREF m_clrNormals;			//Current normal color
 	CString m_strItdFileName;		// file name of IRIT data
 
 	//Scene, cameras, models and related objects:
@@ -160,7 +158,7 @@ protected:
 	//TOOLBAR - Option Functions
 	afx_msg void OnOptionsLineColor();
 	afx_msg void OnOptionsBackgroundColor();
-	afx_msg void OnOptionsNormalscolor();
+	afx_msg void OnOptionsNormalcolor();
 	afx_msg void OnOptionsMousesensitivity();
 
 	//LIGHTING OPTIONS (NOT USED IN HW2)

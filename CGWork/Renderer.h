@@ -23,9 +23,11 @@ class Renderer {
 	bool withBounding;
 	bool withPolygonNormals;
 	bool withVertexNormals;
+	COLORREF lineClr;
+	COLORREF normalClr;
 public:
 	Renderer();
-	void drawWireframe(COLORREF* bitArr/*CDC* pdc*/, CRect rect, Geometry* geometry, COLORREF clr);
+	void drawWireframe(COLORREF* bitArr, CRect rect, Geometry* geometry);
 	void setObjectWorldMatrix(Mat4& matrix);
 	void setCameraMatrix(Mat4& matrix);
 	void setProjectionMatrix(Mat4& matrix);
@@ -36,5 +38,7 @@ public:
 	void enablePolygonNormals();
 	void enableVertexNormals();
 	void disableVertexNormals();
+	void setLineClr(COLORREF clr);
+	void setNormalClr(COLORREF clr);
 };
 #endif /* Renderer_h */

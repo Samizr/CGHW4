@@ -41,7 +41,7 @@ static COLORREF invertRB(COLORREF clr);
 #define INITIAL_SENSITIVITY 10
 #define INITIAL_BACKGROUND_COLOR RGB(5,5,5)
 #define INITIAL_OBJECT_COLOR RGB(230,230,230)
-#define INITIAL_NORMAL_COLOR RGB(0,200,240)
+#define INITIAL_NORMAL_COLOR RGB(0,255,0)
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView
 
@@ -93,7 +93,7 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	//TOOLBAR - Options Function Mapping
 	ON_COMMAND(ID_LINECOLOR, OnOptionsLineColor)
 	ON_COMMAND(ID_BACKGROUNDCOLOR, OnOptionsBackgroundColor)
-	ON_COMMAND(ID_NORMALSCOLOR, OnOptionsNormalscolor)
+	ON_COMMAND(ID_NORMALCOLOR, OnOptionsNormalcolor)
 	ON_COMMAND(ID_OPTIONS_MOUSESENSITIVITY, OnOptionsMousesensitivity)
 
 	//Shading Function Mapping - (Not related to HW2)
@@ -138,8 +138,7 @@ CCGWorkView::CCGWorkView() :
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
 	m_nScaleSensetivity = INITIAL_SENSITIVITY/5;
 	m_clrBackground = INITIAL_BACKGROUND_COLOR;
-	m_clrLines = INITIAL_OBJECT_COLOR;
-	m_clrNormals = INITIAL_NORMAL_COLOR;
+
 
 	// Transformations Quantitive Setup:
 	translationQuota = 4;
@@ -239,6 +238,8 @@ BOOL CCGWorkView::InitializeCGWork()
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
+	scene.setLineClr(INITIAL_OBJECT_COLOR);
+	scene.setNormalClr(INITIAL_NORMAL_COLOR);
 	bitArray = new COLORREF[w * h];
 	return TRUE;
 }
@@ -325,7 +326,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 
 	//testModel(m_pDbDC, r);
 	setBackground(bitArray, r, m_clrBackground);
-	scene.draw(bitArray, r, m_clrLines);
+	scene.draw(bitArray, r);
 	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
 
 	if (pDCToUse != m_pDC)
@@ -574,7 +575,7 @@ void CCGWorkView::OnOptionsLineColor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		m_clrLines = invertRB(CD.GetColor());
+		scene.setLineClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
@@ -588,14 +589,16 @@ void CCGWorkView::OnOptionsBackgroundColor()
 	}
 }
 
-void CCGWorkView::OnOptionsNormalscolor()
+void CCGWorkView::OnOptionsNormalcolor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		m_clrNormals = invertRB(CD.GetColor());
+		scene.setNormalClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
+
+
 
 void CCGWorkView::OnOptionsMousesensitivity()
 {
@@ -794,3 +797,5 @@ void CCGWorkView::OnOptionsFinenesscontrol()
 {
 //	FinenessControlDialog FCDialog(::CGSkelFFCStates.FineNess);
 }
+
+

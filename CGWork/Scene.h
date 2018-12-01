@@ -32,13 +32,15 @@ public:
 	Camera* getCamera(int id);
 	Model* getActiveModel();
 	Camera* getActiveCamera();
-	void draw(COLORREF* bitArr/*CDC* pdc*/, CRect rect, COLORREF clr);
+	void draw(COLORREF* bitArr, CRect rect);
 	void disableBoundingBox();
 	void enableBoundingBox();
 	void disablePolygonNormals();
 	void enablePolygonNormals();
 	void enableVertexNormals();
 	void disableVertexNormals();
+	void setLineClr(COLORREF clr);
+	void setNormalClr(COLORREF clr);
 };
 
 #endif /* Scene_h */

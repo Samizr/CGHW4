@@ -49,7 +49,7 @@ Camera* Scene::getActiveCamera() {
 	return cameras[activeCamera];
 }
 
-void Scene::draw(COLORREF* bitArr/*CDC* pdc*/, CRect rect, COLORREF clr) {
+void Scene::draw(COLORREF* bitArr, CRect rect) {
 	if (activeModel == -1 || activeCamera == -1) {
 		return;
 	}
@@ -79,7 +79,7 @@ void Scene::draw(COLORREF* bitArr/*CDC* pdc*/, CRect rect, COLORREF clr) {
 	float sumH = rect.top + rect.bottom;
 	Vec4 vecVPM[4] = { Vec4(virtualDeltaW / 2, 0, 0, sumW / 2), Vec4(0, virtualDeltaH / 2, 0, sumH / 2), Vec4(0, 0, 0.5, 0.5), Vec4(0, 0, 0, 1) };
 	this->m_renderer.setWindowMatrix(Mat4(vecVPM));
-	m_renderer.drawWireframe(bitArr, rect, &model->getGeometry(), clr);
+	m_renderer.drawWireframe(bitArr, rect, &model->getGeometry());
 }
 
 void Scene::disablePolygonNormals()
@@ -99,6 +99,16 @@ void Scene::enableVertexNormals() {
 void Scene::disableVertexNormals() {
 	this->m_renderer.disableVertexNormals();
 }
+
+void Scene::setLineClr(COLORREF clr)
+{
+	m_renderer.setLineClr(clr);
+}
+
+void Scene::setNormalClr(COLORREF clr) {
+	m_renderer.setNormalClr(clr);
+}
+
 
 void Scene::enableBoundingBox() {
 	m_renderer.enableBoundingBox();

@@ -70,6 +70,7 @@ BEGIN
     SEPARATOR
     BUTTON      ID_LINECOLOR
     BUTTON      ID_BACKGROUNDCOLOR
+    BUTTON      ID_NORMALCOLOR
 END
 
 
@@ -121,7 +122,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Object Color...",             ID_LINECOLOR
         MENUITEM "Background Color...",         ID_BACKGROUNDCOLOR
-        MENUITEM "Normals Color...",            ID_NORMALSCOLOR
+        MENUITEM "Normals Color...",            ID_NORMALCOLOR
     END
     POPUP "&Light"
     BEGIN
