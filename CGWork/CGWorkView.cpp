@@ -141,8 +141,8 @@ CCGWorkView::CCGWorkView() :
 
 
 	// Transformations Quantitive Setup:
-	translationQuota = 4;
-	rotationQuota = 1;
+	translationQuota = 2;
+	rotationQuota = 0.4;
 	scalingQuota = 0.8;
 
 	//Scene initilization:
@@ -775,7 +775,7 @@ void CCGWorkView::transform(Direction direction)
 		break;
 	
 	case (ID_ACTION_TRANSLATE):		
-		adjustedQuota = direction * rotationQuota * m_nRotationSensetivity / 100;
+		adjustedQuota = direction * translationQuota * m_nTranslationSensetivity/ 100;
 		if (m_bIsViewSpace)
 			model->translateViewSpace(sceneAxis, adjustedQuota);
 		else
@@ -783,12 +783,13 @@ void CCGWorkView::transform(Direction direction)
 		break;
 
 	case (ID_ACTION_SCALE):
-		adjustedQuota = (direction == NEGATIVE ? 1 / scalingQuota : scalingQuota);
+		float percentage = m_nScaleSensetivity / 100;
+		adjustedQuota = (direction == NEGATIVE ? 1 / (scalingQuota + percentage): (scalingQuota + percentage));
 		if (m_bIsViewSpace)
 			model->scaleViewSpace(sceneAxis, adjustedQuota);
 		else
 			model->scaleObjectSpace(sceneAxis,  adjustedQuota);
-		scalingQuota *= (direction == NEGATIVE ? (float)101/100 : (float)99/100);
+		//scalingQuota *= (direction == NEGATIVE ? (float)101/100 : (float)99/100);
 		break;
 	}
 }
