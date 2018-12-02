@@ -120,7 +120,7 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 {
 	int i;
 	const char *Str;
-	double RGB[3], Transp;
+	double objectRGB[3], Transp;
 	IPPolygonStruct *PPolygon;
 	IPVertexStruct *PVertex;
 	const IPAttributeStruct *Attrs =
@@ -134,22 +134,30 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	/* You can use IP_IS_POLYGON_OBJ(PObj) and IP_IS_POINTLIST_OBJ(PObj)
 	   to identify the type of the object*/
 
-	if (CGSkelGetObjectColor(PObj, RGB))
+	if (CGSkelGetObjectColor(PObj, objectRGB))
 	{
 		/* color code */
+		loadedGeometry.setObjectColor(objectRGB[0], objectRGB[1], objectRGB[2]);
 	}
+	else {
+		loadedGeometry.setObjectColor(-1, -1, -1);
+	}
+
 	if (CGSkelGetObjectTransp(PObj, &Transp))
 	{
 		/* transparency code */
 	}
+
 	if ((Str = CGSkelGetObjectTexture(PObj)) != NULL)
 	{
 		/* volumetric texture code */
 	}
+
 	if ((Str = CGSkelGetObjectPTexture(PObj)) != NULL)
 	{
 		/* parametric texture code */
 	}
+
 	if (Attrs != NULL)
 	{
 		printf("[OBJECT\n");

@@ -36,8 +36,8 @@ void Camera::LookAt(Vec4& eye, Vec4& at, Vec4& up) {
 }
 
 void Camera::Ortho() {
-	Vec4 normalizationVectors[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
-	this->projection = Mat4(normalizationVectors);
+	Vec4 orthoVectors[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
+	this->projection = Mat4(orthoVectors);
 }
 
 void Camera::Perspective() {
@@ -45,7 +45,7 @@ void Camera::Perspective() {
 	alpha = 8;
 	d = 7;
 	Vec4 perspectiveVectors[4] = {Vec4(-1, 0, 0, 0), Vec4(0, -1, 0, 0), Vec4(0, 0, d / (d - alpha), (-alpha * d) / (d - alpha)), Vec4(0, 0, 1 / d, 0)};
-	this->projection = Mat4(perspectiveVectors);// *Mat4(reScaleVectors);
+	this->projection = Mat4(perspectiveVectors);
 }
 
 Mat4 Camera::getTransformationMatrix() {

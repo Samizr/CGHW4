@@ -41,6 +41,7 @@ public:
 	void disableVertexNormals();
 	void setLineClr(COLORREF clr);
 	void setNormalClr(COLORREF clr);
+	void setBackgroundClr(COLORREF clr);
 };
 
 #endif /* Scene_h */

@@ -12,6 +12,15 @@ int Scene::addModel(Model* model){
 	//TODO make sure vector function called insert.
 	this->models[modelIdGenerator] = model;
 	activeModel = modelIdGenerator;
+	std::vector<double> objectColor = model->getGeometry().getObjectColor();
+	if (objectColor[0] != -1) {
+		m_renderer.setLineClr(RGB(objectColor[0], objectColor[1], objectColor[2]));
+		m_renderer.setBackgroundClr(0xFFFFFF - RGB(objectColor[0], objectColor[1], objectColor[2]));
+	}
+	else {
+		m_renderer.setLineClr(STANDARD_OBJECT_COLOR);
+		m_renderer.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
+	}
 	return modelIdGenerator++;
 }
 
@@ -58,12 +67,6 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
 	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
 	this->m_renderer.setObjectWorldMatrix(model->getTransformationMatrix());
-	float deltaX = 24;
-	float deltaY = 13.5;  
-	float deltaZ = 6;  
-	float sumX = 0;	 
-	float sumY = 0; 
-	float sumZ = 0; 
 	float deltaW = rect.right - rect.left;
 	float deltaH = rect.bottom - rect.top;
 	float virtualDeltaW = min(deltaH, deltaH);
@@ -107,6 +110,11 @@ void Scene::setLineClr(COLORREF clr)
 
 void Scene::setNormalClr(COLORREF clr) {
 	m_renderer.setNormalClr(clr);
+}
+
+void Scene::setBackgroundClr(COLORREF clr)
+{
+	m_renderer.setBackgroundClr(clr);
 }
 
 

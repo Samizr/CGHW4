@@ -3,6 +3,7 @@
 #include "Edge.h"
 #include <list>
 #include <set>
+#include <vector>
 #include "Face.h"
 #include "Vec4.h"
 #include <unordered_map>
@@ -20,6 +21,7 @@ class Geometry
 	std::list<Face*> faces;
 	float maxX, maxY, maxZ;
 	float minX, minY, minZ;
+	std::vector<double> objectColor;
 
 public:
 	bool loaded;
@@ -41,7 +43,9 @@ public:
 	float getMinY();
 	float getMinZ();
 
-	//DEBJUG FUNCTION REMOVE:
+	void setObjectColor(double r, double g, double b);
+	std::vector<double> getObjectColor();
+	//DEBJUG FUNCTION:
 	bool findVertexCollisions();
 };
 

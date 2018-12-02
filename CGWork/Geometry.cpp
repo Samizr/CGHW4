@@ -110,6 +110,19 @@ float Geometry::getMinZ()
 	return minZ;
 }
 
+void Geometry::setObjectColor(double r, double g, double b)
+{
+	objectColor.push_back(r);
+	objectColor.push_back(g);
+	objectColor.push_back(b);
+}
+
+std::vector<double> Geometry::getObjectColor()
+{
+	return objectColor;
+}
+
+
 bool Geometry::findVertexCollisions()
 {
 	bool returnVal = false;

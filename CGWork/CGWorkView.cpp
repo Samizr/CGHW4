@@ -29,7 +29,6 @@ static char THIS_FILE[] = __FILE__;
 // Static Functions:
 static AXIS sceneAxisTranslator(int guiID);
 static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
-static void setBackground(COLORREF* bitArray, CRect rect, COLORREF clr);
 static COLORREF invertRB(COLORREF clr);
 
 // External Variabls:
@@ -39,9 +38,6 @@ static COLORREF invertRB(COLORREF clr);
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
 
 #define INITIAL_SENSITIVITY 10
-#define INITIAL_BACKGROUND_COLOR RGB(5,5,5)
-#define INITIAL_OBJECT_COLOR RGB(230,230,230)
-#define INITIAL_NORMAL_COLOR RGB(0,255,0)
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView
 
@@ -137,12 +133,11 @@ CCGWorkView::CCGWorkView() :
 	m_nTranslationSensetivity = INITIAL_SENSITIVITY;
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
 	m_nScaleSensetivity = INITIAL_SENSITIVITY/5;
-	m_clrBackground = INITIAL_BACKGROUND_COLOR;
 
 
 	// Transformations Quantitive Setup:
-	translationQuota = 2;
-	rotationQuota = 0.4;
+	translationQuota = 1.2;
+	rotationQuota = 0.5;
 	scalingQuota = 0.8;
 
 	//Scene initilization:
@@ -238,9 +233,16 @@ BOOL CCGWorkView::InitializeCGWork()
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
-	scene.setLineClr(INITIAL_OBJECT_COLOR);
-	scene.setNormalClr(INITIAL_NORMAL_COLOR);
+	//scene.setLineClr(INITIAL_OBJECT_COLOR);
+	//scene.setNormalClr(INITIAL_NORMAL_COLOR);
 	bitArray = new COLORREF[w * h];
+
+	for (int i = 0; i < r.Width(); i++) {
+		for (int j = 0; j < r.Height(); j++) {
+			bitArray[(i - r.left) + ((r.right - r.left) * (j - r.top))] = STANDARD_BACKGROUND_COLOR;
+		}
+	}
+
 	return TRUE;
 }
 
@@ -307,7 +309,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	CRect r;
 
 	GetClientRect(&r);
-	CDC *pDCToUse = /*m_pDC*/m_pDbDC;
+	CDC *pDCToUse = m_pDbDC;
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
 	initializeBMI(bminfo, r);
@@ -316,16 +318,8 @@ void CCGWorkView::OnDraw(CDC* pDC)
 		bitArray = new COLORREF[h * w];
 	}
 
-	//for (int i = 0; i < r.Width(); i++) {
-	//	for (int j = 0; j < r.Height(); j++) {
-	//		bitArray[(i - r.left) + ((r.right - r.left) * (j - r.top))] = RGB(0, 128, 255);
-	//	}
-	//}
 
-
-
-	//testModel(m_pDbDC, r);
-	setBackground(bitArray, r, m_clrBackground);
+	//setBackground(bitArray, r, m_clrBackground);
 	scene.draw(bitArray, r);
 	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
 
@@ -584,7 +578,7 @@ void CCGWorkView::OnOptionsBackgroundColor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		m_clrBackground = invertRB(CD.GetColor());
+		scene.setBackgroundClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
@@ -703,14 +697,6 @@ void initializeBMI(BITMAPINFO& bminfo, CRect rect)
 
 }
 
-void setBackground(COLORREF * bitArr, CRect rect, COLORREF clr)
-{
-	for (int i = 0; i < rect.Width(); i++) {
-		for (int j = 0; j < rect.Height(); j++) {
-			bitArr[(i - rect.left) + ((rect.right - rect.left) * (j - rect.top))] = clr;
-		}
-	}
-}
 
 COLORREF invertRB(COLORREF clr)
 {
