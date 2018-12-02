@@ -28,11 +28,14 @@ void Camera::setProjection(const Mat4& T) {
 void Camera::LookAt(Vec4& eye, Vec4& at, Vec4& up) {
 	// implementation as seen in the slides.
 	Vec4 n = (eye - at).normalize();
+	n[3] = 0;
 	Vec4 u = (up.crossProduct(n)).normalize();
+	u[3] = 0;
 	Vec4 v = (n.crossProduct(u)).normalize();
+	v[3] = 0;
 	Vec4 t = Vec4(0, 0, 0, 1);
 	Mat4 c = Mat4(u, v, n, t);
-	cTransform = c * Mat4::Translate(eye * (-1));
+	cTransform = Mat4::Translate(eye * (-1)) * c;
 }
 
 void Camera::Ortho() {
@@ -45,6 +48,7 @@ void Camera::Perspective() {
 	alpha = 8;
 	d = 7;
 	Vec4 perspectiveVectors[4] = {Vec4(-1, 0, 0, 0), Vec4(0, -1, 0, 0), Vec4(0, 0, d / (d - alpha), (-alpha * d) / (d - alpha)), Vec4(0, 0, 1 / d, 0)};
+	//Vec4 perspectiveVectors[4] = {Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, d / (d - alpha), (-alpha * d) / (d - alpha)), Vec4(0, 0, 1 / d, 0)};
 	this->projection = Mat4(perspectiveVectors);
 }
 

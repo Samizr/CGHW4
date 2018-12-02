@@ -78,7 +78,8 @@ Mat4::Mat4(const Vec4& row0, const Vec4& row1, const Vec4& row2, const Vec4& row
 }
 
 Mat4 Mat4::Translate(Vec4& translationVector) {
-	Vec4 rows[4] = {Vec4(1, 0, 0, translationVector[0])
+	Vec4 rows[4] = 
+		{ Vec4(1, 0, 0, translationVector[0])
 		, Vec4(0, 1, 0, translationVector[1])
 		, Vec4(0, 0, 1, translationVector[2])
 		, Vec4(0, 0, 0, 1) };

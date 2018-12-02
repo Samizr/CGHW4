@@ -22,7 +22,7 @@ IPFreeformConvStateStruct CGSkelFFCState = {
 	SYMB_CRV_APPROX_UNIFORM,  /* CrvApproxMethod */
 	FALSE,   /* ShowIntrnal */
 	FALSE,   /* CubicCrvsAprox */
-	20,      /* Polygonal FineNess */
+	200,      /* Polygonal FineNess */
 	FALSE,   /* ComputeUV */
 	TRUE,    /* ComputeNrml */
 	FALSE,   /* FourPerFlat */

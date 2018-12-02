@@ -143,7 +143,8 @@ CCGWorkView::CCGWorkView() :
 	//Scene initilization:
 	auto newCamera = new Camera();
 	newCamera->Ortho();
-	newCamera->LookAt(Vec4(0, 0, 8, 1), Vec4(0, 0, 0, 1), Vec4(0, 1, 0, 1));
+	newCamera->LookAt(Vec4(0, 0, 8, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
+	//newCamera->LookAt(Vec4(0, 0, 8, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
 	cameraIDs.push_back(scene.addCamera(newCamera));
 	
 
@@ -709,7 +710,6 @@ COLORREF invertRB(COLORREF clr)
 
 void CCGWorkView::OnLButtonDown(UINT nFlags, CPoint point)
 {
-
 	m_bAllowTransformations = true;
 	m_lnLastXPos = point.x;
 	CView::OnLButtonDown(nFlags, point);

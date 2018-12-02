@@ -32,6 +32,7 @@ Renderer::Renderer() {
 static Mat4 generateNormalizationMatrix(float deltaX, float deltaY, float deltaZ, float sumX, float sumY, float sumZ) {
 	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, -2 / deltaZ, sumZ / deltaZ), Vec4(0, 0, 0, 1) };
 	return Mat4(vecNM);
+	//return Mat4::Identity();
 }
 
 void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Geometry * geometry) {
@@ -47,18 +48,38 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Geometry * geometry) 
 	deltaZ = geometry->getMaxZ() - geometry->getMinZ();
 
 	Mat4 normalizationMatrix = generateNormalizationMatrix(2 * deltaX, 2 * deltaY, deltaZ, sumX, sumY, sumZ);
-	Mat4 debug = projectionMatrix * (cameraMatrix * objectWorldMatrix);
+	Mat4 debug = (cameraMatrix * objectWorldMatrix);
+	Mat4 debugA = projectionMatrix * (cameraMatrix * objectWorldMatrix);
+	Mat4 debugB = projectionMatrix * (cameraMatrix * objectWorldMatrix);
+	int x = 0;
+	int y = 0;
+	int z1 = 100000, z2 = 100000;
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
 	for (Edge* edge : geometry->getEdges()) {
 		Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
 		Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
-		p1 = debug * p1;
-		p2 = debug * p2;
+		p1 = debugA * p1;
+		p2 = debugA * p2;
+		if (p1.zCoord() < z1)
+			z1 = p1.zCoord();
+		if (p2.zCoord() < z2)
+			z2 = p2.zCoord();
+	}
+	z1 = 100000;
+	z2 = 100000;
+	for (Edge* edge : geometry->getEdges()) {
+		Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
+		Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
 		p1 = finalMatrix * p1;
 		p2 = finalMatrix * p2;
-		if (p1.zCoord() > -1 && p2.zCoord() > -1)
-			plotLine(p1.xCoord() / p1.wCoord(), p1.yCoord() / p1.wCoord(), p2.xCoord() / p2.wCoord(), p2.yCoord() / p2.wCoord(), bitArr, rect, lineClr);
+		//	if (p1.zCoord() < -2.0 && p2.zCoord() < -2.0)
+		//if (p1.xCoord() < rect.right && p1.yCoord() < rect.bottom && p2.xCoord() < rect.right && p2.yCoord() < rect.bottom)
+		plotLine(p1.xCoord() / p1.wCoord(), p1.yCoord() / p1.wCoord(), p2.xCoord() / p2.wCoord(), p2.yCoord() / p2.wCoord(), bitArr, rect, lineClr);
+		if (p1.zCoord() < z1)
+			z1 = p1.zCoord();
+		if (p2.zCoord() < z2)
+			z2 = p2.zCoord();
 	}
 	if (withBounding) {
 		drawBoundingBox(bitArr, rect, geometry, lineClr, finalMatrix);
