@@ -3,6 +3,8 @@
 #include "Geometry.h"
 #include "Vertex.h"
 #include "Edge.h"
+#include "stdafx.h"
+
 /*****************************************************************************
 * Skeleton for an interface to a parser to read IRIT data files.			 *
 ******************************************************************************
@@ -137,10 +139,15 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	if (CGSkelGetObjectColor(PObj, objectRGB))
 	{
 		/* color code */
-		loadedGeometry.setObjectColor(objectRGB[0], objectRGB[1], objectRGB[2]);
+		COLORREF clr = RGB(objectRGB[0], objectRGB[1], objectRGB[2]);
+		loadedGeometry.setLineClr(clr);
+		loadedGeometry.setNormalClr(clr);
+		loadedGeometry.setBackgroundClr(0xFFFFFF - clr);
 	}
 	else {
-		loadedGeometry.setObjectColor(-1, -1, -1);
+		loadedGeometry.setLineClr(STANDARD_OBJECT_COLOR);
+		loadedGeometry.setNormalClr(STANDARD_NORMAL_COLOR);
+		loadedGeometry.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
 	}
 
 	if (CGSkelGetObjectTransp(PObj, &Transp))

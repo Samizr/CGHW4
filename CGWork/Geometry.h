@@ -1,12 +1,19 @@
 #pragma once
-#include "Vertex.h"
-#include "Edge.h"
 #include <list>
 #include <set>
 #include <vector>
+#include <unordered_map>
+#include "Vertex.h"
+#include "Edge.h"
 #include "Face.h"
 #include "Vec4.h"
-#include <unordered_map>
+#include "stdafx.h"
+
+
+#define STANDARD_OBJECT_COLOR RGB(230,230,230)
+#define STANDARD_NORMAL_COLOR RGB(0,255,0)
+#define STANDARD_BACKGROUND_COLOR RGB(5,5,5)
+//TODO: NORMAL COLOR IS SAME AS OBJECT COLOR???
 
 class Geometry
 {
@@ -22,6 +29,9 @@ class Geometry
 	float maxX, maxY, maxZ;
 	float minX, minY, minZ;
 	std::vector<double> objectColor;
+	COLORREF lineClr;
+	COLORREF normalClr;
+	COLORREF backgroundClr;
 
 public:
 	bool loaded;
@@ -43,9 +53,15 @@ public:
 	float getMinY();
 	float getMinZ();
 
-	void setObjectColor(double r, double g, double b);
-	std::vector<double> getObjectColor();
-	//DEBJUG FUNCTION:
+	void setLineClr(COLORREF clr);
+	void setNormalClr(COLORREF clr);
+	void setBackgroundClr(COLORREF clr);
+
+	COLORREF getLineClr();
+	COLORREF getNormalClr();
+	COLORREF getBackgroundClr();
+
+	//DEBUG FUNCTION:
 	bool findVertexCollisions();
 };
 

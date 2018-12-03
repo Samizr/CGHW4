@@ -98,6 +98,7 @@ BEGIN
         MENUITEM "Polygon Normals",             ID_POLYNORMALS
         MENUITEM "Vertex Normals",              ID_VERTEXNORMALS
         MENUITEM SEPARATOR
+        MENUITEM "Split Screen",                ID_VIEW_SPLITSCREEN
     END
     POPUP "A&ction"
     BEGIN

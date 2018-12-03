@@ -8,18 +8,21 @@
 // comment
 #include "Scene.h"
 
+Scene::Scene(Renderer& renderer){
+	this->m_renderer = renderer;
+	this->activeCamera = -1;
+	this->activeModel = -1;
+	this->secondActiveModel = -1;
+	this->dualView = false;
+}
+
 int Scene::addModel(Model* model){
-	//TODO make sure vector function called insert.
 	this->models[modelIdGenerator] = model;
-	activeModel = modelIdGenerator;
-	std::vector<double> objectColor = model->getGeometry().getObjectColor();
-	if (objectColor[0] != -1) {
-		m_renderer.setLineClr(RGB(objectColor[0], objectColor[1], objectColor[2]));
-		m_renderer.setBackgroundClr(0xFFFFFF - RGB(objectColor[0], objectColor[1], objectColor[2]));
+	if (dualView && activeModel > secondActiveModel) {
+		secondActiveModel = modelIdGenerator;
 	}
 	else {
-		m_renderer.setLineClr(STANDARD_OBJECT_COLOR);
-		m_renderer.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
+		activeModel = modelIdGenerator;
 	}
 	return modelIdGenerator++;
 }
@@ -51,6 +54,14 @@ Model* Scene::getActiveModel() {
 	return models[activeModel];
 }
 
+Model * Scene::getSecondActiveModel()
+{
+	if (secondActiveModel == -1) {
+		return nullptr;
+	}
+	return models[secondActiveModel];
+}
+
 Camera* Scene::getActiveCamera() {
 	if (activeCamera == -1) {
 		return nullptr;
@@ -66,23 +77,25 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	Camera* camera = cameras[activeCamera];
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
 	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
-	this->m_renderer.setObjectWorldMatrix(model->getTransformationMatrix());
-	float deltaW = rect.right - rect.left;
-	float deltaH = rect.bottom - rect.top;
-	float virtualDeltaW = min(deltaH, deltaH);
-	float virtualDeltaH = min(deltaH, deltaH);
-	if (16*deltaH > 9*deltaW) {
-		virtualDeltaW = deltaW;
-		virtualDeltaH = deltaW * 9 / 16;
-	} else {
-		virtualDeltaW = deltaH * 16 / 9;
-		virtualDeltaH = deltaH;
+	//this->m_renderer.setObjectWorldMatrix(model->getTransformationMatrix());
+	this->m_renderer.setMainRect(rect);
+
+	if (dualView) {
+		if (secondActiveModel == -1) {
+			secondActiveModel = activeModel;
+			Model* duplicate = new Model(model->getGeometry());
+			addModel(duplicate);
+		}
+		Model* secondModel = models[secondActiveModel];
+		CRect leftRect = rect, rightRect = rect;
+		leftRect.right /= 2;
+		rightRect.left = leftRect.right;
+		m_renderer.drawWireframe(bitArr, leftRect, model);
+		m_renderer.drawWireframe(bitArr, rightRect, secondModel);
 	}
-	float sumW = rect.right + rect.left;
-	float sumH = rect.top + rect.bottom;
-	Vec4 vecVPM[4] = { Vec4(virtualDeltaW / 2, 0, 0, sumW / 2), Vec4(0, virtualDeltaH / 2, 0, sumH / 2), Vec4(0, 0, 0.5, 0.5), Vec4(0, 0, 0, 1) };
-	this->m_renderer.setWindowMatrix(Mat4(vecVPM));
-	m_renderer.drawWireframe(bitArr, rect, &model->getGeometry());
+	else {
+		m_renderer.drawWireframe(bitArr, rect, model);
+	}
 }
 
 void Scene::disablePolygonNormals()
@@ -103,18 +116,14 @@ void Scene::disableVertexNormals() {
 	this->m_renderer.disableVertexNormals();
 }
 
-void Scene::setLineClr(COLORREF clr)
+void Scene::enableDualView()
 {
-	m_renderer.setLineClr(clr);
+	dualView = true;
 }
 
-void Scene::setNormalClr(COLORREF clr) {
-	m_renderer.setNormalClr(clr);
-}
-
-void Scene::setBackgroundClr(COLORREF clr)
+void Scene::disableDualView()
 {
-	m_renderer.setBackgroundClr(clr);
+	dualView = false;
 }
 
 
@@ -125,12 +134,6 @@ void Scene::enableBoundingBox() {
 
 void Scene::disableBoundingBox() {
 	m_renderer.disableBoundingBox();
-}
-
-Scene::Scene(Renderer& renderer){
-	this->m_renderer = renderer;
-	this->activeCamera = -1;
-	this->activeModel = -1;
 }
 
 int Scene::cameraIdGenerator = 0;

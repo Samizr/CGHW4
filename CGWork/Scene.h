@@ -21,6 +21,8 @@ class Scene {
 	std::map<int, Camera*> cameras;
 	int activeCamera;
 	int activeModel;
+	int secondActiveModel;
+	bool dualView;
 	Renderer m_renderer;
 	static int cameraIdGenerator;
 	static int modelIdGenerator;
@@ -31,6 +33,7 @@ public:
 	Model* getModel(int id);
 	Camera* getCamera(int id);
 	Model* getActiveModel();
+	Model* getSecondActiveModel();
 	Camera* getActiveCamera();
 	void draw(COLORREF* bitArr, CRect rect);
 	void disableBoundingBox();
@@ -39,9 +42,8 @@ public:
 	void enablePolygonNormals();
 	void enableVertexNormals();
 	void disableVertexNormals();
-	void setLineClr(COLORREF clr);
-	void setNormalClr(COLORREF clr);
-	void setBackgroundClr(COLORREF clr);
+	void enableDualView();
+	void disableDualView();
 };
 
 #endif /* Scene_h */
