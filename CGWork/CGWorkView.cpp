@@ -29,7 +29,6 @@ static char THIS_FILE[] = __FILE__;
 // Static Functions:
 static AXIS sceneAxisTranslator(int guiID);
 static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
-static void setBackground(COLORREF* bitArray, CRect rect, COLORREF clr);
 static COLORREF invertRB(COLORREF clr);
 
 // External Variabls:
@@ -39,9 +38,6 @@ static COLORREF invertRB(COLORREF clr);
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
 
 #define INITIAL_SENSITIVITY 10
-#define INITIAL_BACKGROUND_COLOR RGB(5,5,5)
-#define INITIAL_OBJECT_COLOR RGB(230,230,230)
-#define INITIAL_NORMAL_COLOR RGB(0,255,0)
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView
 
@@ -108,6 +104,8 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_COMMAND(ID_OPTIONS_FINENESSCONTROL, &CCGWorkView::OnOptionsFinenesscontrol)
+	ON_COMMAND(ID_VIEW_SPLITSCREEN, &CCGWorkView::OnViewSplitscreen)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_SPLITSCREEN, &CCGWorkView::OnUpdateViewSplitscreen)
 END_MESSAGE_MAP()
 
 
@@ -134,23 +132,24 @@ CCGWorkView::CCGWorkView() :
 	m_bPolyNormals = false;
 	m_bVertexNormals = false;
 	m_bIsViewSpace = true;
+	m_bDualView = false;
 	m_nTranslationSensetivity = INITIAL_SENSITIVITY;
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
-	m_nScaleSensetivity = INITIAL_SENSITIVITY/5;
-	m_clrBackground = INITIAL_BACKGROUND_COLOR;
+	m_nScaleSensetivity = INITIAL_SENSITIVITY / 5;
 
 
 	// Transformations Quantitive Setup:
-	translationQuota = 2;
-	rotationQuota = 0.4;
+	translationQuota = 1.2;
+	rotationQuota = 0.5;
 	scalingQuota = 0.8;
 
 	//Scene initilization:
 	auto newCamera = new Camera();
 	newCamera->Ortho();
-	newCamera->LookAt(Vec4(0, 0, 8, 1), Vec4(0, 0, 0, 1), Vec4(0, 1, 0, 1));
+	newCamera->LookAt(Vec4(0, 0, 8, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
+	//newCamera->LookAt(Vec4(0, 0, 8, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
 	cameraIDs.push_back(scene.addCamera(newCamera));
-	
+
 
 	//Shading Related
 	m_nLightShading = ID_LIGHT_SHADING_FLAT;
@@ -238,9 +237,16 @@ BOOL CCGWorkView::InitializeCGWork()
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
-	scene.setLineClr(INITIAL_OBJECT_COLOR);
-	scene.setNormalClr(INITIAL_NORMAL_COLOR);
+	//scene.setLineClr(INITIAL_OBJECT_COLOR);
+	//scene.setNormalClr(INITIAL_NORMAL_COLOR);
 	bitArray = new COLORREF[w * h];
+
+	for (int i = 0; i < r.Width(); i++) {
+		for (int j = 0; j < r.Height(); j++) {
+			bitArray[(i - r.left) + ((r.right - r.left) * (j - r.top))] = STANDARD_BACKGROUND_COLOR;
+		}
+	}
+
 	return TRUE;
 }
 
@@ -307,7 +313,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	CRect r;
 
 	GetClientRect(&r);
-	CDC *pDCToUse = /*m_pDC*/m_pDbDC;
+	CDC *pDCToUse = m_pDbDC;
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
 	initializeBMI(bminfo, r);
@@ -316,16 +322,6 @@ void CCGWorkView::OnDraw(CDC* pDC)
 		bitArray = new COLORREF[h * w];
 	}
 
-	//for (int i = 0; i < r.Width(); i++) {
-	//	for (int j = 0; j < r.Height(); j++) {
-	//		bitArray[(i - r.left) + ((r.right - r.left) * (j - r.top))] = RGB(0, 128, 255);
-	//	}
-	//}
-
-
-
-	//testModel(m_pDbDC, r);
-	setBackground(bitArray, r, m_clrBackground);
 	scene.draw(bitArray, r);
 	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
 
@@ -575,7 +571,15 @@ void CCGWorkView::OnOptionsLineColor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		scene.setLineClr(invertRB(CD.GetColor()));
+		Model* model;
+		if (m_bDualView && !m_bLeftModel) {
+			model = scene.getSecondActiveModel();
+		}
+		else {
+			model = scene.getActiveModel();
+		}
+		Geometry& geometry = model->getGeometry();
+		geometry.setLineClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
@@ -584,7 +588,15 @@ void CCGWorkView::OnOptionsBackgroundColor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		m_clrBackground = invertRB(CD.GetColor());
+		Model* model;
+		if (m_bDualView && !m_bLeftModel) {
+			model = scene.getSecondActiveModel();
+		}
+		else {
+			model = scene.getActiveModel();
+		}
+		Geometry& geometry = model->getGeometry();
+		geometry.setBackgroundClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
@@ -593,7 +605,15 @@ void CCGWorkView::OnOptionsNormalcolor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		scene.setNormalClr(invertRB(CD.GetColor()));
+		Model* model;
+		if (m_bDualView && !m_bLeftModel) {
+			model = scene.getSecondActiveModel();
+		}
+		else {
+			model = scene.getActiveModel();
+		}
+		Geometry& geometry = model->getGeometry();		
+		geometry.setNormalClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
@@ -691,7 +711,7 @@ void initializeBMI(BITMAPINFO& bminfo, CRect rect)
 {
 	bminfo.bmiHeader.biSize = sizeof(bminfo.bmiHeader);
 	bminfo.bmiHeader.biWidth = rect.right - rect.left;
-	bminfo.bmiHeader.biHeight = rect.bottom - rect.top;
+	bminfo.bmiHeader.biHeight = rect.top - rect.bottom;
 	bminfo.bmiHeader.biPlanes = 1;
 	bminfo.bmiHeader.biBitCount = 32;
 	bminfo.bmiHeader.biCompression = BI_RGB;
@@ -703,14 +723,6 @@ void initializeBMI(BITMAPINFO& bminfo, CRect rect)
 
 }
 
-void setBackground(COLORREF * bitArr, CRect rect, COLORREF clr)
-{
-	for (int i = 0; i < rect.Width(); i++) {
-		for (int j = 0; j < rect.Height(); j++) {
-			bitArr[(i - rect.left) + ((rect.right - rect.left) * (j - rect.top))] = clr;
-		}
-	}
-}
 
 COLORREF invertRB(COLORREF clr)
 {
@@ -723,9 +735,13 @@ COLORREF invertRB(COLORREF clr)
 
 void CCGWorkView::OnLButtonDown(UINT nFlags, CPoint point)
 {
-
 	m_bAllowTransformations = true;
 	m_lnLastXPos = point.x;
+	if (m_bDualView) {
+		CRect r;
+		GetClientRect(&r);
+		m_bLeftModel = point.x < r.Width() / 2 ? true : false;
+	}
 	CView::OnLButtonDown(nFlags, point);
 }
 
@@ -757,8 +773,13 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 //Parses the requested transformation and requests the correct transformation:
 void CCGWorkView::transform(Direction direction)
 {
-
-	Model* model = scene.getActiveModel();
+	Model * model;
+	if (m_bDualView && !m_bLeftModel) {
+		model = scene.getSecondActiveModel();
+	}
+	else {
+		model = scene.getActiveModel();
+	}
 	if (model == nullptr) {
 		return;
 	}
@@ -766,16 +787,16 @@ void CCGWorkView::transform(Direction direction)
 	float adjustedQuota;
 	switch (m_nAction) {
 
-	case (ID_ACTION_ROTATE) : 
+	case (ID_ACTION_ROTATE):
 		adjustedQuota = direction * rotationQuota * m_nRotationSensetivity / 100;
 		if (m_bIsViewSpace)
 			model->rotateViewSpace(sceneAxis, adjustedQuota);
 		else
 			model->rotateObjectSpace(sceneAxis, adjustedQuota);
 		break;
-	
-	case (ID_ACTION_TRANSLATE):		
-		adjustedQuota = direction * translationQuota * m_nTranslationSensetivity/ 100;
+
+	case (ID_ACTION_TRANSLATE):
+		adjustedQuota = direction * translationQuota * m_nTranslationSensetivity / 100;
 		if (m_bIsViewSpace)
 			model->translateViewSpace(sceneAxis, adjustedQuota);
 		else
@@ -784,11 +805,11 @@ void CCGWorkView::transform(Direction direction)
 
 	case (ID_ACTION_SCALE):
 		float percentage = m_nScaleSensetivity / 100;
-		adjustedQuota = (direction == NEGATIVE ? 1 / (scalingQuota + percentage): (scalingQuota + percentage));
+		adjustedQuota = (direction == NEGATIVE ? 1 / (scalingQuota + percentage) : (scalingQuota + percentage));
 		if (m_bIsViewSpace)
 			model->scaleViewSpace(sceneAxis, adjustedQuota);
 		else
-			model->scaleObjectSpace(sceneAxis,  adjustedQuota);
+			model->scaleObjectSpace(sceneAxis, adjustedQuota);
 		//scalingQuota *= (direction == NEGATIVE ? (float)101/100 : (float)99/100);
 		break;
 	}
@@ -796,7 +817,21 @@ void CCGWorkView::transform(Direction direction)
 
 void CCGWorkView::OnOptionsFinenesscontrol()
 {
-//	FinenessControlDialog FCDialog(::CGSkelFFCStates.FineNess);
+	//	FinenessControlDialog FCDialog(::CGSkelFFCStates.FineNess);
 }
 
 
+
+
+void CCGWorkView::OnViewSplitscreen()
+{
+	m_bDualView = !m_bDualView;
+	m_bDualView == true ? scene.enableDualView() : scene.disableDualView();
+	Invalidate();
+}
+
+
+void CCGWorkView::OnUpdateViewSplitscreen(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bDualView);
+}

@@ -3,6 +3,8 @@
 #include "Geometry.h"
 #include "Vertex.h"
 #include "Edge.h"
+#include "stdafx.h"
+
 /*****************************************************************************
 * Skeleton for an interface to a parser to read IRIT data files.			 *
 ******************************************************************************
@@ -22,7 +24,7 @@ IPFreeformConvStateStruct CGSkelFFCState = {
 	SYMB_CRV_APPROX_UNIFORM,  /* CrvApproxMethod */
 	FALSE,   /* ShowIntrnal */
 	FALSE,   /* CubicCrvsAprox */
-	20,      /* Polygonal FineNess */
+	200,      /* Polygonal FineNess */
 	FALSE,   /* ComputeUV */
 	TRUE,    /* ComputeNrml */
 	FALSE,   /* FourPerFlat */
@@ -120,7 +122,7 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 {
 	int i;
 	const char *Str;
-	double RGB[3], Transp;
+	double objectRGB[3], Transp;
 	IPPolygonStruct *PPolygon;
 	IPVertexStruct *PVertex;
 	const IPAttributeStruct *Attrs =
@@ -134,22 +136,35 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	/* You can use IP_IS_POLYGON_OBJ(PObj) and IP_IS_POINTLIST_OBJ(PObj)
 	   to identify the type of the object*/
 
-	if (CGSkelGetObjectColor(PObj, RGB))
+	if (CGSkelGetObjectColor(PObj, objectRGB))
 	{
 		/* color code */
+		COLORREF clr = RGB(objectRGB[0], objectRGB[1], objectRGB[2]);
+		loadedGeometry.setLineClr(clr);
+		loadedGeometry.setNormalClr(clr);
+		loadedGeometry.setBackgroundClr(0xFFFFFF - clr);
 	}
+	else {
+		loadedGeometry.setLineClr(STANDARD_OBJECT_COLOR);
+		loadedGeometry.setNormalClr(STANDARD_NORMAL_COLOR);
+		loadedGeometry.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
+	}
+
 	if (CGSkelGetObjectTransp(PObj, &Transp))
 	{
 		/* transparency code */
 	}
+
 	if ((Str = CGSkelGetObjectTexture(PObj)) != NULL)
 	{
 		/* volumetric texture code */
 	}
+
 	if ((Str = CGSkelGetObjectPTexture(PObj)) != NULL)
 	{
 		/* parametric texture code */
 	}
+
 	if (Attrs != NULL)
 	{
 		printf("[OBJECT\n");

@@ -11,7 +11,8 @@
 Model::Model(Geometry& geometry) {
 	this->geometry = geometry;
 	this->mTransform = Mat4::Identity();
-	//this->geometry.
+	//TODO: REMOVE!!
+	this->mTransform = Mat4::Rotate(XAXIS, 3.1415926535) * mTransform;
 }
 
 Geometry& Model::getGeometry(){

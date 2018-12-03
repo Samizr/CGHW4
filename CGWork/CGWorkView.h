@@ -42,6 +42,8 @@ private:
 	bool m_bPolyNormals;			//Polygon normals activation
 	bool m_bVertexNormals;			//Vertex normals activation
 	bool m_bBoxFrame;				//Bounding box activation
+	bool m_bDualView;				//Split screen or not?
+	bool m_bLeftModel;				//Acticating transformations on left model?	
 	float m_nTranslationSensetivity;   //Mouse sensetivity for translation
 	float m_nRotationSensetivity;		//Mouse sensetivity for rotation
 	float m_nScaleSensetivity;		//Mouse sensetivity for scaling
@@ -178,6 +180,8 @@ public:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnOptionsSetsensitivityvariables();
 	afx_msg void OnOptionsFinenesscontrol();
+	afx_msg void OnViewSplitscreen();
+	afx_msg void OnUpdateViewSplitscreen(CCmdUI *pCmdUI);
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

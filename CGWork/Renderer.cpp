@@ -9,74 +9,90 @@
 #include "Renderer.h"
 #include "LinePlotter.h"
 #include <math.h>
-static void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
-static void drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 finalMatrix);
-static void drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix, COLORREF clr);
-static void drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix, COLORREF clr);
+
+
+
+static Mat4 generateViewportMatrix(CRect rect);
+static Mat4 generateNormalizationMatrix(Geometry* geometry);
 
 #define NORMAL_LENGTH_FACTOR 13
 
 // this sets all the matricies to be identity;
 Renderer::Renderer() {
-	
 	withBounding = false;
 	withPolygonNormals = false;
 	withVertexNormals = false;
 }
 
 
-static Mat4 generateNormalizationMatrix(float deltaX, float deltaY, float deltaZ, float sumX, float sumY, float sumZ) {
-	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, 2 / deltaZ, -sumZ / deltaZ), Vec4(0, 0, 0, 1) };
-	return Mat4(vecNM);
-}
 
-void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Geometry * geometry) {
+void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 
-	float sumX, sumY, sumZ;
-	sumX = geometry->getMaxX() + geometry->getMinX();
-	sumY = geometry->getMaxY() + geometry->getMinY();
-	sumZ = geometry->getMaxZ() + geometry->getMinZ();
-	Mat4 normalizationMatrix = generateNormalizationMatrix(24, 13.5, 24, sumX, 0, sumZ);
+	Geometry* geometry = &model->getGeometry();
+	
+	drawBackground(bitArr, rect, geometry->getBackgroundClr());
+
+	objectWorldMatrix = model->getTransformationMatrix();
+	windowMatrix = generateViewportMatrix(rect);
+	normalizationMatrix = generateNormalizationMatrix(geometry);
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
+	//Mat4 debugA = projectionMatrix * (cameraMatrix * objectWorldMatrix);
+	//int z1 = 100000, z2 = 100000;
+	//for (Edge* edge : geometry->getEdges()) {
+	//	Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
+	//	Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
+	//	p1 = debugA * p1;
+	//	p2 = debugA * p2;
+	//	if (p1.zCoord() < z1)
+	//		z1 = p1.zCoord();
+	//	if (p2.zCoord() < z2)
+	//		z2 = p2.zCoord();
+	//}
+	//z1 = 100000;
+	//z2 = 100000;
 	for (Edge* edge : geometry->getEdges()) {
 		Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
 		Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
 		p1 = finalMatrix * p1;
 		p2 = finalMatrix * p2;
-		plotLine(p1.xCoord() / p1.wCoord(), p1.yCoord() / p1.wCoord(), p2.xCoord() / p2.wCoord(), p2.yCoord() / p2.wCoord(), bitArr, rect, lineClr);
+		//	if (p1.zCoord() < -2.0 && p2.zCoord() < -2.0)
+		//if (p1.xCoord() < rect.right && p1.yCoord() < rect.bottom && p2.xCoord() < rect.right && p2.yCoord() < rect.bottom)
+		int p1x = p1.xCoord() / p1.wCoord();
+		int p2x = p2.xCoord() / p2.wCoord();
+		int p1y = p1.yCoord() / p1.wCoord();
+		int p2y = p2.yCoord() / p1.wCoord();
+		if (p1x > rect.left && p1x < rect.right && p2x > rect.left && p2x < rect.right)
+		plotLine(p1x, p1y, p2x, p2y, bitArr, mainRect, geometry->getLineClr());
+		//if (p1.zCoord() < z1)
+		//	z1 = p1.zCoord();
+		//if (p2.zCoord() < z2)
+		//	z2 = p2.zCoord();
 	}
 	if (withBounding) {
-		drawBoundingBox(bitArr, rect, geometry, lineClr, finalMatrix);
+		drawBoundingBox(bitArr, mainRect, geometry, geometry->getLineClr(), finalMatrix);
 	}
 	if (withPolygonNormals) {
-		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix, normalClr);
+		drawPolygonNormals(bitArr, mainRect, geometry, restMatrix, objectWorldMatrix, geometry->getNormalClr());
 	}
 	if (withVertexNormals) {
-		drawVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix, normalClr);
+		drawVertexNormals(bitArr, mainRect, geometry, restMatrix, objectWorldMatrix, geometry->getNormalClr());
 	}
-	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
+	drawCenterAxis(bitArr, mainRect, geometry, finalMatrix);
 }
 
-void static drawProximity(COLORREF* bitArr, CRect rect, Geometry * geometry, float x, float y, Mat4 finalMatrix) {
-	Vec4 closestVertexToScreen = (*(geometry->getVertices().begin()))->getVec4Coords();
-	for (Vertex* vertex : geometry->getVertices()) {
-		Vec4 pointOnScreen= finalMatrix * vertex->getVec4Coords();
-		if (euclideanDistance(pointOnScreen.xCoord(), pointOnScreen.yCoord(), x, y) < 50) {
-			if()
+void Renderer::drawBackground(COLORREF * bitArr, CRect rect, COLORREF clr)
+{
+
+	for (int i = rect.left; i < rect.right; i++) {
+		for (int j = rect.top; j < rect.bottom; j++) {
+			bitArr[i  + j * mainRect.Width()] = clr;
 		}
 	}
+
 }
 
-float static euclideanDistance(float x1, float y1, float x2, float y2) {
-	float deltaX = x1 - x2;
-	float deltaY = y1 - y2;
-	return sqrt(pow(deltaX, 2) + pow(deltaY, 2));
-}
-
-
-
-static void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix) {
+void Renderer::drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix) {
 	float mtop, mbottom, mfar, mnear, mright, mleft;
 	float xVals[2] = {geometry->getMinX(), geometry->getMaxX()};
 	float yVals[2] = {geometry->getMinY(), geometry->getMaxY()};
@@ -114,7 +130,7 @@ static void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, C
 	}
 }
 
-void drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 finalMatrix) {
+void Renderer::drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 finalMatrix) {
 	float deltaXNorm = pow(geometry->getMaxX() - geometry->getMinX(), 2);
 	float deltaYNorm = pow(geometry->getMaxY() - geometry->getMinY(), 2);
 	float deltaZNorm = pow(geometry->getMaxZ() - geometry->getMinZ(), 2);
@@ -133,7 +149,7 @@ void drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 fina
 }
 
 
-void drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix, COLORREF clr) {
+void Renderer::drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix, COLORREF clr) {
 	for (Vertex* vertex : geometry->getVertices()) {
 		Vec4 currentVertex = transformationMatrix *  Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
 		Vec4 target = vertex->calculateVertexNormalTarget(transformationMatrix);
@@ -145,7 +161,7 @@ void drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 r
 	}
 }
 
-void drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix, COLORREF clr)
+void Renderer::drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix, COLORREF clr)
 {
 	std::list<Face*> faces = geometry->getFaces();
 	for (Face* face : faces) {
@@ -158,6 +174,44 @@ void drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 
 		plotLine(midpoint.xCoord() / p1Factor, midpoint.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, clr);
 	}
 }
+
+
+Mat4 generateViewportMatrix(CRect rect)
+{
+	float deltaW = rect.right - rect.left;
+	float deltaH = rect.bottom - rect.top;
+	float virtualDeltaW = min(deltaH, deltaH);
+	float virtualDeltaH = min(deltaH, deltaH);
+	if (16 * deltaH > 9 * deltaW) {
+		virtualDeltaW = deltaW;
+		virtualDeltaH = deltaW * 9 / 16;
+	}
+	else {
+		virtualDeltaW = deltaH * 16 / 9;
+		virtualDeltaH = deltaH;
+	}
+	float sumW = rect.right + rect.left;
+	float sumH = rect.top + rect.bottom;
+	Vec4 vecVPM[4] = { Vec4(virtualDeltaW / 2, 0, 0, sumW / 2), Vec4(0, virtualDeltaH / 2, 0, sumH / 2), Vec4(0, 0, 0.5, 0.5), Vec4(0, 0, 0, 1) };
+	return Mat4(vecVPM);
+}
+
+static Mat4 generateNormalizationMatrix(Geometry* geometry) {
+	float sumX, sumY, sumZ, deltaX, deltaY, deltaZ;
+	sumX = geometry->getMaxX() + geometry->getMinX();
+	sumY = geometry->getMaxY() + geometry->getMinY();
+	sumZ = geometry->getMaxZ() + geometry->getMinZ();
+	deltaX = geometry->getMaxX() - geometry->getMinX();
+	deltaY = geometry->getMaxY() - geometry->getMinY();
+	deltaZ = geometry->getMaxZ() - geometry->getMinZ();
+	deltaX *= 2;
+	deltaY *= 2;
+
+	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, -2 / deltaZ, sumZ / deltaZ), Vec4(0, 0, 0, 1) };
+	return Mat4(vecNM);
+}
+
+
 
 void Renderer::setObjectWorldMatrix(Mat4 &matrix) {
 	objectWorldMatrix = matrix;
@@ -173,6 +227,11 @@ void Renderer::setProjectionMatrix(Mat4 &matrix) {
 
 void Renderer::setWindowMatrix(Mat4 &matrix) {
 	windowMatrix = matrix;
+}
+
+void Renderer::setMainRect(CRect rect)
+{
+	mainRect = rect;
 }
 
 void Renderer::disableBoundingBox() {
@@ -199,14 +258,4 @@ void Renderer::enableVertexNormals() {
 
 void Renderer::disableVertexNormals() {
 	this->withVertexNormals = false;
-}
-
-void Renderer::setLineClr(COLORREF clr)
-{
-	lineClr = clr;
-}
-
-void Renderer::setNormalClr(COLORREF clr)
-{
-	normalClr = clr;
 }

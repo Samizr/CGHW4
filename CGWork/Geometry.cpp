@@ -1,9 +1,13 @@
 #include "Geometry.h"
 #include <limits>
-#include <math.h>
 
-static float max(float a, float b);
-static float min(float a, float b);
+#undef max
+#undef min
+
+static float geo_max(float a, float b);
+static float geo_min(float a, float b);
+
+using std::numeric_limits;
 
 Geometry::Geometry() {
 	maxX = std::numeric_limits<float>::min();
@@ -52,12 +56,12 @@ Edge * Geometry::getEdge(Vertex * x, Vertex * y) {
 
 void Geometry::addVertex(Vertex* vertex) {
 	if (this->getVertex(vertex->xCoord(), vertex->yCoord(), vertex->zCoord()) == nullptr) {
-		maxX = max(vertex->xCoord(), maxX);
-		maxY = max(vertex->yCoord(), maxY);
-		maxZ = max(vertex->zCoord(), maxZ);
-		minX = min(vertex->xCoord(), minX);
-		minY = min(vertex->yCoord(), minY);
-		minZ = min(vertex->zCoord(), minZ);
+		maxX = geo_max(vertex->xCoord(), maxX);
+		maxY = geo_max(vertex->yCoord(), maxY);
+		maxZ = geo_max(vertex->zCoord(), maxZ);
+		minX = geo_min(vertex->xCoord(), minX);
+		minY = geo_min(vertex->yCoord(), minY);
+		minZ = geo_min(vertex->zCoord(), minZ);
 		this->verticies.insert(vertex);
 		vertexMap[Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 0)] = vertex;
 	}
@@ -110,6 +114,37 @@ float Geometry::getMinZ()
 	return minZ;
 }
 
+void Geometry::setLineClr(COLORREF clr)
+{
+	lineClr = clr;
+}
+
+void Geometry::setNormalClr(COLORREF clr)
+{
+	normalClr = clr;
+}
+
+void Geometry::setBackgroundClr(COLORREF clr)
+{
+	backgroundClr = clr;
+}
+
+COLORREF Geometry::getLineClr()
+{
+	return lineClr;
+}
+
+COLORREF Geometry::getNormalClr()
+{
+	return normalClr;
+}
+
+COLORREF Geometry::getBackgroundClr()
+{
+	return backgroundClr;
+}
+
+
 bool Geometry::findVertexCollisions()
 {
 	bool returnVal = false;
@@ -132,10 +167,10 @@ size_t Geometry::PointHash::operator()(const Vec4 point)
 
 // Static Function Implementations:
 
-static float max(float a, float b) {
+static float geo_max(float a, float b) {
 	return a > b ? a : b;
 }
 
-static float min(float a, float b) {
+static float geo_min(float a, float b) {
 	return a < b ? a : b;
 }
