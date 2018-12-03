@@ -36,6 +36,7 @@ public:
 	std::map<int, Model*>& getAllModels();
 	
 	void setRenderer(Renderer& renderer);
+	Renderer& getRenderer();
 
 	Model* getMainModel();
 	void setMainModel(Model* model);

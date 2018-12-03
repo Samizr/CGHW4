@@ -46,6 +46,11 @@ void Scene::setRenderer(Renderer & renderer)
 	this->m_renderer = renderer;
 }
 
+Renderer & Scene::getRenderer()
+{
+	return m_renderer;
+}
+
 Model * Scene::getMainModel()
 {
 	return mainModel;

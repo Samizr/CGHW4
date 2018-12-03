@@ -34,6 +34,7 @@ public:
 public:
 
 private:
+	void resetButtons();
 
 	//Parameters that define the drawing and viewing of the objects:
 	int m_nAxis;				// Axis of Action, X Y or Z

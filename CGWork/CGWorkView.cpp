@@ -34,7 +34,6 @@ static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
 //static void resetModel(Model* model);
 static COLORREF invertRB(COLORREF clr);
 
-
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
 
@@ -392,6 +391,9 @@ void CCGWorkView::OnFileLoad()
 		scene.addCamera(newCamera);
 		newCamera->LookAt(Vec4(0, 0, 3 * distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
 
+		resetButtons();
+		m_clrBackground = STANDARD_BACKGROUND_COLOR;
+
 		if (m_bIsPerspective) {
 			newCamera->Perspective(m_nPerspectiveD, m_nPerspectiveAlpha);
 		}
@@ -589,18 +591,19 @@ void CCGWorkView::OnOptionsLineColor()
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
 		Model* model;
-		if (m_bDualView && !m_bLeftModel) {
-			model = scene.getSecondActiveModel();
+		if (m_nIsSubobjectMode) {
+			Geometry& geometry = scene.getActiveModel()->getGeometry();
+			geometry.setLineClr(invertRB(CD.GetColor()));
 		}
 		else {
-			model = scene.getActiveModel();
+			for (std::pair<int, Model*> pair : scene.getAllModels()) {
+				Geometry& geometry = pair.second->getGeometry();
+				geometry.setLineClr(invertRB(CD.GetColor()));
+			}
 		}
-		Geometry& geometry = model->getGeometry();
-		geometry.setLineClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
-
 void CCGWorkView::OnOptionsBackgroundColor()
 {
 	CColorDialog CD;
@@ -632,7 +635,7 @@ void CCGWorkView::OnOptionsNormalcolor()
 		//}
 		//Geometry& geometry = model->getGeometry();		
 		//geometry.setNormalClr(invertRB(CD.GetColor()));
-		renderer.setNormalClr(invertRB(CD.GetColor()));
+		scene.getRenderer().setNormalClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
@@ -918,4 +921,12 @@ void CCGWorkView::OnViewObjectselection()
 		scene.setActiveModelID(m_nSubobject);
 		m_nIsSubobjectMode == true ? scene.setSubobjectMode() : scene.setWholeobjectMode();
 	}
+}
+
+void CCGWorkView::resetButtons() {
+	m_bIsPerspective = false;
+	m_bBoxFrame = false;
+	m_bPolyNormals = false;
+	m_bVertexNormals = false;
+	m_bIsViewSpace = true;
 }
