@@ -23,7 +23,7 @@ static char THIS_FILE[] = __FILE__;
 #include "MouseSensitivityDialog.h"
 #include "FinenessControlDialog.h"
 #include "PerspectiveParametersDialog.h"
-#include "AdvancedSettingsDialog.h"
+#include "AdvancedDialog.h"
 
 // For Status Bar access
 #include "MainFrm.h"
@@ -140,6 +140,7 @@ CCGWorkView::CCGWorkView()
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
 	m_nScaleSensetivity = INITIAL_SENSITIVITY / 5;
 	m_nSubobject = -1;
+	m_nIsSubobjectMode = false;
 
 	// Transformations Quantitive Setup:
 	translationQuota = 1.2;
@@ -788,12 +789,12 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 //Parses the requested transformation and requests the correct transformation:
 void CCGWorkView::transform(Direction direction)
 {
-	Model * model;
-	if (m_bDualView && !m_bLeftModel) {
-		model = scene.getSecondActiveModel();
+	Model * model = nullptr;
+	if (m_nIsSubobjectMode) {
+		model = scene.getModel(m_nSubobject);
 	}
 	else {
-		model = scene.getActiveModel();
+		model = scene.getMainModel();
 	}
 	if (model == nullptr) {
 		return;
@@ -905,12 +906,13 @@ void CCGWorkView::OnViewResetview()
 
 void CCGWorkView::OnViewObjectselection()
 {
-	AdvancedSettingsDialog dlg;
+	AdvancedDialog dlg;
 	dlg.maxSubobject = scene.getAllModels().size();
-	dlg.subButton.SetCheck(m_nIsSubobjectMode);
-	dlg.wholeButton.SetCheck(!m_nIsSubobjectMode);
+	dlg.subChecked = m_nIsSubobjectMode;
 	if (dlg.DoModal() == IDOK) {
-		m_nSubobject = dlg.objectID;
-		m_nIsSubobjectMode = dlg.subButton.GetCheck();
+		m_nIsSubobjectMode = dlg.subChecked;
+		m_nSubobject = dlg.subobjectID;
+		scene.setActiveModelID(m_nSubobject);
+		m_nIsSubobjectMode == true ? scene.setSubobjectMode() : scene.setWholeobjectMode();
 	}
 }

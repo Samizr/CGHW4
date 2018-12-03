@@ -15,6 +15,8 @@ Scene::Scene(){
 	this->activeModel = -1;
 	this->secondActiveModel = -1;
 	this->dualView = false;
+	this->subobjectDraw = false;
+	this->mainModel = nullptr;
 }
 
 int Scene::addModel(Model* model){
@@ -54,6 +56,16 @@ void Scene::setMainModel(Model * model)
 	mainModel = model;
 }
 
+void Scene::setSubobjectMode()
+{
+	subobjectDraw = true;
+}
+
+void Scene::setWholeobjectMode()
+{
+	subobjectDraw = false;
+}
+
 Model* Scene::getModel(int id) {
 	if (models.find(id) == models.end()) {
 		return nullptr;
@@ -90,6 +102,11 @@ Camera* Scene::getActiveCamera() {
 	return cameras[activeCamera];
 }
 
+void Scene::setActiveModelID(int id)
+{
+	activeModel = id;
+}
+
 void Scene::draw(COLORREF* bitArr, CRect rect) {
 	if (activeModel == -1 || activeCamera == -1) {
 		return;
@@ -98,11 +115,16 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	Camera* camera = cameras[activeCamera];
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
 	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
-	this->m_renderer.setObjectWorldMatrix(mainModel->getTransformationMatrix());
 	this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&mainModel->getGeometry()));
 	this->m_renderer.setMainRect(rect);
 
 	for (std::pair<int, Model*> pair : models) {
+		if (subobjectDraw && pair.first == activeModel) {
+			this->m_renderer.setObjectWorldMatrix(models[activeModel]->getTransformationMatrix());
+		}
+		else {
+			this->m_renderer.setObjectWorldMatrix(mainModel->getTransformationMatrix());
+		}
 		m_renderer.drawWireframe(bitArr, rect, pair.second);
 	}
 

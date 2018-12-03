@@ -90,7 +90,7 @@
     <ClCompile Include="FinenessControlDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AdvancedSettingsDialog.cpp">
+    <ClCompile Include="AdvancedDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -247,7 +247,7 @@
     <ClInclude Include="FinenessControlDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AdvancedSettingsDialog.h">
+    <ClInclude Include="AdvancedDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

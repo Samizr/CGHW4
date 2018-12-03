@@ -30,7 +30,6 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 	
 	//drawBackground(bitArr, rect, RGB(255, 255, 255));//geometry->getBackgroundClr());
 
-	objectWorldMatrix = model->getTransformationMatrix();
 	windowMatrix = generateViewportMatrix(rect);
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));

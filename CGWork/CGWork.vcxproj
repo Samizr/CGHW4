@@ -160,7 +160,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AdvancedSettingsDialog.cpp" />
+    <ClCompile Include="AdvancedDialog.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CGWork.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
@@ -236,7 +236,7 @@
     <ResourceCompile Include="CGWork.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AdvancedSettingsDialog.h" />
+    <ClInclude Include="AdvancedDialog.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CGWork.h" />
     <ClInclude Include="CGWorkDoc.h" />
