@@ -29,6 +29,7 @@ static char THIS_FILE[] = __FILE__;
 // Static Functions:
 static AXIS sceneAxisTranslator(int guiID);
 static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
+static void resetModel(Model* model);
 static COLORREF invertRB(COLORREF clr);
 
 
@@ -149,6 +150,7 @@ CCGWorkView::CCGWorkView() :
 	m_lMaterialDiffuse = 0.8;
 	m_lMaterialSpecular = 1.0;
 	m_nMaterialCosineFactor = 32;
+	m_nFinenessValue = 20;
 
 	//init the first light to be enabled
 	m_lights[LIGHT_ID_1].enabled = true;
@@ -229,8 +231,7 @@ BOOL CCGWorkView::InitializeCGWork()
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
-	//scene.setLineClr(INITIAL_OBJECT_COLOR);
-	//scene.setNormalClr(INITIAL_NORMAL_COLOR);
+
 	bitArray = new COLORREF[w * h];
 
 	for (int i = 0; i < r.Width(); i++) {
@@ -366,7 +367,8 @@ void CCGWorkView::OnFileLoad()
 
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 		// Open the file and read it.
-
+		
+		OnViewResetview();
 		// Does not reload the model if requested.
 		auto newModel = new Model(::loadedGeometry);
 		modelIDs.push_back(scene.addModel(newModel));
@@ -374,9 +376,7 @@ void CCGWorkView::OnFileLoad()
 		m_nPerspectiveD = distance;
 		auto newCamera = new Camera();
 		cameraIDs.push_back(scene.addCamera(newCamera));
-		//ADD RESET HERE:
 		newCamera->LookAt(Vec4(0, 0, distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
-
 
 		Invalidate();	// force a WM_PAINT for drawing.
 	}
@@ -816,7 +816,10 @@ void CCGWorkView::transform(Direction direction)
 
 void CCGWorkView::OnOptionsFinenesscontrol()
 {
-	//FinenessControlDialog FCDialog(::CGSkelFFCStates.FineNess);
+	FinenessControlDialog dlg(m_nFinenessValue);
+	if (dlg.DoModal() == IDOK) {
+		m_nFinenessValue = dlg.fineness;
+	}
 }
 
 
@@ -859,23 +862,48 @@ void CCGWorkView::OnOptionsPerspectivecontrol()
 
 void CCGWorkView::OnViewResetview()
 {
-	for (int modelID : modelIDs) {
-		Model* model = scene.getModel(modelID);
-		model->setTransformation(Mat4::Identity());
-	}
 	m_bBoxFrame = false;
-	m_bDualView = false;
 	m_bIsPerspective = false;
 	m_bIsViewSpace = false;
 	m_bPolyNormals = false;
 	m_bVertexNormals = false;
 	m_nAxis = ID_AXIS_X;
 	m_nAction = ID_ACTION_ROTATE;
+	
+	for (int modelID : modelIDs) { // FIX THIS
+		Model* model = scene.getModel(modelID);
+		model->setTransformation(Mat4::Identity());
+	}
+
+	//Reset first model
 	Model* model = scene.getActiveModel();
+	if (model == nullptr) //REMOVE THIS
+		return;
 	Geometry& geometry = model->getGeometry();
 	geometry.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
 	geometry.setLineClr(STANDARD_OBJECT_COLOR);
 	geometry.setNormalClr(STANDARD_NORMAL_COLOR);
+
+	//Reset second model
+	model = scene.getActiveModel();
+	if (model == nullptr)
+		return;
+	model->setTransformation(Mat4::Identity());
+	geometry = model->getGeometry();
+	geometry.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
+	geometry.setLineClr(STANDARD_OBJECT_COLOR);
+	geometry.setNormalClr(STANDARD_NORMAL_COLOR);
+
 	Invalidate();
 
+}
+
+static void resetModel(Model* model) {
+	if (model == nullptr)
+		return;
+	model->setTransformation(Mat4::Identity());
+	Geometry& geometry = model->getGeometry();
+	geometry.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
+	geometry.setLineClr(STANDARD_OBJECT_COLOR);
+	geometry.setNormalClr(STANDARD_NORMAL_COLOR);
 }
