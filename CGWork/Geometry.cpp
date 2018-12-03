@@ -75,7 +75,7 @@ void Geometry::addVertex(Vertex* vertex) {
 
 std::list<Edge*> Geometry::getEdges()
 {
-	return this->edges;
+	return this->edges;	
 }
 
 std::set<Vertex*> Geometry::getVertices()
@@ -123,29 +123,9 @@ void Geometry::setLineClr(COLORREF clr)
 	lineClr = clr;
 }
 
-void Geometry::setNormalClr(COLORREF clr)
-{
-	normalClr = clr;
-}
-
-void Geometry::setBackgroundClr(COLORREF clr)
-{
-	backgroundClr = clr;
-}
-
 COLORREF Geometry::getLineClr()
 {
 	return lineClr;
-}
-
-COLORREF Geometry::getNormalClr()
-{
-	return normalClr;
-}
-
-COLORREF Geometry::getBackgroundClr()
-{
-	return backgroundClr;
 }
 
 void Geometry::clear()

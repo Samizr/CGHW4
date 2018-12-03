@@ -13,9 +13,9 @@
 
 
 static Mat4 generateViewportMatrix(CRect rect);
-static Mat4 generateNormalizationMatrix(Geometry* geometry);
 
 #define NORMAL_LENGTH_FACTOR 13
+
 
 // this sets all the matricies to be identity;
 Renderer::Renderer() {
@@ -28,11 +28,10 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 
 	Geometry* geometry = &model->getGeometry();
 	
-	drawBackground(bitArr, rect, geometry->getBackgroundClr());
+	//drawBackground(bitArr, rect, RGB(255, 255, 255));//geometry->getBackgroundClr());
 
 	objectWorldMatrix = model->getTransformationMatrix();
 	windowMatrix = generateViewportMatrix(rect);
-	normalizationMatrix = generateNormalizationMatrix(geometry);
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
 	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
@@ -58,10 +57,10 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 		drawBoundingBox(bitArr, rect, geometry, geometry->getLineClr(), finalMatrix);
 	}
 	if (withPolygonNormals) {
-		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix, geometry->getNormalClr());
+		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
 	if (withVertexNormals) {
-		drawVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix, geometry->getNormalClr());
+		drawVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
 	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
 }
@@ -146,7 +145,7 @@ void Renderer::drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry,
 }
 
 
-void Renderer::drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix, COLORREF clr) {
+void Renderer::drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix) {
 	for (Vertex* vertex : geometry->getVertices()) {
 		Vec4 vertexVector = Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
 		Vec4 currentVertex = transformationMatrix * vertexVector;
@@ -161,11 +160,11 @@ void Renderer::drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geomet
 		target = restMatrix * target;
 		float p1Factor = currentVertex.wCoord();
 		float p2Factor = target.wCoord();
-		plotLine(currentVertex.xCoord() / p1Factor, currentVertex.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, mainRect.Width(), clr);
+		plotLine(currentVertex.xCoord() / p1Factor, currentVertex.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, mainRect.Width(), normalClr);
 	}
 }
 
-void Renderer::drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix, COLORREF clr)
+void Renderer::drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix)
 {
 	std::list<Face*> faces = geometry->getFaces();
 	for (Face* face : faces) {
@@ -181,7 +180,7 @@ void Renderer::drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geome
 		target = restMatrix * target;
 		float p1Factor = midpoint.wCoord();
 		float p2Factor = target.wCoord();
-		plotLine(midpoint.xCoord() / p1Factor, midpoint.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, mainRect.Width(), clr);
+		plotLine(midpoint.xCoord() / p1Factor, midpoint.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, mainRect.Width(), normalClr);
 	}
 }
 
@@ -206,22 +205,6 @@ Mat4 generateViewportMatrix(CRect rect)
 	return Mat4(vecVPM);
 }
 
-static Mat4 generateNormalizationMatrix(Geometry* geometry) {
-	float sumX, sumY, sumZ, deltaX, deltaY, deltaZ;
-	sumX = geometry->getMaxX() + geometry->getMinX();
-	sumY = geometry->getMaxY() + geometry->getMinY();
-	sumZ = geometry->getMaxZ() + geometry->getMinZ();
-	deltaX = geometry->getMaxX() - geometry->getMinX();
-	deltaY = geometry->getMaxY() - geometry->getMinY();
-	deltaZ = geometry->getMaxZ() - geometry->getMinZ();
-	deltaX *= 2;
-	deltaY *= 2;
-
-	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, -2 / deltaZ, sumZ / deltaZ), Vec4(0, 0, 0, 1) };
-	return Mat4(vecNM);
-}
-
-
 
 void Renderer::setObjectWorldMatrix(Mat4 &matrix) {
 	objectWorldMatrix = matrix;
@@ -235,6 +218,11 @@ void Renderer::setProjectionMatrix(Mat4 &matrix) {
 	projectionMatrix = matrix;
 }
 
+void Renderer::setNormalizationMatrix(Mat4 & matrix)
+{
+	normalizationMatrix = matrix;
+}
+
 void Renderer::setWindowMatrix(Mat4 &matrix) {
 	windowMatrix = matrix;
 }
@@ -242,6 +230,16 @@ void Renderer::setWindowMatrix(Mat4 &matrix) {
 void Renderer::setMainRect(CRect rect)
 {
 	mainRect = rect;
+}
+
+void Renderer::setBackgroundClr(COLORREF clr)
+{
+	backgroundClr = clr;
+}
+
+void Renderer::setNormalClr(COLORREF clr)
+{
+	normalClr = clr;
 }
 
 void Renderer::disableBoundingBox() {

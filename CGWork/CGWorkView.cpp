@@ -23,13 +23,15 @@ static char THIS_FILE[] = __FILE__;
 #include "MouseSensitivityDialog.h"
 #include "FinenessControlDialog.h"
 #include "PerspectiveParametersDialog.h"
+#include "AdvancedSettingsDialog.h"
+
 // For Status Bar access
 #include "MainFrm.h"
 
 // Static Functions:
 static AXIS sceneAxisTranslator(int guiID);
 static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
-static void resetModel(Model* model);
+//static void resetModel(Model* model);
 static COLORREF invertRB(COLORREF clr);
 
 
@@ -107,6 +109,7 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_SPLITSCREEN, &CCGWorkView::OnUpdateViewSplitscreen)
 	ON_COMMAND(ID_OPTIONS_PERSPECTIVECONTROL, &CCGWorkView::OnOptionsPerspectivecontrol)
 	ON_COMMAND(ID_VIEW_RESETVIEW, &CCGWorkView::OnViewResetview)
+	ON_COMMAND(ID_VIEW_OBJECTSELECTION, &CCGWorkView::OnViewObjectselection)
 END_MESSAGE_MAP()
 
 
@@ -121,8 +124,7 @@ void auxSolidCone(GLdouble radius, GLdouble height) {
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView construction/destruction
 
-CCGWorkView::CCGWorkView() :
-	scene(renderer)
+CCGWorkView::CCGWorkView()
 {
 	//Set default values
 	m_nAxis = ID_AXIS_X;
@@ -137,6 +139,7 @@ CCGWorkView::CCGWorkView() :
 	m_nTranslationSensetivity = INITIAL_SENSITIVITY;
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
 	m_nScaleSensetivity = INITIAL_SENSITIVITY / 5;
+	m_nSubobject = -1;
 
 	// Transformations Quantitive Setup:
 	translationQuota = 1.2;
@@ -314,6 +317,13 @@ void CCGWorkView::OnDraw(CDC* pDC)
 		bitArray = new COLORREF[h * w];
 	}
 
+	for (int i = r.left; i < r.right; i++) {
+		for (int j = r.top; j < r.bottom; j++) {
+			bitArray[i + j * r.Width()] = RGB(255, 0, 0);
+		}
+	}
+
+
 	scene.draw(bitArray, r);
 	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
 
@@ -321,8 +331,6 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	{
 		m_pDC->BitBlt(r.left, r.top, r.right, r.bottom, pDCToUse, r.left, r.top, SRCCOPY);
 	}
-
-
 
 
 }
@@ -369,13 +377,15 @@ void CCGWorkView::OnFileLoad()
 		// Open the file and read it.
 		
 		// Does not reload the model if requested.
+		scene = loadedScene;
+		scene.setRenderer(renderer);
 		auto newModel = new Model(::loadedGeometry);
-		modelIDs.push_back(scene.addModel(newModel));
+		scene.setMainModel(newModel); 
 		float distance = (::loadedGeometry.getMaxZ() - ::loadedGeometry.getMinZ());
 		m_nPerspectiveD = 3 * distance;
 		m_nPerspectiveAlpha = distance;
 		auto newCamera = new Camera();
-		cameraIDs.push_back(scene.addCamera(newCamera));
+		scene.addCamera(newCamera);
 		newCamera->LookAt(Vec4(0, 0, 3 * distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
 
 		if (m_bIsPerspective) {
@@ -591,15 +601,16 @@ void CCGWorkView::OnOptionsBackgroundColor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		Model* model;
-		if (m_bDualView && !m_bLeftModel) {
-			model = scene.getSecondActiveModel();
-		}
-		else {
-			model = scene.getActiveModel();
-		}
-		Geometry& geometry = model->getGeometry();
-		geometry.setBackgroundClr(invertRB(CD.GetColor()));
+		//Model* model;
+		//if (m_bDualView && !m_bLeftModel) {
+		//	model = scene.getSecondActiveModel();
+		//}
+		//else {
+		//	model = scene.getActiveModel();
+		//}
+		//Geometry& geometry = model->getGeometry();
+		//geometry.setBackgroundClr(invertRB(CD.GetColor()));
+		renderer.setBackgroundClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
@@ -608,15 +619,16 @@ void CCGWorkView::OnOptionsNormalcolor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		Model* model;
-		if (m_bDualView && !m_bLeftModel) {
-			model = scene.getSecondActiveModel();
-		}
-		else {
-			model = scene.getActiveModel();
-		}
-		Geometry& geometry = model->getGeometry();		
-		geometry.setNormalClr(invertRB(CD.GetColor()));
+		//Model* model;
+		//if (m_bDualView && !m_bLeftModel) {
+		//	model = scene.getSecondActiveModel();
+		//}
+		//else {
+		//	model = scene.getActiveModel();
+		//}
+		//Geometry& geometry = model->getGeometry();		
+		//geometry.setNormalClr(invertRB(CD.GetColor()));
+		renderer.setNormalClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
@@ -861,32 +873,44 @@ void CCGWorkView::OnOptionsPerspectivecontrol()
 	}
 }
 
-
 void CCGWorkView::OnViewResetview()
 {
-	m_bBoxFrame = false;
-	m_bIsPerspective = false;
-	m_bIsViewSpace = false;
-	m_bPolyNormals = false;
-	m_bVertexNormals = false;
-	m_nAxis = ID_AXIS_X;
-	m_nAction = ID_ACTION_ROTATE;
-	
-	for (int i = 0; i < scene.getAllModels().size(); i++) {
-		Model* model = scene.getAllModels()[i];
-		resetModel(model);
-	}
-
-	Invalidate();
-
+//	m_bBoxFrame = false;
+//	m_bIsPerspective = false;
+//	m_bIsViewSpace = false;
+//	m_bPolyNormals = false;
+//	m_bVertexNormals = false;
+//	m_nAxis = ID_AXIS_X;
+//	m_nAction = ID_ACTION_ROTATE;
+//	
+//	for (int i = 0; i < scene.getAllModels().size(); i++) {
+//		Model* model = scene.getAllModels()[i];
+//		resetModel(model);
+//	}
+//
+//	Invalidate();
+//
 }
 
-static void resetModel(Model* model) {
-	if (model == nullptr)
-		return;
-	model->setTransformation(Mat4::Identity());
-	Geometry& geometry = model->getGeometry();
-	geometry.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
-	geometry.setLineClr(STANDARD_OBJECT_COLOR);
-	geometry.setNormalClr(STANDARD_NORMAL_COLOR);
+//static void resetModel(Model* model) {
+//	if (model == nullptr)
+//		return;
+//	model->setTransformation(Mat4::Identity());
+//	Geometry& geometry = model->getGeometry();
+//	geometry.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
+//	geometry.setLineClr(STANDARD_OBJECT_COLOR);
+//	geometry.setNormalClr(STANDARD_NORMAL_COLOR);
+//}
+
+
+void CCGWorkView::OnViewObjectselection()
+{
+	AdvancedSettingsDialog dlg;
+	dlg.maxSubobject = scene.getAllModels().size();
+	dlg.subButton.SetCheck(m_nIsSubobjectMode);
+	dlg.wholeButton.SetCheck(!m_nIsSubobjectMode);
+	if (dlg.DoModal() == IDOK) {
+		m_nSubobject = dlg.objectID;
+		m_nIsSubobjectMode = dlg.subButton.GetCheck();
+	}
 }

@@ -119,8 +119,10 @@ void CGSkelDumpOneTraversedObject(IPObjectStruct *PObj,
 *   bool:		false - fail, true - success.                                *
 *****************************************************************************/
 Geometry loadedGeometry;
+Scene loadedScene;
 bool CGSkelStoreData(IPObjectStruct *PObj)
 {
+	Geometry subGeometry;
 	int i;
 	const char *Str;
 	double objectRGB[3], Transp;
@@ -141,14 +143,10 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	{
 		/* color code */
 		COLORREF clr = RGB(objectRGB[0], objectRGB[1], objectRGB[2]);
-		loadedGeometry.setLineClr(clr);
-		loadedGeometry.setNormalClr(clr);
-		loadedGeometry.setBackgroundClr(0xFFFFFF - clr);
+		subGeometry.setLineClr(clr);
 	}
 	else {
-		loadedGeometry.setLineClr(STANDARD_OBJECT_COLOR);
-		loadedGeometry.setNormalClr(STANDARD_NORMAL_COLOR);
-		loadedGeometry.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
+		subGeometry.setLineClr(STANDARD_OBJECT_COLOR);
 	}
 
 	if (CGSkelGetObjectTransp(PObj, &Transp))
@@ -212,6 +210,7 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 		if (firstVertex == nullptr) {
 			firstVertex = new Vertex(previous->Coord[0], previous->Coord[1], previous->Coord[2]);
 			loadedGeometry.addVertex(firstVertex);
+			subGeometry.addVertex(firstVertex);
 		}
 		firstVertex->addFace(face);
 		Vertex* previousVertex = firstVertex;
@@ -220,11 +219,13 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 			if (currentVertex == nullptr) {
 				currentVertex = new Vertex(current->Coord[0], current->Coord[1], current->Coord[2]);
 				loadedGeometry.addVertex(currentVertex);
+				subGeometry.addVertex(currentVertex);
 			}
 			Edge* edgeToAdd = loadedGeometry.getEdge(previousVertex, currentVertex);
 			if (edgeToAdd == nullptr) {
 				edgeToAdd = new Edge(previousVertex, currentVertex);
 				loadedGeometry.addEdge(edgeToAdd);
+				subGeometry.addEdge(edgeToAdd);
 			}
 			face->addEdge(edgeToAdd);
 			currentVertex->addFace(face);
@@ -234,9 +235,12 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 
 		} while (current != NULL && previous != PPolygon->PVertex);
 		loadedGeometry.addFace(face);
+		subGeometry.addFace(face);
 		// Added By Firas END.
 		/* Close the polygon. */
 	}
+	Model* model = new Model(subGeometry);
+	loadedScene.addModel(model);
 	/* Close the object. */
 	return true;
 }

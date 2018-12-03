@@ -8,8 +8,9 @@
 // comment
 #include "Scene.h"
 
-Scene::Scene(Renderer& renderer){
-	this->m_renderer = renderer;
+static Mat4 generateNormalizationMatrix(Geometry* geometry);
+
+Scene::Scene(){
 	this->activeCamera = -1;
 	this->activeModel = -1;
 	this->secondActiveModel = -1;
@@ -36,6 +37,21 @@ int Scene::addCamera(Camera* camera){
 std::map<int, Model*>& Scene::getAllModels()
 {
 	return models;
+}
+
+void Scene::setRenderer(Renderer & renderer)
+{
+	this->m_renderer = renderer;
+}
+
+Model * Scene::getMainModel()
+{
+	return mainModel;
+}
+
+void Scene::setMainModel(Model * model)
+{
+	mainModel = model;
 }
 
 Model* Scene::getModel(int id) {
@@ -78,13 +94,20 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	if (activeModel == -1 || activeCamera == -1) {
 		return;
 	}
-	Model* model = models[activeModel];
+
 	Camera* camera = cameras[activeCamera];
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
 	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
+	this->m_renderer.setObjectWorldMatrix(mainModel->getTransformationMatrix());
+	this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&mainModel->getGeometry()));
 	this->m_renderer.setMainRect(rect);
 
-	if (dualView) {
+	for (std::pair<int, Model*> pair : models) {
+		m_renderer.drawWireframe(bitArr, rect, pair.second);
+	}
+
+	//DUAL SCREEN MODE CODE:
+	/*if (dualView) {
 		if (secondActiveModel == -1) {
 			secondActiveModel = activeModel;
 			Model* duplicate = new Model(model->getGeometry());
@@ -99,7 +122,7 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	}
 	else {
 		m_renderer.drawWireframe(bitArr, rect, model);
-	}
+	}*/
 }
 
 void Scene::disablePolygonNormals()
@@ -142,3 +165,20 @@ void Scene::disableBoundingBox() {
 
 int Scene::cameraIdGenerator = 0;
 int Scene::modelIdGenerator = 0;
+
+
+
+static Mat4 generateNormalizationMatrix(Geometry* geometry) {
+	float sumX, sumY, sumZ, deltaX, deltaY, deltaZ;
+	sumX = geometry->getMaxX() + geometry->getMinX();
+	sumY = geometry->getMaxY() + geometry->getMinY();
+	sumZ = geometry->getMaxZ() + geometry->getMinZ();
+	deltaX = geometry->getMaxX() - geometry->getMinX();
+	deltaY = geometry->getMaxY() - geometry->getMinY();
+	deltaZ = geometry->getMaxZ() - geometry->getMinZ();
+	deltaX *= 2;
+	deltaY *= 2;
+
+	Vec4 vecNM[4] = { Vec4(2 / deltaX, 0, 0, -sumX / deltaX), Vec4(0, 2 / deltaY, 0, -sumY / deltaY), Vec4(0, 0, -2 / deltaZ, sumZ / deltaZ), Vec4(0, 0, 0, 1) };
+	return Mat4(vecNM);
+}

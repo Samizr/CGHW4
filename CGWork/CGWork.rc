@@ -98,6 +98,7 @@ BEGIN
         MENUITEM "Polygon Normals",             ID_POLYNORMALS
         MENUITEM "Vertex Normals",              ID_VERTEXNORMALS
         MENUITEM SEPARATOR
+        MENUITEM "Advanced Settings",           ID_VIEW_OBJECTSELECTION
         MENUITEM "Split Screen",                ID_VIEW_SPLITSCREEN
         MENUITEM "Reset View",                  ID_VIEW_RESETVIEW
     END
@@ -285,6 +286,21 @@ BEGIN
     LTEXT           "Fineness:",IDC_STATIC,35,46,32,8
 END
 
+IDD_ADVANCED_DIALOG DIALOGEX 0, 0, 295, 111
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Advanced Settings"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,176,90,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,238,90,50,14
+    EDITTEXT        IDC_SUBOBJECT_NUMBER,211,39,60,15,ES_AUTOHSCROLL
+    LTEXT           "Sub-object ID",IDC_STATIC,145,42,53,17
+    GROUPBOX        "Sub-object Settings",IDC_STATIC,129,27,149,38
+    CONTROL         "Whole Object",IDC_WHOLE_RADIO,"Button",BS_AUTORADIOBUTTON,19,40,59,10
+    CONTROL         "Sub Object",IDC_SUBOBJECT_RADIO,"Button",BS_AUTORADIOBUTTON,19,56,51,10
+    GROUPBOX        "Transformation Settings",IDC_STATIC,15,26,87,46
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -371,6 +387,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 90
     END
+
+    IDD_ADVANCED_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 288
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 104
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -407,6 +431,11 @@ BEGIN
 END
 
 IDD_FINENESSCONTROL_DLG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_ADVANCED_DIALOG AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

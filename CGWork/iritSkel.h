@@ -16,9 +16,13 @@
 #include "symb_lib.h"
 #include "Geometry.h"
 #include "Face.h"
+#include "Scene.h"
+#include "Model.h"
+
 
 extern IPFreeformConvStateStruct CGSkelFFCState;
 extern Geometry loadedGeometry;
+extern Scene loadedScene;
 
 
 bool CGSkelProcessIritDataFiles(CString &FileNames, int NumFiles);
