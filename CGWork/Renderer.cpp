@@ -83,6 +83,7 @@ void Renderer::drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry
 	float yVals[2] = {geometry->getMinY(), geometry->getMaxY()};
 	float zVals[2] = {geometry->getMinZ(), geometry->getMaxZ()};
 	int p = 0;
+	Mat4 afterCamMatrix = objectWorldMatrix * cameraMatrix;
 	Vec4 points[8];
 	for (int i = 0; i < 2; i++) {
 		for (int j = 0; j < 2; j++) {
@@ -108,7 +109,9 @@ void Renderer::drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry
 			if (similarPlanes == 2) {
 				Vec4 p1 = finalMatrix * points[i];
 				Vec4 p2 = finalMatrix * points[j];
-				
+				if ((afterCamMatrix * points[i]).zCoord() > 0 || (afterCamMatrix * points[j]).zCoord() > 0) {
+					continue;
+				}
 				plotLine(p1.xCoord() / p1.wCoord(), p1.yCoord() / p1.wCoord(), p2.xCoord() / p2.wCoord(), p2.yCoord() / p2.wCoord(), bitArr, rect, mainRect.Width(), clr);
 			}
 		}
@@ -124,20 +127,36 @@ void Renderer::drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry,
 	float centerY = (geometry->getMinY() + geometry->getMaxY()) / 2;
 	float centerZ = (geometry->getMinZ() + geometry->getMaxZ()) / 2;
 	Vec4 p0, p1, p2, p3;
-	p0 = finalMatrix * Vec4(centerX, centerY, centerZ, 1);
-	p1 = finalMatrix * Vec4(centerX + normalizedSize, centerY, centerZ, 1);
-	p2 = finalMatrix * Vec4(centerX, centerY + normalizedSize, centerZ, 1);
-	p3 = finalMatrix * Vec4(centerX, centerY, centerZ+ normalizedSize, 1);
-	plotLine(p0.xCoord() / p0.wCoord(), p0.yCoord() / p0.wCoord(), p1.xCoord() / p1.wCoord(), p1.yCoord() / p1.wCoord(), bitArr, rect, mainRect.Width(), RGB(255, 0, 0));
-	plotLine(p0.xCoord() / p0.wCoord(), p0.yCoord() / p0.wCoord(), p2.xCoord() / p2.wCoord(), p2.yCoord() / p2.wCoord(), bitArr, rect, mainRect.Width(), RGB(0, 255, 0));
-	plotLine(p0.xCoord() / p0.wCoord(), p0.yCoord() / p0.wCoord(), p3.xCoord() / p3.wCoord(), p3.yCoord() / p3.wCoord(), bitArr, rect, mainRect.Width(), RGB(0, 0, 255));
+	Mat4 afterCamMatrix = cameraMatrix * objectWorldMatrix;
+	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix)));
+	p0 = afterCamMatrix * Vec4(centerX, centerY, centerZ, 1);
+	p1 = afterCamMatrix * Vec4(centerX + normalizedSize, centerY, centerZ, 1);
+	p2 = afterCamMatrix * Vec4(centerX, centerY + normalizedSize, centerZ, 1);
+	p3 = afterCamMatrix * Vec4(centerX, centerY, centerZ + normalizedSize, 1);
+	if (p0.zCoord() < 0 && p1.zCoord() < 0 && p2.zCoord() < 0 && p3.zCoord() < 0) {
+		p0 = restMatrix * p0;
+		p1 = restMatrix * p1;
+		p2 = restMatrix * p2;
+		p3 = restMatrix * p3;
+		plotLine(p0.xCoord() / p0.wCoord(), p0.yCoord() / p0.wCoord(), p1.xCoord() / p1.wCoord(), p1.yCoord() / p1.wCoord(), bitArr, rect, mainRect.Width(), RGB(255, 0, 0));
+		plotLine(p0.xCoord() / p0.wCoord(), p0.yCoord() / p0.wCoord(), p2.xCoord() / p2.wCoord(), p2.yCoord() / p2.wCoord(), bitArr, rect, mainRect.Width(), RGB(0, 255, 0));
+		plotLine(p0.xCoord() / p0.wCoord(), p0.yCoord() / p0.wCoord(), p3.xCoord() / p3.wCoord(), p3.yCoord() / p3.wCoord(), bitArr, rect, mainRect.Width(), RGB(0, 0, 255));
+	}
+	
 }
 
 
 void Renderer::drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix, COLORREF clr) {
 	for (Vertex* vertex : geometry->getVertices()) {
-		Vec4 currentVertex = transformationMatrix *  Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
+		Vec4 vertexVector = Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
+		Vec4 currentVertex = transformationMatrix * vertexVector;
+		if ((cameraMatrix * currentVertex).zCoord() > 0) {
+			continue;
+		}
 		Vec4 target = vertex->calculateVertexNormalTarget(transformationMatrix);
+		if ((cameraMatrix * target).zCoord() > 0) {
+			continue;
+		}
 		currentVertex = restMatrix * currentVertex;
 		target = restMatrix * target;
 		float p1Factor = currentVertex.wCoord();
@@ -151,7 +170,13 @@ void Renderer::drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geome
 	std::list<Face*> faces = geometry->getFaces();
 	for (Face* face : faces) {
 		Vec4 midpoint = transformationMatrix * face->calculateMidpoint();
+		if ((cameraMatrix * midpoint).zCoord() > 0) {
+			continue;
+		}
 		Vec4 target = face->calculateFaceNormalTarget(midpoint, transformationMatrix);
+		if ((cameraMatrix * target).zCoord() > 0) {
+			continue;
+		}
 		midpoint = restMatrix * midpoint;
 		target = restMatrix * target;
 		float p1Factor = midpoint.wCoord();
