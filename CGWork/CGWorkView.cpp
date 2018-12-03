@@ -370,7 +370,7 @@ void CCGWorkView::OnFileLoad()
 		// Does not reload the model if requested.
 		auto newModel = new Model(::loadedGeometry);
 		modelIDs.push_back(scene.addModel(newModel));
-		float distance = ::loadedGeometry.getMaxZ() - ::loadedGeometry.getMinZ();
+		float distance = 2 * (::loadedGeometry.getMaxZ() - ::loadedGeometry.getMinZ());
 		m_nPerspectiveD = distance;
 		auto newCamera = new Camera();
 		cameraIDs.push_back(scene.addCamera(newCamera));
