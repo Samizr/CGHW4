@@ -150,7 +150,6 @@ CCGWorkView::CCGWorkView() :
 	m_lMaterialDiffuse = 0.8;
 	m_lMaterialSpecular = 1.0;
 	m_nMaterialCosineFactor = 32;
-	m_nFinenessValue = 20;
 
 	//init the first light to be enabled
 	m_lights[LIGHT_ID_1].enabled = true;
@@ -362,21 +361,26 @@ void CCGWorkView::OnFileLoad()
 	CFileDialog dlg(TRUE, _T("itd"), _T("*.itd"), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters);
 
 	if (dlg.DoModal() == IDOK) {
+		::loadedGeometry.clear();
 		m_strItdFileName = dlg.GetPathName();		// Full path and filename
 		PngWrapper p;
 
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 		// Open the file and read it.
 		
-		OnViewResetview();
 		// Does not reload the model if requested.
 		auto newModel = new Model(::loadedGeometry);
 		modelIDs.push_back(scene.addModel(newModel));
-		float distance = 2 * (::loadedGeometry.getMaxZ() - ::loadedGeometry.getMinZ());
-		m_nPerspectiveD = distance;
+		float distance = (::loadedGeometry.getMaxZ() - ::loadedGeometry.getMinZ());
+		m_nPerspectiveD = 3 * distance;
+		m_nPerspectiveAlpha = distance;
 		auto newCamera = new Camera();
 		cameraIDs.push_back(scene.addCamera(newCamera));
-		newCamera->LookAt(Vec4(0, 0, distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
+		newCamera->LookAt(Vec4(0, 0, 3 * distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
+
+		if (m_bIsPerspective) {
+			newCamera->Perspective(m_nPerspectiveD, m_nPerspectiveAlpha);
+		}
 
 		Invalidate();	// force a WM_PAINT for drawing.
 	}
@@ -816,13 +820,11 @@ void CCGWorkView::transform(Direction direction)
 
 void CCGWorkView::OnOptionsFinenesscontrol()
 {
-	FinenessControlDialog dlg(m_nFinenessValue);
+	FinenessControlDialog dlg(::CGSkelFFCState.FineNess);
 	if (dlg.DoModal() == IDOK) {
-		m_nFinenessValue = dlg.fineness;
+		::CGSkelFFCState.FineNess = dlg.fineness;
 	}
 }
-
-
 
 
 void CCGWorkView::OnViewSplitscreen()
@@ -870,29 +872,10 @@ void CCGWorkView::OnViewResetview()
 	m_nAxis = ID_AXIS_X;
 	m_nAction = ID_ACTION_ROTATE;
 	
-	for (int modelID : modelIDs) { // FIX THIS
-		Model* model = scene.getModel(modelID);
-		model->setTransformation(Mat4::Identity());
+	for (int i = 0; i < scene.getAllModels().size(); i++) {
+		Model* model = scene.getAllModels()[i];
+		resetModel(model);
 	}
-
-	//Reset first model
-	Model* model = scene.getActiveModel();
-	if (model == nullptr) //REMOVE THIS
-		return;
-	Geometry& geometry = model->getGeometry();
-	geometry.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
-	geometry.setLineClr(STANDARD_OBJECT_COLOR);
-	geometry.setNormalClr(STANDARD_NORMAL_COLOR);
-
-	//Reset second model
-	model = scene.getActiveModel();
-	if (model == nullptr)
-		return;
-	model->setTransformation(Mat4::Identity());
-	geometry = model->getGeometry();
-	geometry.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
-	geometry.setLineClr(STANDARD_OBJECT_COLOR);
-	geometry.setNormalClr(STANDARD_NORMAL_COLOR);
 
 	Invalidate();
 

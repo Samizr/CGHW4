@@ -7,16 +7,21 @@
 static float geo_max(float a, float b);
 static float geo_min(float a, float b);
 
+
 using std::numeric_limits;
 
-Geometry::Geometry() {
+void Geometry::setPointLimits()
+{
 	maxX = std::numeric_limits<float>::min();
 	maxY = std::numeric_limits<float>::min();
 	maxZ = std::numeric_limits<float>::min();
 	minX = std::numeric_limits<float>::max();
 	minY = std::numeric_limits<float>::max();
 	minZ = std::numeric_limits<float>::max();
-	loaded = false;
+}
+
+Geometry::Geometry() {
+	setPointLimits();
 }
 
 Geometry::~Geometry() {
@@ -26,7 +31,6 @@ Geometry::~Geometry() {
 void Geometry::addEdge(Edge* edge) {
 	if (this->getEdge(edge->getA(), edge->getB()) == nullptr) {
 		this->edges.push_back(edge);
-		loaded = true;
 	}
 }
 
@@ -142,6 +146,16 @@ COLORREF Geometry::getNormalClr()
 COLORREF Geometry::getBackgroundClr()
 {
 	return backgroundClr;
+}
+
+void Geometry::clear()
+{
+	verticies.clear();
+	vertexMap.clear();
+	edges.clear();
+	faces.clear();
+	setPointLimits();
+
 }
 
 

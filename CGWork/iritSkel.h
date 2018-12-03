@@ -17,8 +17,7 @@
 #include "Geometry.h"
 #include "Face.h"
 
-
-extern IPFreeformConvStateStruct CGSkelFFCStates;
+extern IPFreeformConvStateStruct CGSkelFFCState;
 extern Geometry loadedGeometry;
 
 
@@ -30,5 +29,6 @@ const char *CGSkelGetObjectPTexture(IPObjectStruct *PObj);
 int CGSkelGetObjectTransp(IPObjectStruct *PObj, double *Transp);
 
 bool CGSkelStoreData(IPObjectStruct *PObj);
+
 
 #endif // IRIT_SKEL_H

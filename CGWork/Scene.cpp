@@ -33,6 +33,11 @@ int Scene::addCamera(Camera* camera){
 	return cameraIdGenerator++;
 }
 
+std::map<int, Model*>& Scene::getAllModels()
+{
+	return models;
+}
+
 Model* Scene::getModel(int id) {
 	if (models.find(id) == models.end()) {
 		return nullptr;

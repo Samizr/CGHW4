@@ -24,7 +24,7 @@ IPFreeformConvStateStruct CGSkelFFCState = {
 	SYMB_CRV_APPROX_UNIFORM,  /* CrvApproxMethod */
 	FALSE,   /* ShowIntrnal */
 	FALSE,   /* CubicCrvsAprox */
-	200,      /* Polygonal FineNess */
+	20,      /* Polygonal FineNess */
 	FALSE,   /* ComputeUV */
 	TRUE,    /* ComputeNrml */
 	FALSE,   /* FourPerFlat */
@@ -35,6 +35,7 @@ IPFreeformConvStateStruct CGSkelFFCState = {
 };
 
 //CGSkelProcessIritDataFiles(argv + 1, argc - 1);
+
 
 
 /*****************************************************************************
@@ -66,7 +67,7 @@ bool CGSkelProcessIritDataFiles(CString &FileNames, int NumFiles)
 		IRIT_GEN_COPY(CrntViewMat, IPViewMat, sizeof(IrtHmgnMatType));
 
 	/* Here some useful parameters to play with in tesselating freeforms: */
-	CGSkelFFCState.FineNess = 20;   /* Res. of tesselation, larger is finer. */
+	//CGSkelFFCState.FineNess = 60;   /* Res. of tesselation, larger is finer. */
 	CGSkelFFCState.ComputeUV = TRUE;   /* Wants UV coordinates for textures. */
 	CGSkelFFCState.FourPerFlat = TRUE;/* 4 poly per ~flat patch, 2 otherwise.*/
 	CGSkelFFCState.LinearOnePolyFlag = TRUE;    /* Linear srf gen. one poly. */
@@ -350,4 +351,3 @@ int CGSkelGetObjectTransp(IPObjectStruct *PObj, double *Transp)
 
 	return !IP_ATTR_IS_BAD_REAL(*Transp);
 }
-

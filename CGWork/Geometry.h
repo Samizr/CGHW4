@@ -17,6 +17,7 @@
 
 class Geometry
 {
+private:
 	class PointHash {
 	public:
 		PointHash() = default;
@@ -28,13 +29,14 @@ class Geometry
 	std::list<Face*> faces;
 	float maxX, maxY, maxZ;
 	float minX, minY, minZ;
-	std::vector<double> objectColor;
 	COLORREF lineClr;
 	COLORREF normalClr;
 	COLORREF backgroundClr;
 
+protected:
+	void setPointLimits();
+
 public:
-	bool loaded;
 	Geometry();
 	~Geometry();
 	void addVertex(Vertex* vertex);
@@ -60,6 +62,8 @@ public:
 	COLORREF getLineClr();
 	COLORREF getNormalClr();
 	COLORREF getBackgroundClr();
+
+	void clear();
 
 	//DEBUG FUNCTION:
 	bool findVertexCollisions();

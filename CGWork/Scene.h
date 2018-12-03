@@ -30,6 +30,8 @@ public:
 	Scene(Renderer& renderer);
 	int addModel(Model* model);
 	int addCamera(Camera* camera);
+	std::map<int, Model*>& getAllModels();
+
 	Model* getModel(int id);
 	Camera* getCamera(int id);
 	Model* getActiveModel();

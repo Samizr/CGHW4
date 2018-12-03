@@ -49,7 +49,6 @@ private:
 	float m_nScaleSensetivity;			//Mouse sensetivity for scaling
 	float m_nPerspectiveD;
 	float m_nPerspectiveAlpha;
-	int m_nFinenessValue;
 	COLORREF m_clrBackground;		//Current background color
 	CString m_strItdFileName;		// file name of IRIT data
 
