@@ -36,6 +36,10 @@ Vec4 Vertex::calculateVertexNormalTarget(Mat4 transformationMatrix)
 	return finalNormal;
 }
 
+Vec4 Vertex::getVec4Coords(){
+	return Vec4(_xCoord, _yCoord, _zCoord, 1);
+}
+
 float Vertex::xCoord() {
 	return this->_xCoord;
 }

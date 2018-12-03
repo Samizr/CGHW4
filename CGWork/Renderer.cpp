@@ -58,6 +58,24 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Geometry * geometry) 
 	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
 }
 
+void static drawProximity(COLORREF* bitArr, CRect rect, Geometry * geometry, float x, float y, Mat4 finalMatrix) {
+	Vec4 closestVertexToScreen = (*(geometry->getVertices().begin()))->getVec4Coords();
+	for (Vertex* vertex : geometry->getVertices()) {
+		Vec4 pointOnScreen= finalMatrix * vertex->getVec4Coords();
+		if (euclideanDistance(pointOnScreen.xCoord(), pointOnScreen.yCoord(), x, y) < 50) {
+			if()
+		}
+	}
+}
+
+float static euclideanDistance(float x1, float y1, float x2, float y2) {
+	float deltaX = x1 - x2;
+	float deltaY = y1 - y2;
+	return sqrt(pow(deltaX, 2) + pow(deltaY, 2));
+}
+
+
+
 static void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix) {
 	float mtop, mbottom, mfar, mnear, mright, mleft;
 	float xVals[2] = {geometry->getMinX(), geometry->getMaxX()};
