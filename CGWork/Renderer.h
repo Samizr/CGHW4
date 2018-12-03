@@ -14,7 +14,6 @@
 #include "stdafx.h"
 #include "Mat4.h"
 
-#define STANDARD_BACKGROUND_COLOR RGB(5,5,5)
 #define STANDARD_NORMAL_COLOR RGB(0,255,0)
 
 class Renderer {
@@ -27,8 +26,8 @@ class Renderer {
 	bool withPolygonNormals;
 	bool withVertexNormals;
 	CRect mainRect;
-	COLORREF backgroundClr;
 	COLORREF normalClr;
+
 
 	void drawBackground(COLORREF * bitArr, CRect rect, COLORREF clr);
 	void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
@@ -45,7 +44,6 @@ public:
 	void setNormalizationMatrix(Mat4& matrix);
 	void setWindowMatrix(Mat4& matrix);
 	void setMainRect(CRect rect);
-	void setBackgroundClr(COLORREF clr);
 	void setNormalClr(COLORREF clr);
 	void disableBoundingBox();
 	void enableBoundingBox();

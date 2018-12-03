@@ -17,6 +17,8 @@
 #include "Light.h"
 #include <vector>
 
+#define STANDARD_BACKGROUND_COLOR RGB(5,5,5)
+
 using std::vector;
 class CCGWorkView : public CView
 {

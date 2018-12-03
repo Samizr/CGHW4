@@ -102,6 +102,15 @@ Camera* Scene::getActiveCamera() {
 	return cameras[activeCamera];
 }
 
+void Scene::clear()
+{
+	models.clear();
+	cameras.clear();
+	mainModel = nullptr;
+	modelIdGenerator = 0;
+	cameraIdGenerator = 0;
+}
+
 void Scene::setActiveModelID(int id)
 {
 	activeModel = id;
@@ -119,12 +128,13 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	this->m_renderer.setMainRect(rect);
 
 	for (std::pair<int, Model*> pair : models) {
-		if (subobjectDraw && pair.first == activeModel) {
-			this->m_renderer.setObjectWorldMatrix(models[activeModel]->getTransformationMatrix());
-		}
-		else {
-			this->m_renderer.setObjectWorldMatrix(mainModel->getTransformationMatrix());
-		}
+		//if (subobjectDraw && pair.first == activeModel) {
+		//	this->m_renderer.setObjectWorldMatrix(models[activeModel]->getTransformationMatrix());
+		//}
+		//else {
+		//	this->m_renderer.setObjectWorldMatrix(mainModel->getTransformationMatrix());
+		//}
+		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
 		m_renderer.drawWireframe(bitArr, rect, pair.second);
 	}
 

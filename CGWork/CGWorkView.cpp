@@ -141,6 +141,7 @@ CCGWorkView::CCGWorkView()
 	m_nScaleSensetivity = INITIAL_SENSITIVITY / 5;
 	m_nSubobject = -1;
 	m_nIsSubobjectMode = false;
+	m_clrBackground = STANDARD_BACKGROUND_COLOR;
 
 	// Transformations Quantitive Setup:
 	translationQuota = 1.2;
@@ -320,7 +321,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 
 	for (int i = r.left; i < r.right; i++) {
 		for (int j = r.top; j < r.bottom; j++) {
-			bitArray[i + j * r.Width()] = RGB(255, 0, 0);
+			bitArray[i + j * r.Width()] = m_clrBackground;
 		}
 	}
 
@@ -373,6 +374,8 @@ void CCGWorkView::OnFileLoad()
 		::loadedGeometry.clear();
 		m_strItdFileName = dlg.GetPathName();		// Full path and filename
 		PngWrapper p;
+
+		loadedScene.clear();
 
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 		// Open the file and read it.
@@ -611,7 +614,7 @@ void CCGWorkView::OnOptionsBackgroundColor()
 		//}
 		//Geometry& geometry = model->getGeometry();
 		//geometry.setBackgroundClr(invertRB(CD.GetColor()));
-		renderer.setBackgroundClr(invertRB(CD.GetColor()));
+		m_clrBackground = invertRB(CD.GetColor());
 		Invalidate();
 	}
 }

@@ -46,6 +46,8 @@ public:
 	Model* getActiveModel();
 	Model* getSecondActiveModel();
 	Camera* getActiveCamera();
+
+	void clear();
 	void setActiveModelID(int id);
 	void draw(COLORREF* bitArr, CRect rect);
 	void disableBoundingBox();
