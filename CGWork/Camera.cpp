@@ -43,11 +43,8 @@ void Camera::Ortho() {
 	this->projection = Mat4(orthoVectors);
 }
 
-void Camera::Perspective() {
-	float alpha, d;
-	alpha = 8;
-	d = 7;
-
+void Camera::Perspective(float d, float alpha) {
+	
 	Vec4 perspectiveVectors[4] = {Vec4(-1, 0, 0, 0), Vec4(0, -1, 0, 0), Vec4(0, 0, d / (d - alpha), (-alpha * d) / (d - alpha)), Vec4(0, 0, 1 / d, 0)};
 	//Vec4 perspectiveVectors[4] = {Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, d / (d - alpha), (-alpha * d) / (d - alpha)), Vec4(0, 0, 1 / d, 0)};
 	this->projection = Mat4(perspectiveVectors);
@@ -69,3 +66,22 @@ Mat4 Camera::getTransformationMatrix() {
 Mat4 Camera::getProjectionMatrix() {
 	return projection;
 }
+
+float Camera::getD()
+{
+	return d;
+}
+
+float Camera::getAlpha()
+{
+	return alpha;
+}
+
+//void Camera::setD(float newD)
+//{
+//	d = newD;
+//}
+//
+//void Camera::setAlpha(float newAlpha)
+//{
+//}

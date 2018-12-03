@@ -22,7 +22,7 @@ static char THIS_FILE[] = __FILE__;
 #include "iritSkel.h"
 #include "MouseSensitivityDialog.h"
 #include "FinenessControlDialog.h"
-
+#include "PerspectiveParametersDialog.h"
 // For Status Bar access
 #include "MainFrm.h"
 
@@ -30,8 +30,6 @@ static char THIS_FILE[] = __FILE__;
 static AXIS sceneAxisTranslator(int guiID);
 static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
 static COLORREF invertRB(COLORREF clr);
-
-// External Variabls:
 
 
 // Use this macro to display text messages in the status bar.
@@ -106,6 +104,8 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_COMMAND(ID_OPTIONS_FINENESSCONTROL, &CCGWorkView::OnOptionsFinenesscontrol)
 	ON_COMMAND(ID_VIEW_SPLITSCREEN, &CCGWorkView::OnViewSplitscreen)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_SPLITSCREEN, &CCGWorkView::OnUpdateViewSplitscreen)
+	ON_COMMAND(ID_OPTIONS_PERSPECTIVECONTROL, &CCGWorkView::OnOptionsPerspectivecontrol)
+	ON_COMMAND(ID_VIEW_RESETVIEW, &CCGWorkView::OnViewResetview)
 END_MESSAGE_MAP()
 
 
@@ -137,18 +137,10 @@ CCGWorkView::CCGWorkView() :
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
 	m_nScaleSensetivity = INITIAL_SENSITIVITY / 5;
 
-
 	// Transformations Quantitive Setup:
 	translationQuota = 1.2;
 	rotationQuota = 0.5;
 	scalingQuota = 0.8;
-
-	//Scene initilization:
-	auto newCamera = new Camera();
-	newCamera->Ortho();
-	newCamera->LookAt(Vec4(0, 0, 8, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
-	//newCamera->LookAt(Vec4(0, 0, 8, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
-	cameraIDs.push_back(scene.addCamera(newCamera));
 
 
 	//Shading Related
@@ -378,6 +370,13 @@ void CCGWorkView::OnFileLoad()
 		// Does not reload the model if requested.
 		auto newModel = new Model(::loadedGeometry);
 		modelIDs.push_back(scene.addModel(newModel));
+		float distance = ::loadedGeometry.getMaxZ() - ::loadedGeometry.getMinZ();
+		m_nPerspectiveD = distance;
+		auto newCamera = new Camera();
+		cameraIDs.push_back(scene.addCamera(newCamera));
+		//ADD RESET HERE:
+		newCamera->LookAt(Vec4(0, 0, distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
+
 
 		Invalidate();	// force a WM_PAINT for drawing.
 	}
@@ -409,7 +408,7 @@ void CCGWorkView::OnViewPerspective()
 	m_nView = ID_VIEW_PERSPECTIVE;
 	m_bIsPerspective = true;
 	Camera* activeCamera = scene.getActiveCamera();
-	activeCamera->Perspective();
+	activeCamera->Perspective(m_nPerspectiveD, m_nPerspectiveAlpha);
 	Invalidate();
 }
 
@@ -711,7 +710,7 @@ void initializeBMI(BITMAPINFO& bminfo, CRect rect)
 {
 	bminfo.bmiHeader.biSize = sizeof(bminfo.bmiHeader);
 	bminfo.bmiHeader.biWidth = rect.right - rect.left;
-	bminfo.bmiHeader.biHeight = rect.top - rect.bottom;
+	bminfo.bmiHeader.biHeight = rect.bottom - rect.top;
 	bminfo.bmiHeader.biPlanes = 1;
 	bminfo.bmiHeader.biBitCount = 32;
 	bminfo.bmiHeader.biCompression = BI_RGB;
@@ -817,7 +816,7 @@ void CCGWorkView::transform(Direction direction)
 
 void CCGWorkView::OnOptionsFinenesscontrol()
 {
-	//	FinenessControlDialog FCDialog(::CGSkelFFCStates.FineNess);
+	//FinenessControlDialog FCDialog(::CGSkelFFCStates.FineNess);
 }
 
 
@@ -834,4 +833,49 @@ void CCGWorkView::OnViewSplitscreen()
 void CCGWorkView::OnUpdateViewSplitscreen(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bDualView);
+}
+
+
+void CCGWorkView::OnOptionsPerspectivecontrol()
+{
+	Camera* cam = scene.getActiveCamera();
+	if (cam == nullptr) {
+		MessageBox(_T("ERROR: No active camera, please load an object."), _T("Error"),
+		MB_ICONERROR | MB_OK);
+		return;
+	}
+	
+	PerspectiveParametersDialog dlg(m_nPerspectiveD, m_nPerspectiveAlpha);
+	if (dlg.DoModal() == IDOK) {
+		m_nPerspectiveD = dlg.d;
+		m_nPerspectiveAlpha = dlg.alpha;
+		if (m_bIsPerspective) {
+			cam->Perspective(m_nPerspectiveD, m_nPerspectiveAlpha);
+			Invalidate();
+		}
+	}
+}
+
+
+void CCGWorkView::OnViewResetview()
+{
+	for (int modelID : modelIDs) {
+		Model* model = scene.getModel(modelID);
+		model->setTransformation(Mat4::Identity());
+	}
+	m_bBoxFrame = false;
+	m_bDualView = false;
+	m_bIsPerspective = false;
+	m_bIsViewSpace = false;
+	m_bPolyNormals = false;
+	m_bVertexNormals = false;
+	m_nAxis = ID_AXIS_X;
+	m_nAction = ID_ACTION_ROTATE;
+	Model* model = scene.getActiveModel();
+	Geometry& geometry = model->getGeometry();
+	geometry.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
+	geometry.setLineClr(STANDARD_OBJECT_COLOR);
+	geometry.setNormalClr(STANDARD_NORMAL_COLOR);
+	Invalidate();
+
 }

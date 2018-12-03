@@ -47,6 +47,8 @@ private:
 	float m_nTranslationSensetivity;   //Mouse sensetivity for translation
 	float m_nRotationSensetivity;		//Mouse sensetivity for rotation
 	float m_nScaleSensetivity;		//Mouse sensetivity for scaling
+	float m_nPerspectiveD;
+	float m_nPerspectiveAlpha;
 	COLORREF m_clrBackground;		//Current background color
 	CString m_strItdFileName;		// file name of IRIT data
 
@@ -143,11 +145,13 @@ protected:
 	afx_msg void OnActionScale();
 	afx_msg void OnActionViewSpace();
 	afx_msg void OnActionObjectSpace();
+	afx_msg void OnViewSplitscreen();
 	afx_msg void OnUpdateActionTranslate(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateActionRotate(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateActionScale(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateActionViewSpace(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateActionObjectSpace(CCmdUI* pCmdUI);
+	afx_msg void OnUpdateViewSplitscreen(CCmdUI *pCmdUI);
 
 	//TOOLBAR - Axis Functions 
 	afx_msg void OnAxisX();
@@ -168,20 +172,19 @@ protected:
 	afx_msg void OnUpdateLightShadingFlat(CCmdUI* pCmdUI);
 	afx_msg void OnLightShadingGouraud();
 	afx_msg void OnUpdateLightShadingGouraud(CCmdUI* pCmdUI);
+	afx_msg void OnOptionsPerspectivecontrol();
+	afx_msg void OnOptionsFinenesscontrol();
 	afx_msg void OnLightConstants();
 
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 
-	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	afx_msg void OnOptionsSetsensitivityvariables();
-	afx_msg void OnOptionsFinenesscontrol();
-	afx_msg void OnViewSplitscreen();
-	afx_msg void OnUpdateViewSplitscreen(CCmdUI *pCmdUI);
+	afx_msg void OnViewResetview();
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

@@ -42,7 +42,9 @@
 #define IDC_MATERIAL_SPECULAR           1042
 #define IDC_SCALING_SLIDER              1042
 #define IDC_EDIT1                       1063
+#define IDC_PERS_D_PARAM                1063
 #define IDC_RICHEDIT21                  1064
+#define IDC_PERS_ALPHA_PARAM            1064
 #define IDC_FINENESSVALUE               1070
 #define ID_FILE_LOAD                    32771
 #define ID_VIEW_ORTHOGRAPHIC            32772
@@ -85,13 +87,14 @@
 #define ID_OPTIONS_FINENESSCONTROL      32824
 #define ID_NORMALCOLOR                  32828
 #define ID_VIEW_SPLITSCREEN             32829
+#define ID_VIEW_RESETVIEW               32830
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        149
-#define _APS_NEXT_COMMAND_VALUE         32830
+#define _APS_NEXT_COMMAND_VALUE         32831
 #define _APS_NEXT_CONTROL_VALUE         1071
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

@@ -24,8 +24,6 @@ Renderer::Renderer() {
 	withVertexNormals = false;
 }
 
-
-
 void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 
 	Geometry* geometry = &model->getGeometry();
@@ -37,44 +35,35 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 	normalizationMatrix = generateNormalizationMatrix(geometry);
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
-	Mat4 debugMatrix = (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix)));
-	Mat4 debugMatrix2 = (cameraMatrix * objectWorldMatrix);
+	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
 	for (Edge* edge : geometry->getEdges()) {
 		Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
 		Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
 
-		Vec4 debugp1 = debugMatrix * p1;
-		Vec4 debugp2 = debugMatrix * p2;
-		Vec4 afterCamera1 = debugMatrix2 * p1;
-		Vec4 afterCamera2 = debugMatrix2 * p2;
-		if (afterCamera2.zCoord() > -1 || afterCamera1.zCoord() > -1) {
+		Vec4 afterCameraP1 = afterCamera* p1;
+		Vec4 afterCameraP2 = afterCamera * p2;
+		if (afterCameraP2.zCoord() > 0 || afterCameraP1.zCoord() > 0) {
 			continue;
 		}
 		p1 = finalMatrix * p1;
 		p2 = finalMatrix * p2;
-		//	if (p1.zCoord() < -2.0 && p2.zCoord() < -2.0)
-		//if (p1.xCoord() < rect.right && p1.yCoord() < rect.bottom && p2.xCoord() < rect.right && p2.yCoord() < rect.bottom)
 		int p1x = p1.xCoord() / p1.wCoord();
 		int p2x = p2.xCoord() / p2.wCoord();
 		int p1y = p1.yCoord() / p1.wCoord();
 		int p2y = p2.yCoord() / p2.wCoord();
-		if (p1x > rect.left && p1x < rect.right && p2x > rect.left && p2x < rect.right)
-		plotLine(p1x, p1y, p2x, p2y, bitArr, mainRect, geometry->getLineClr());
-		//if (p1.zCoord() < z1)
-		//	z1 = p1.zCoord();
-		//if (p2.zCoord() < z2)
-		//	z2 = p2.zCoord();
+		plotLine(p1x, p1y, p2x, p2y, bitArr, rect, mainRect.Width() ,geometry->getLineClr());
+
 	}
 	if (withBounding) {
-		drawBoundingBox(bitArr, mainRect, geometry, geometry->getLineClr(), finalMatrix);
+		drawBoundingBox(bitArr, rect, geometry, geometry->getLineClr(), finalMatrix);
 	}
 	if (withPolygonNormals) {
-		drawPolygonNormals(bitArr, mainRect, geometry, restMatrix, objectWorldMatrix, geometry->getNormalClr());
+		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix, geometry->getNormalClr());
 	}
 	if (withVertexNormals) {
-		drawVertexNormals(bitArr, mainRect, geometry, restMatrix, objectWorldMatrix, geometry->getNormalClr());
+		drawVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix, geometry->getNormalClr());
 	}
-	drawCenterAxis(bitArr, mainRect, geometry, finalMatrix);
+	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
 }
 
 void Renderer::drawBackground(COLORREF * bitArr, CRect rect, COLORREF clr)
@@ -120,7 +109,7 @@ void Renderer::drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry
 				Vec4 p1 = finalMatrix * points[i];
 				Vec4 p2 = finalMatrix * points[j];
 				
-				plotLine(p1.xCoord() / p1.wCoord(), p1.yCoord() / p1.wCoord(), p2.xCoord() / p2.wCoord(), p2.yCoord() / p2.wCoord(), bitArr, rect, clr);
+				plotLine(p1.xCoord() / p1.wCoord(), p1.yCoord() / p1.wCoord(), p2.xCoord() / p2.wCoord(), p2.yCoord() / p2.wCoord(), bitArr, rect, mainRect.Width(), clr);
 			}
 		}
 	}
@@ -139,9 +128,9 @@ void Renderer::drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry,
 	p1 = finalMatrix * Vec4(centerX + normalizedSize, centerY, centerZ, 1);
 	p2 = finalMatrix * Vec4(centerX, centerY + normalizedSize, centerZ, 1);
 	p3 = finalMatrix * Vec4(centerX, centerY, centerZ+ normalizedSize, 1);
-	plotLine(p0.xCoord() / p0.wCoord(), p0.yCoord() / p0.wCoord(), p1.xCoord() / p1.wCoord(), p1.yCoord() / p1.wCoord(), bitArr, rect, RGB(255, 0, 0));
-	plotLine(p0.xCoord() / p0.wCoord(), p0.yCoord() / p0.wCoord(), p2.xCoord() / p2.wCoord(), p2.yCoord() / p2.wCoord(), bitArr, rect, RGB(0, 255, 0));
-	plotLine(p0.xCoord() / p0.wCoord(), p0.yCoord() / p0.wCoord(), p3.xCoord() / p3.wCoord(), p3.yCoord() / p3.wCoord(), bitArr, rect, RGB(0, 0, 255));
+	plotLine(p0.xCoord() / p0.wCoord(), p0.yCoord() / p0.wCoord(), p1.xCoord() / p1.wCoord(), p1.yCoord() / p1.wCoord(), bitArr, rect, mainRect.Width(), RGB(255, 0, 0));
+	plotLine(p0.xCoord() / p0.wCoord(), p0.yCoord() / p0.wCoord(), p2.xCoord() / p2.wCoord(), p2.yCoord() / p2.wCoord(), bitArr, rect, mainRect.Width(), RGB(0, 255, 0));
+	plotLine(p0.xCoord() / p0.wCoord(), p0.yCoord() / p0.wCoord(), p3.xCoord() / p3.wCoord(), p3.yCoord() / p3.wCoord(), bitArr, rect, mainRect.Width(), RGB(0, 0, 255));
 }
 
 
@@ -153,7 +142,7 @@ void Renderer::drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geomet
 		target = restMatrix * target;
 		float p1Factor = currentVertex.wCoord();
 		float p2Factor = target.wCoord();
-		plotLine(currentVertex.xCoord() / p1Factor, currentVertex.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, clr);
+		plotLine(currentVertex.xCoord() / p1Factor, currentVertex.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, mainRect.Width(), clr);
 	}
 }
 
@@ -167,7 +156,7 @@ void Renderer::drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geome
 		target = restMatrix * target;
 		float p1Factor = midpoint.wCoord();
 		float p2Factor = target.wCoord();
-		plotLine(midpoint.xCoord() / p1Factor, midpoint.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, clr);
+		plotLine(midpoint.xCoord() / p1Factor, midpoint.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, mainRect.Width(), clr);
 	}
 }
 

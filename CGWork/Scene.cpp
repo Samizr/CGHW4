@@ -77,7 +77,6 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	Camera* camera = cameras[activeCamera];
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
 	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
-	//this->m_renderer.setObjectWorldMatrix(model->getTransformationMatrix());
 	this->m_renderer.setMainRect(rect);
 
 	if (dualView) {
