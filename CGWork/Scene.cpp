@@ -41,7 +41,7 @@ std::map<int, Model*>& Scene::getAllModels()
 	return models;
 }
 
-void Scene::setRenderer(Renderer & renderer)
+void Scene::setRenderer(Renderer& renderer)
 {
 	this->m_renderer = renderer;
 }
@@ -119,32 +119,10 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	this->m_renderer.setMainRect(rect);
 
 	for (std::pair<int, Model*> pair : models) {
-		if (subobjectDraw && pair.first == activeModel) {
-			this->m_renderer.setObjectWorldMatrix(models[activeModel]->getTransformationMatrix());
-		}
-		else {
-			this->m_renderer.setObjectWorldMatrix(mainModel->getTransformationMatrix());
-		}
+		this->m_renderer.setObjectWorldMatrix(mainModel->getTransformationMatrix() * models[pair.first]->getTransformationMatrix());
 		m_renderer.drawWireframe(bitArr, rect, pair.second);
 	}
 
-	//DUAL SCREEN MODE CODE:
-	/*if (dualView) {
-		if (secondActiveModel == -1) {
-			secondActiveModel = activeModel;
-			Model* duplicate = new Model(model->getGeometry());
-			addModel(duplicate);
-		}
-		Model* secondModel = models[secondActiveModel];
-		CRect leftRect = rect, rightRect = rect;
-		leftRect.right /= 2;
-		rightRect.left = leftRect.right;
-		m_renderer.drawWireframe(bitArr, leftRect, model);
-		m_renderer.drawWireframe(bitArr, rightRect, secondModel);
-	}
-	else {
-		m_renderer.drawWireframe(bitArr, rect, model);
-	}*/
 }
 
 void Scene::disablePolygonNormals()
