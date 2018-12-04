@@ -72,7 +72,7 @@ BOOL MouseSensitivityDialog::OnInitDialog()
 	// TODO:  Add extra initialization here
 	t_control.SetRange(5, 40);
 	r_control.SetRange(3, 30);
-	s_control.SetRange(1, 5);
+	s_control.SetRange(1, 100);
 	t_control.SetPos(translationSensitivity);
 	r_control.SetPos(rotationSensitivity);
 	s_control.SetPos(scalingSensitivity);

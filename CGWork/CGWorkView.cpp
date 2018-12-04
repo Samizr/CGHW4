@@ -31,7 +31,7 @@ static char THIS_FILE[] = __FILE__;
 // Static Functions:
 static AXIS sceneAxisTranslator(int guiID);
 static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
-//static void resetModel(Model* model);
+static void resetModel(Model* model);
 static COLORREF invertRB(COLORREF clr);
 
 // Use this macro to display text messages in the status bar.
@@ -44,7 +44,7 @@ static COLORREF invertRB(COLORREF clr);
 IMPLEMENT_DYNCREATE(CCGWorkView, CView)
 
 BEGIN_MESSAGE_MAP(CCGWorkView, CView)
-	//{{AFX_MSG_MAP(CCGWorkView)
+	//{{AFX_MSG_MAP(CCGWorkView)m_nScaleSensetivity
 	//Common Function Mappings
 	ON_WM_ERASEBKGND()
 	ON_WM_CREATE()
@@ -136,7 +136,7 @@ CCGWorkView::CCGWorkView(){
 	m_bDualView = false;
 	m_nTranslationSensetivity = INITIAL_SENSITIVITY;
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
-	m_nScaleSensetivity = INITIAL_SENSITIVITY / 5;
+	m_nScaleSensetivity = INITIAL_SENSITIVITY * 2;
 	m_nSubobject = -1;
 	m_nIsSubobjectMode = false;
 	m_clrBackground = STANDARD_BACKGROUND_COLOR;
@@ -144,7 +144,7 @@ CCGWorkView::CCGWorkView(){
 	// Transformations Quantitive Setup:
 	translationQuota = 1.2;
 	rotationQuota = 0.5;
-	scalingQuota = 0.8;
+	scalingQuota = 1;
 
 
 	//Shading Related
@@ -841,8 +841,8 @@ void CCGWorkView::transform(Direction direction)
 		break;
 
 	case (ID_ACTION_SCALE):
-		float percentage = m_nScaleSensetivity / 100;
-		adjustedQuota = (direction == NEGATIVE ? 1 / (scalingQuota + percentage) : (scalingQuota + percentage));
+		float percentage = m_nScaleSensetivity / 1000;
+		adjustedQuota = (direction == NEGATIVE ? 1 / (scalingQuota - percentage) : (scalingQuota - percentage));
 		if (m_bIsViewSpace)
 			model->scaleViewSpace(sceneAxis, adjustedQuota);
 		else
@@ -904,32 +904,20 @@ void CCGWorkView::OnOptionsPerspectivecontrol()
 
 void CCGWorkView::OnViewResetview()
 {
-//	m_bBoxFrame = false;
-//	m_bIsPerspective = false;
-//	m_bIsViewSpace = false;
-//	m_bPolyNormals = false;
-//	m_bVertexNormals = false;
-//	m_nAxis = ID_AXIS_X;
-//	m_nAction = ID_ACTION_ROTATE;
-//	
-//	for (int i = 0; i < scene.getAllModels().size(); i++) {
-//		Model* model = scene.getAllModels()[i];
-//		resetModel(model);
-//	}
-//
-//	Invalidate();
-//
+	resetButtons();
+	resetModel(scene.getMainModel());
+	for (std::pair<int, Model*> pair : scene.getAllModels()) {
+		resetModel(pair.second);
+	}
+	Invalidate();
 }
 
-//static void resetModel(Model* model) {
-//	if (model == nullptr)
-//		return;
-//	model->setTransformation(Mat4::Identity());
-//	Geometry& geometry = model->getGeometry();
-//	geometry.setBackgroundClr(STANDARD_BACKGROUND_COLOR);
-//	geometry.setLineClr(STANDARD_OBJECT_COLOR);
-//	geometry.setNormalClr(STANDARD_NORMAL_COLOR);
-//}
+static void resetModel(Model* model) {
+	if (model == nullptr)
+		return;
+	model->setTransformation(Mat4::Identity());
+	Geometry& geometry = model->getGeometry();
+}
 
 
 void CCGWorkView::OnViewObjectselection()

@@ -84,7 +84,7 @@ void Renderer::drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry
 	float yVals[2] = {geometry->getMinY(), geometry->getMaxY()};
 	float zVals[2] = {geometry->getMinZ(), geometry->getMaxZ()};
 	int p = 0;
-	Mat4 afterCamMatrix = objectWorldMatrix * cameraMatrix;
+	Mat4 afterCamMatrix = cameraMatrix * objectWorldMatrix;
 	Vec4 points[8];
 	for (int i = 0; i < 2; i++) {
 		for (int j = 0; j < 2; j++) {
