@@ -16,10 +16,13 @@
 #include "symb_lib.h"
 #include "Geometry.h"
 #include "Face.h"
+#include "Scene.h"
+#include "Model.h"
 
 
-extern IPFreeformConvStateStruct CGSkelFFCStates;
+extern IPFreeformConvStateStruct CGSkelFFCState;
 extern Geometry loadedGeometry;
+extern Scene loadedScene;
 
 
 bool CGSkelProcessIritDataFiles(CString &FileNames, int NumFiles);
@@ -30,5 +33,6 @@ const char *CGSkelGetObjectPTexture(IPObjectStruct *PObj);
 int CGSkelGetObjectTransp(IPObjectStruct *PObj, double *Transp);
 
 bool CGSkelStoreData(IPObjectStruct *PObj);
+
 
 #endif // IRIT_SKEL_H

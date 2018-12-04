@@ -14,6 +14,9 @@
 #include "stdafx.h"
 #include "Mat4.h"
 
+#define STANDARD_BACKGROUND_COLOR RGB(5,5,5)
+#define STANDARD_NORMAL_COLOR RGB(0,255,0)
+
 class Renderer {
 	Mat4 objectWorldMatrix;
 	Mat4 cameraMatrix;
@@ -24,11 +27,14 @@ class Renderer {
 	bool withPolygonNormals;
 	bool withVertexNormals;
 	CRect mainRect;
+	COLORREF backgroundClr;
+	COLORREF normalClr;
+
 	void drawBackground(COLORREF * bitArr, CRect rect, COLORREF clr);
 	void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
 	void drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 finalMatrix);
-	void drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix, COLORREF clr);
-	void drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix, COLORREF clr);
+	void drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
+	void drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 
 public:
 	Renderer();
@@ -36,8 +42,11 @@ public:
 	void setObjectWorldMatrix(Mat4& matrix);
 	void setCameraMatrix(Mat4& matrix);
 	void setProjectionMatrix(Mat4& matrix);
+	void setNormalizationMatrix(Mat4& matrix);
 	void setWindowMatrix(Mat4& matrix);
 	void setMainRect(CRect rect);
+	void setBackgroundClr(COLORREF clr);
+	void setNormalClr(COLORREF clr);
 	void disableBoundingBox();
 	void enableBoundingBox();
 	void disablePolygonNormals();

@@ -46,9 +46,11 @@ private:
 	bool m_bLeftModel;				//Acticating transformations on left model?	
 	float m_nTranslationSensetivity;   //Mouse sensetivity for translation
 	float m_nRotationSensetivity;		//Mouse sensetivity for rotation
-	float m_nScaleSensetivity;		//Mouse sensetivity for scaling
+	float m_nScaleSensetivity;			//Mouse sensetivity for scaling
 	float m_nPerspectiveD;
 	float m_nPerspectiveAlpha;
+	int m_nSubobject;	
+	bool m_nIsSubobjectMode;		
 	COLORREF m_clrBackground;		//Current background color
 	CString m_strItdFileName;		// file name of IRIT data
 
@@ -185,6 +187,7 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 
 	afx_msg void OnViewResetview();
+	afx_msg void OnViewObjectselection();
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

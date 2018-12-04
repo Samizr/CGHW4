@@ -19,22 +19,34 @@
 class Scene {
 	std::map<int, Model*> models;
 	std::map<int, Camera*> cameras;
+	Model* mainModel;
 	int activeCamera;
 	int activeModel;
 	int secondActiveModel;
 	bool dualView;
+	bool subobjectDraw;
 	Renderer m_renderer;
 	static int cameraIdGenerator;
 	static int modelIdGenerator;
+
 public:
-	Scene(Renderer& renderer);
+	Scene();
 	int addModel(Model* model);
 	int addCamera(Camera* camera);
+	std::map<int, Model*>& getAllModels();
+	
+	void setRenderer(Renderer& renderer);
+
+	Model* getMainModel();
+	void setMainModel(Model* model);
+	void setSubobjectMode();
+	void setWholeobjectMode();
 	Model* getModel(int id);
 	Camera* getCamera(int id);
 	Model* getActiveModel();
 	Model* getSecondActiveModel();
 	Camera* getActiveCamera();
+	void setActiveModelID(int id);
 	void draw(COLORREF* bitArr, CRect rect);
 	void disableBoundingBox();
 	void enableBoundingBox();

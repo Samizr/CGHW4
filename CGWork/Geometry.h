@@ -10,13 +10,12 @@
 #include "stdafx.h"
 
 
+
 #define STANDARD_OBJECT_COLOR RGB(230,230,230)
-#define STANDARD_NORMAL_COLOR RGB(0,255,0)
-#define STANDARD_BACKGROUND_COLOR RGB(5,5,5)
-//TODO: NORMAL COLOR IS SAME AS OBJECT COLOR???
 
 class Geometry
 {
+private:
 	class PointHash {
 	public:
 		PointHash() = default;
@@ -28,13 +27,12 @@ class Geometry
 	std::list<Face*> faces;
 	float maxX, maxY, maxZ;
 	float minX, minY, minZ;
-	std::vector<double> objectColor;
 	COLORREF lineClr;
-	COLORREF normalClr;
-	COLORREF backgroundClr;
+
+protected:
+	void setPointLimits();
 
 public:
-	bool loaded;
 	Geometry();
 	~Geometry();
 	void addVertex(Vertex* vertex);
@@ -54,12 +52,8 @@ public:
 	float getMinZ();
 
 	void setLineClr(COLORREF clr);
-	void setNormalClr(COLORREF clr);
-	void setBackgroundClr(COLORREF clr);
-
 	COLORREF getLineClr();
-	COLORREF getNormalClr();
-	COLORREF getBackgroundClr();
+	void clear();
 
 	//DEBUG FUNCTION:
 	bool findVertexCollisions();
