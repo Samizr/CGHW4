@@ -58,8 +58,8 @@ private:
 	CString m_strItdFileName;		// file name of IRIT data
 
 	//Scene, cameras, models and related objects:
-	Renderer renderer;
 	Scene scene;
+	Renderer renderer;
 	vector<int> cameraIDs;
 	vector<int> modelIDs;
 
