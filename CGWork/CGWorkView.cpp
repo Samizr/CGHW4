@@ -123,7 +123,7 @@ void auxSolidCone(GLdouble radius, GLdouble height) {
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView construction/destruction
 
-CCGWorkView::CCGWorkView():{
+CCGWorkView::CCGWorkView(){
 	//Set default values
 	m_nAxis = ID_AXIS_X;
 	m_nAction = ID_ACTION_ROTATE;
