@@ -14,6 +14,14 @@
 * Minimal changes made by Amit Mano			November 2008					 *
 ******************************************************************************/
 
+static COLORREF invertRB(COLORREF clr)
+{
+	int iRed = GetRValue(clr);
+	int iBlue = GetBValue(clr);
+	int iGreen = GetGValue(clr);
+	return RGB(iBlue, iGreen, iRed);
+}
+
 IPFreeformConvStateStruct CGSkelFFCState = {
 	FALSE,          /* Talkative */
 	FALSE,          /* DumpObjsAsPolylines */
@@ -131,6 +139,7 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	const IPAttributeStruct *Attrs =
 		AttrTraceAttributes(PObj->Attr, PObj->Attr);
 
+
 	if (PObj->ObjType != IP_OBJ_POLY) {
 		AfxMessageBox(_T("Non polygonal object detected and ignored"));
 		return true;
@@ -142,8 +151,8 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	if (CGSkelGetObjectColor(PObj, objectRGB))
 	{
 		/* color code */
-		COLORREF clr = RGB(objectRGB[0], objectRGB[1], objectRGB[2]);
-		subGeometry.setLineClr(clr);
+		COLORREF clr = RGB(255*objectRGB[0], 255*objectRGB[1], 255*objectRGB[2]);
+		subGeometry.setLineClr(invertRB(clr));
 	}
 	else {
 		subGeometry.setLineClr(STANDARD_OBJECT_COLOR);

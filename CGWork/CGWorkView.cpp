@@ -382,6 +382,7 @@ void CCGWorkView::OnFileLoad()
 		// Does not reload the model if requested.
 		scene = loadedScene;
 		scene.setRenderer(renderer);
+		::loadedGeometry.setLineClr(scene.getModel(0)->getGeometry().getLineClr()); //SETS THE MAIN MODEL COLOR TO BE SIMILAR TO THE FIRST COLOR IN SCENE
 		auto newModel = new Model(::loadedGeometry);
 		scene.setMainModel(newModel); 
 		float distance = (::loadedGeometry.getMaxZ() - ::loadedGeometry.getMinZ());
@@ -795,7 +796,7 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 //Parses the requested transformation and requests the correct transformation:
 void CCGWorkView::transform(Direction direction)
 {
-	Model * model = nullptr;
+	Model* model = nullptr;
 	if (m_nIsSubobjectMode) {
 		model = scene.getModel(m_nSubobject);
 	}
@@ -805,6 +806,19 @@ void CCGWorkView::transform(Direction direction)
 	if (model == nullptr) {
 		return;
 	}
+
+	//CODE FOR SENDING SUBOBJECT TO CENTER:
+	//Geometry& geometry = model->getGeometry();
+	//float centerX = (geometry.getMaxX() + geometry.getMinX()) / 2;
+	//float centerY = (geometry.getMaxY() + geometry.getMinY()) / 2;
+	//float centerZ = (geometry.getMaxZ() + geometry.getMinZ()) / 2;
+
+	//Vec4 center = scene.getMainModel()->getTransformationMatrix() * model->getTransformationMatrix() * Vec4(centerX, centerY, centerZ, -1);
+	//if (m_nIsSubobjectMode) {
+	//	model->prependToTransformation(Mat4::Translate(center * (-1)));
+	//}
+
+	//CODE FOR TRANSFORMATIONS:
 	AXIS sceneAxis = sceneAxisTranslator(m_nAxis);
 	float adjustedQuota;
 	switch (m_nAction) {
@@ -835,6 +849,13 @@ void CCGWorkView::transform(Direction direction)
 		//scalingQuota *= (direction == NEGATIVE ? (float)101/100 : (float)99/100);
 		break;
 	}
+
+	//CODE FOR SENEING SUBOBJECT BACK TO ITS PLACE:
+	//if (m_nIsSubobjectMode) {
+	//	center[3] = 1;
+	//	model->prependToTransformation(Mat4::Translate(center));
+	//}
+
 }
 
 void CCGWorkView::OnOptionsFinenesscontrol()
@@ -913,7 +934,7 @@ void CCGWorkView::OnViewResetview()
 void CCGWorkView::OnViewObjectselection()
 {
 	AdvancedDialog dlg;
-	dlg.maxSubobject = scene.getAllModels().size();
+	dlg.maxSubobject = scene.getAllModels().size() - 1;
 	dlg.subChecked = m_nIsSubobjectMode;
 	if (dlg.DoModal() == IDOK) {
 		m_nIsSubobjectMode = dlg.subChecked;
