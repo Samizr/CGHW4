@@ -28,6 +28,7 @@ class Scene {
 	Renderer m_renderer;
 	static int cameraIdGenerator;
 	static int modelIdGenerator;
+	bool withBoundingBox;
 
 public:
 	Scene();

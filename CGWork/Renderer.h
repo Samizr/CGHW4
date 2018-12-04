@@ -30,10 +30,10 @@ class Renderer {
 
 
 	void drawBackground(COLORREF * bitArr, CRect rect, COLORREF clr);
-	void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
 	void drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 finalMatrix);
 	void drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
+	void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
 
 public:
 	Renderer();
@@ -51,5 +51,6 @@ public:
 	void enablePolygonNormals();
 	void enableVertexNormals();
 	void disableVertexNormals();
+	void drawBounding(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr);
 };
 #endif /* Renderer_h */
