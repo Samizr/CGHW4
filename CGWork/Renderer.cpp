@@ -22,12 +22,12 @@ Renderer::Renderer() {
 	withBounding = false;
 	withPolygonNormals = false;
 	withVertexNormals = false;
+	normalClr = STANDARD_NORMAL_COLOR;
 }
 
 void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 
 	Geometry* geometry = &model->getGeometry();
-	
 	//drawBackground(bitArr, rect, RGB(255, 255, 255));//geometry->getBackgroundClr());
 
 	windowMatrix = generateViewportMatrix(rect);
@@ -61,7 +61,7 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 	if (withVertexNormals) {
 		drawVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
-	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
+//	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
 }
 
 void Renderer::drawBackground(COLORREF * bitArr, CRect rect, COLORREF clr)
@@ -229,11 +229,6 @@ void Renderer::setWindowMatrix(Mat4 &matrix) {
 void Renderer::setMainRect(CRect rect)
 {
 	mainRect = rect;
-}
-
-void Renderer::setBackgroundClr(COLORREF clr)
-{
-	backgroundClr = clr;
 }
 
 void Renderer::setNormalClr(COLORREF clr)

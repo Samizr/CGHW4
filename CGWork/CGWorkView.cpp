@@ -34,7 +34,6 @@ static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
 //static void resetModel(Model* model);
 static COLORREF invertRB(COLORREF clr);
 
-
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
 
@@ -140,6 +139,7 @@ CCGWorkView::CCGWorkView():{
 	m_nScaleSensetivity = INITIAL_SENSITIVITY / 5;
 	m_nSubobject = -1;
 	m_nIsSubobjectMode = false;
+	m_clrBackground = STANDARD_BACKGROUND_COLOR;
 
 	// Transformations Quantitive Setup:
 	translationQuota = 1.2;
@@ -321,7 +321,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 
 	for (int i = r.left; i < r.right; i++) {
 		for (int j = r.top; j < r.bottom; j++) {
-			bitArray[i + j * r.Width()] = RGB(255, 0, 0);
+			bitArray[i + j * r.Width()] = m_clrBackground;
 		}
 	}
 
@@ -375,6 +375,8 @@ void CCGWorkView::OnFileLoad()
 		m_strItdFileName = dlg.GetPathName();		// Full path and filename
 		PngWrapper p;
 
+		loadedScene.clear();
+
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 		// Open the file and read it.
 		
@@ -389,6 +391,9 @@ void CCGWorkView::OnFileLoad()
 		auto newCamera = new Camera();
 		scene.addCamera(newCamera);
 		newCamera->LookAt(Vec4(0, 0, 3 * distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
+
+		resetButtons();
+		m_clrBackground = STANDARD_BACKGROUND_COLOR;
 
 		if (m_bIsPerspective) {
 			newCamera->Perspective(m_nPerspectiveD, m_nPerspectiveAlpha);
@@ -587,18 +592,19 @@ void CCGWorkView::OnOptionsLineColor()
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
 		Model* model;
-		if (m_bDualView && !m_bLeftModel) {
-			model = scene.getSecondActiveModel();
+		if (m_nIsSubobjectMode) {
+			Geometry& geometry = scene.getActiveModel()->getGeometry();
+			geometry.setLineClr(invertRB(CD.GetColor()));
 		}
 		else {
-			model = scene.getActiveModel();
+			for (std::pair<int, Model*> pair : scene.getAllModels()) {
+				Geometry& geometry = pair.second->getGeometry();
+				geometry.setLineClr(invertRB(CD.GetColor()));
+			}
 		}
-		Geometry& geometry = model->getGeometry();
-		geometry.setLineClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
-
 void CCGWorkView::OnOptionsBackgroundColor()
 {
 	CColorDialog CD;
@@ -612,7 +618,7 @@ void CCGWorkView::OnOptionsBackgroundColor()
 		//}
 		//Geometry& geometry = model->getGeometry();
 		//geometry.setBackgroundClr(invertRB(CD.GetColor()));
-		renderer.setBackgroundClr(invertRB(CD.GetColor()));
+		m_clrBackground = invertRB(CD.GetColor());
 		Invalidate();
 	}
 }
@@ -630,7 +636,7 @@ void CCGWorkView::OnOptionsNormalcolor()
 		//}
 		//Geometry& geometry = model->getGeometry();		
 		//geometry.setNormalClr(invertRB(CD.GetColor()));
-		renderer.setNormalClr(invertRB(CD.GetColor()));
+		scene.getRenderer().setNormalClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
@@ -916,4 +922,12 @@ void CCGWorkView::OnViewObjectselection()
 		scene.setActiveModelID(m_nSubobject);
 		m_nIsSubobjectMode == true ? scene.setSubobjectMode() : scene.setWholeobjectMode();
 	}
+}
+
+void CCGWorkView::resetButtons() {
+	m_bIsPerspective = false;
+	m_bBoxFrame = false;
+	m_bPolyNormals = false;
+	m_bVertexNormals = false;
+	m_bIsViewSpace = true;
 }

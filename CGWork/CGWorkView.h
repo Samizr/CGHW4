@@ -17,6 +17,8 @@
 #include "Light.h"
 #include <vector>
 
+#define STANDARD_BACKGROUND_COLOR RGB(5,5,5)
+
 using std::vector;
 class CCGWorkView : public CView
 {
@@ -32,6 +34,7 @@ public:
 public:
 
 private:
+	void resetButtons();
 
 	//Parameters that define the drawing and viewing of the objects:
 	int m_nAxis;				// Axis of Action, X Y or Z

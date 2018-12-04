@@ -36,6 +36,7 @@ public:
 	std::map<int, Model*>& getAllModels();
 	
 	void setRenderer(Renderer& renderer);
+	Renderer& getRenderer();
 
 	Model* getMainModel();
 	void setMainModel(Model* model);
@@ -46,6 +47,8 @@ public:
 	Model* getActiveModel();
 	Model* getSecondActiveModel();
 	Camera* getActiveCamera();
+
+	void clear();
 	void setActiveModelID(int id);
 	void draw(COLORREF* bitArr, CRect rect);
 	void disableBoundingBox();
