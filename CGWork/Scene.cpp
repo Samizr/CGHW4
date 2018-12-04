@@ -133,33 +133,13 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	this->m_renderer.setMainRect(rect);
 
 	for (std::pair<int, Model*> pair : models) {
-		//if (subobjectDraw && pair.first == activeModel) {
-		//	this->m_renderer.setObjectWorldMatrix(models[activeModel]->getTransformationMatrix());
-		//}
-		//else {
-		//	this->m_renderer.setObjectWorldMatrix(mainModel->getTransformationMatrix());
-		//}
 		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
 		m_renderer.drawWireframe(bitArr, rect, pair.second);
 	}
-
-	//DUAL SCREEN MODE CODE:
-	/*if (dualView) {
-		if (secondActiveModel == -1) {
-			secondActiveModel = activeModel;
-			Model* duplicate = new Model(model->getGeometry());
-			addModel(duplicate);
-		}
-		Model* secondModel = models[secondActiveModel];
-		CRect leftRect = rect, rightRect = rect;
-		leftRect.right /= 2;
-		rightRect.left = leftRect.right;
-		m_renderer.drawWireframe(bitArr, leftRect, model);
-		m_renderer.drawWireframe(bitArr, rightRect, secondModel);
+	if (withBoundingBox && !subobjectDraw) {
+		Geometry* geometry = &mainModel->getGeometry();
+		m_renderer.drawBounding(bitArr, rect, geometry, geometry->getLineClr());
 	}
-	else {
-		m_renderer.drawWireframe(bitArr, rect, model);
-	}*/
 }
 
 void Scene::disablePolygonNormals()
@@ -193,11 +173,13 @@ void Scene::disableDualView()
 
 void Scene::enableBoundingBox() {
 	m_renderer.enableBoundingBox();
+	withBoundingBox = true;
 }
 
 
 void Scene::disableBoundingBox() {
 	m_renderer.disableBoundingBox();
+	withBoundingBox = false;
 }
 
 int Scene::cameraIdGenerator = 0;

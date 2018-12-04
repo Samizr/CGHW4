@@ -52,9 +52,7 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 		plotLine(p1x, p1y, p2x, p2y, bitArr, rect, mainRect.Width() ,geometry->getLineClr());
 
 	}
-	if (withBounding) {
-		drawBoundingBox(bitArr, rect, geometry, geometry->getLineClr(), finalMatrix);
-	}
+
 	if (withPolygonNormals) {
 		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
@@ -73,6 +71,11 @@ void Renderer::drawBackground(COLORREF * bitArr, CRect rect, COLORREF clr)
 		}
 	}
 
+}
+
+void Renderer::drawBounding(COLORREF * bitArr, CRect rect, Geometry * geometry, COLORREF clr) {
+	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+	drawBoundingBox(bitArr, rect, geometry, clr, finalMatrix);
 }
 
 void Renderer::drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix) {
