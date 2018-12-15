@@ -16,10 +16,9 @@
 
 static Mat4 generateViewportMatrix(CRect rect);
 static bool pixelIsInPolygon(int pixelX, int pixelY, Face* polygon, Mat4 finalMatrix);
-static float calculateDepthOfPoint(int pixelX, int pixelY, Face* polygon, Mat4 finalMatrix);
 static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth);
 bool edgeIntersectsWithBeam(int yBeam, Edge* edge, Mat4 finalMatrix);
-Vec4 getdepthAtPoint(int x, int y, Edge* edge, Mat4 finalMatrix);
+float getDepthAtPoint(int x, int y, Face* polygon, Mat4 finalMatrix);
 
 #define NORMAL_LENGTH_FACTOR 13
 
@@ -87,7 +86,7 @@ void fillZBuffer(CRect rect, float* zBuffer, Model* model, Mat4 finalMatrix) {
 		for (int i = 0; i < rect.Height(); i++) {
 			for (int j = 0; j < rect.Width(); j++) {
 				if (pixelIsInPolygon(i, j, face, finalMatrix)) {
-					float currentDepth = calculateDepthOfPoint(i, j, face, finalMatrix);
+					float currentDepth = getDepthAtPoint(i, j, face, finalMatrix);
 					// Remember, depth is in negative values.
 					if (currentDepth > zBuffer[i * rect.Width() + j]) {
 						zBuffer[i * rect.Width() + j] = currentDepth;
@@ -115,7 +114,7 @@ static bool pixelIsInPolygon(int x, int y, Face* polygon, Mat4 finalMatrix) {
 		if ((poly[i].yCoord() < y && poly[j].yCoord() >= y
 			|| poly[j].yCoord() < y && poly[i].yCoord() >= y)
 			&& (poly[i].xCoord() <= x || poly[j].xCoord() <= x)) {
-			oddNodes ^= (poly[i].xCoord() + (y - poly[i].yCoord()) / (poly[j].yCoord() - poly[i].yCoord())*(poly[j].xCoord() - poly[i].xCoord) < x);
+			oddNodes ^= (poly[i].xCoord() + (y - poly[i].yCoord()) / (poly[j].yCoord() - poly[i].yCoord())*(poly[j].xCoord() - poly[i].xCoord()) < x);
 		}
 		j = i;
 	}
@@ -124,9 +123,9 @@ static bool pixelIsInPolygon(int x, int y, Face* polygon, Mat4 finalMatrix) {
 }
 
 float getDepthAtPoint(int x, int y, Face* polygon, Mat4 finalMatrix) {
-	Vec4 p1 = polygon->getVerticies[0];
-	Vec4 p2 = polygon->getVerticies[1];
-	Vec4 p3 = polygon->getVerticies[2];
+	Vec4 p1 = polygon->getVerticies()[0]->getVec4Coords();
+	Vec4 p2 = polygon->getVerticies()[1]->getVec4Coords();
+	Vec4 p3 = polygon->getVerticies()[2]->getVec4Coords();
 	float za = p1.zCoord() - (p1.zCoord() - p2.zCoord()) * ((p1.yCoord() - y) / (p1.yCoord() - p2.yCoord()));
 	float xa = p1.xCoord() - (p1.xCoord() - p2.xCoord()) * ((p1.yCoord() - y) / (p1.yCoord() - p2.yCoord()));
 	float zb = p1.zCoord() - (p1.zCoord() - p2.zCoord()) * ((p1.yCoord() - y) / (p1.yCoord() - p3.yCoord()));
@@ -169,7 +168,6 @@ static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix,
 	plotLine(p1x, p1y, p2x, p2y, bitArr, rect, rect.Width(), lineclr);
 }
 
-void Renderer::drawBackground(COLORREF * bitArr, CRect rect, COLORREF clr) {
 
 void Renderer::drawBackgroundColor(COLORREF * bitArr, CRect rect)
 {

@@ -24,13 +24,14 @@ void Face::addVertex(Vertex * vertex) {
 
 vector<Vertex*> Face::getVerticies() {
 	//TODO
+	return verticies;
 }
 
 vector<Edge*> Face::getEdges() {
 	return edges;
 }
 
-Vec4 Face::calculateFaceNormalTarget(Vec4 origin, Mat4 transformationMatrix) {
+Vec4 Face::calculateFaceNormalTarget(Vec4 origin, Mat4 transformationMatrix, bool invert) {
 	
 	Vec4 sharedVertex(edges[0]->getB()->xCoord(), edges[0]->getB()->yCoord(), edges[0]->getB()->zCoord(), 1);
 	Vec4 firstVertex(edges[0]->getA()->xCoord(), edges[0]->getA()->yCoord(), edges[0]->getA()->zCoord(), 1);
