@@ -11,9 +11,7 @@
 #define IDD_DIALOG1                     143
 #define IDD_PERSPECTIVEPARS_DLG         143
 #define IDD_FINENESSCONTROL_DLG         147
-#define IDD_ADVANCED_DIALOG             149
-#define IDD_DIALOG2                     151
-#define IDD_ADVANCED_DIALOG_2           151
+#define IDD_ADVANCED_DLG                153
 #define IDC_LIGHT_SPACE                 1010
 #define IDC_RADIO_LIGHT1                1017
 #define IDC_RADIO_LIGHT2                1018
@@ -51,6 +49,10 @@
 #define IDC_PERS_ALPHA_PARAM            1064
 #define IDC_FINENESSVALUE               1070
 #define IDC_SUBCHECK                    1076
+#define IDC_INVERT_VERTEX_NORMALS       1078
+#define IDC_ADVANCED_DIALOG             1079
+#define IDC_IMPORT_NORMALS              1080
+#define IDC_CALCULATE_NORMALS           1081
 #define ID_FILE_LOAD                    32771
 #define ID_VIEW_ORTHOGRAPHIC            32772
 #define ID_VIEW_PERSPECTIVE             32773
@@ -94,14 +96,15 @@
 #define ID_VIEW_SPLITSCREEN             32829
 #define ID_VIEW_RESETVIEW               32830
 #define ID_VIEW_OBJECTSELECTION         32831
+#define ID_VIEW_BACKFACECULLING         32832
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        153
-#define _APS_NEXT_COMMAND_VALUE         32832
-#define _APS_NEXT_CONTROL_VALUE         1077
+#define _APS_NEXT_RESOURCE_VALUE        155
+#define _APS_NEXT_COMMAND_VALUE         32833
+#define _APS_NEXT_CONTROL_VALUE         1081
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

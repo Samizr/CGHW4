@@ -13,7 +13,7 @@ public:
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_ADVANCED_DIALOG_2 };
+	enum { IDD = IDD_ADVANCED_DLG };
 #endif
 
 protected:
@@ -24,4 +24,9 @@ public:
 	int maxSubobject;
 	BOOL subChecked;
 	int subobjectID;
+
+	BOOL invertVertexNormals;
+	BOOL invertPolygonNormals;
+	BOOL importNormals;
+	
 };

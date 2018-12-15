@@ -29,6 +29,7 @@ class Scene {
 	static int cameraIdGenerator;
 	static int modelIdGenerator;
 	bool withBoundingBox;
+	bool withBackfaceCulling;
 
 public:
 	Scene();
@@ -52,12 +53,20 @@ public:
 	void clear();
 	void setActiveModelID(int id);
 	void draw(COLORREF* bitArr, CRect rect);
-	void disableBoundingBox();
 	void enableBoundingBox();
-	void disablePolygonNormals();
 	void enablePolygonNormals();
-	void enableVertexNormals();
-	void disableVertexNormals();
+	void enablePolygonNormalInvert();
+	void enableVertexNormalInvert();
+	void enableBackfaceCulling();
+	void setVertexNormalsMode(VNMode mode);
+	void setBackgroundColor(COLORREF clr);
+	void disableBoundingBox();
+	void disablePolygonNormals();
+	void disablePolygonNormalInvert();
+	void disableVertexNormalInvert();
+	void disableBackfaceCulling();
+	//void disableVertexNormals();
+	//void enableVertexNormals();
 	void enableDualView();
 	void disableDualView();
 };

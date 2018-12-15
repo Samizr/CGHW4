@@ -43,11 +43,15 @@ Vec4 Face::calculateFaceNormalTarget(Vec4 origin, Mat4 transformationMatrix) {
 	Vec4 U(firstVertex + (sharedVertex * -1.0));
 	Vec4 V(secondVertex + (sharedVertex * -1.0));
 	Vec4 normal = V.crossProduct(U).normalize();
+	if (invert) {
+		normal = normal * (-1);
+		normal[3] = (-1) * normal[3];
+	}
 
 	Mat4 translate = Mat4::Translate(Vec4(origin.xCoord(), origin.yCoord(), origin.zCoord(), 1));
 	Mat4 scaling = Mat4::Scale(Vec4(0.2, 0.2, 0.2, 1));
 
-	return translate * (scaling * normal);
+	return translate * (scaling * (normal));
 }
 
 

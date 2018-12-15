@@ -28,7 +28,9 @@ Vec4 getdepthAtPoint(int x, int y, Edge* edge, Mat4 finalMatrix);
 Renderer::Renderer() {
 	withBounding = false;
 	withPolygonNormals = false;
-	withVertexNormals = false;
+	vertexNormals = NONE;
+	invertPolygonNormals = false;
+	invertVertexNormals = false;
 	normalClr = STANDARD_NORMAL_COLOR;
 }
 
@@ -62,7 +64,7 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 	if (withPolygonNormals) {
 		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
-	if (withVertexNormals) {
+	if (vertexNormals == CALCULATED) {
 		drawVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
 //	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
@@ -168,12 +170,14 @@ static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix,
 }
 
 void Renderer::drawBackground(COLORREF * bitArr, CRect rect, COLORREF clr) {
+
+void Renderer::drawBackgroundColor(COLORREF * bitArr, CRect rect)
+{
 	for (int i = rect.left; i < rect.right; i++) {
 		for (int j = rect.top; j < rect.bottom; j++) {
-			bitArr[i  + j * mainRect.Width()] = clr;
+			bitArr[i  + j * mainRect.Width()] = backgroundClr;
 		}
 	}
-
 }
 
 void Renderer::drawBounding(COLORREF * bitArr, CRect rect, Geometry * geometry, COLORREF clr) {
@@ -298,7 +302,7 @@ void Renderer::drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geomet
 		if ((cameraMatrix * currentVertex).zCoord() > 0) {
 			continue;
 		}
-		Vec4 target = vertex->calculateVertexNormalTarget(transformationMatrix);
+		Vec4 target = vertex->calculateVertexNormalTarget(transformationMatrix, invertVertexNormals);
 		if ((cameraMatrix * target).zCoord() > 0) {
 			continue;
 		}
@@ -315,10 +319,11 @@ void Renderer::drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geome
 	std::list<Face*> faces = geometry->getFaces();
 	for (Face* face : faces) {
 		Vec4 midpoint = transformationMatrix * face->calculateMidpoint();
+		//Normal Clipping:
 		if ((cameraMatrix * midpoint).zCoord() > 0) {
 			continue;
 		}
-		Vec4 target = face->calculateFaceNormalTarget(midpoint, transformationMatrix);
+		Vec4 target = face->calculateFaceNormalTarget(midpoint, transformationMatrix, invertPolygonNormals);
 		if ((cameraMatrix * target).zCoord() > 0) {
 			continue;
 		}
@@ -383,6 +388,11 @@ void Renderer::setNormalClr(COLORREF clr)
 	normalClr = clr;
 }
 
+void Renderer::setBackgroundClr(COLORREF clr)
+{
+	backgroundClr = clr;
+}
+
 void Renderer::disableBoundingBox() {
 	withBounding = false;
 }
@@ -396,15 +406,42 @@ void Renderer::disablePolygonNormals()
 	withPolygonNormals = false;
 }
 
+void Renderer::disablePolygonNormalInvert()
+{
+	invertPolygonNormals = false;
+}
+
+void Renderer::disableVertexNormalInvert()
+{
+	invertVertexNormals = false;
+}
+
 void Renderer::enablePolygonNormals()
 {
 	withPolygonNormals = true;
 }
 
-void Renderer::enableVertexNormals() {
-	this->withVertexNormals = true;
+void Renderer::enablePolygonNormalInvert()
+{
+	invertPolygonNormals = true;
 }
 
-void Renderer::disableVertexNormals() {
-	this->withVertexNormals = false;
+void Renderer::enableVertexNormalInvert()
+{
+	invertVertexNormals = true;
 }
+
+
+
+void Renderer::setVertexNormalMode(VNMode mode)
+{
+	vertexNormals = mode;
+}
+//
+//void Renderer::enableVertexNormals() {
+//	this->withVertexNormals = true;
+//}
+//
+//void Renderer::disableVertexNormals() {
+//	this->withVertexNormals = false;
+//}

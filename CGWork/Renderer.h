@@ -17,6 +17,10 @@
 
 #define STANDARD_NORMAL_COLOR RGB(0,255,0)
 
+enum VNMode {
+	NONE, IMPORTED, CALCULATED
+};
+
 class Renderer {
 	Mat4 objectWorldMatrix;
 	Mat4 cameraMatrix;
@@ -25,12 +29,14 @@ class Renderer {
 	Mat4 windowMatrix;
 	bool withBounding;
 	bool withPolygonNormals;
-	bool withVertexNormals;
+	VNMode vertexNormals;
+	bool invertPolygonNormals;
+	bool invertVertexNormals;
 	CRect mainRect;
 	COLORREF normalClr;
+	COLORREF backgroundClr;
 
 
-	void drawBackground(COLORREF * bitArr, CRect rect, COLORREF clr);
 	void drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 finalMatrix);
 	void drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
@@ -39,6 +45,7 @@ class Renderer {
 
 public:
 	Renderer();
+	void drawBackgroundColor(COLORREF* bitArr, CRect rect);
 	void drawWireframe(COLORREF* bitArr, CRect rect, Model* model);
 	void drawWireframeBackfaceCulling(COLORREF* bitArr, CRect rect, Model* model, COLORREF background);
 	void setObjectWorldMatrix(Mat4& matrix);
@@ -48,12 +55,18 @@ public:
 	void setWindowMatrix(Mat4& matrix);
 	void setMainRect(CRect rect);
 	void setNormalClr(COLORREF clr);
-	void disableBoundingBox();
+	void setBackgroundClr(COLORREF clr);
 	void enableBoundingBox();
-	void disablePolygonNormals();
 	void enablePolygonNormals();
-	void enableVertexNormals();
-	void disableVertexNormals();
+	void enablePolygonNormalInvert();
+	void enableVertexNormalInvert();
+	void setVertexNormalMode(VNMode mode);
+	void disableBoundingBox();
+	void disablePolygonNormals();
+	void disablePolygonNormalInvert();
+	void disableVertexNormalInvert();
+	//void disableVertexNormals();
+	//void enableVertexNormals();
 	void drawBounding(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr);
 	void drawBackgoundImageStretch(COLORREF* bitArr, CRect rect, PngWrapper png);
 	void drawBackgoundImageRepeat(COLORREF* bitArr, CRect rect, PngWrapper png);
