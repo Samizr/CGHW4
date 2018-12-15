@@ -9,10 +9,17 @@
 #include "Renderer.h"
 #include "LinePlotter.h"
 #include <math.h>
+#include <limits>
+#include <vector>
 
 
 
 static Mat4 generateViewportMatrix(CRect rect);
+static bool pixelIsInPolygon(int pixelX, int pixelY, Face* polygon, Mat4 finalMatrix);
+static float calculateDepthOfPoint(int pixelX, int pixelY, Face* polygon, Mat4 finalMatrix);
+static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth);
+bool edgeIntersectsWithBeam(int yBeam, Edge* edge, Mat4 finalMatrix);
+Vec4 getdepthAtPoint(int x, int y, Edge* edge, Mat4 finalMatrix);
 
 #define NORMAL_LENGTH_FACTOR 13
 
@@ -28,7 +35,6 @@ Renderer::Renderer() {
 void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 
 	Geometry* geometry = &model->getGeometry();
-	//drawBackground(bitArr, rect, RGB(255, 255, 255));//geometry->getBackgroundClr());
 
 	windowMatrix = generateViewportMatrix(rect);
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
@@ -62,9 +68,106 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 //	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
 }
 
-void Renderer::drawBackground(COLORREF * bitArr, CRect rect, COLORREF clr)
-{
+float* createZBuffer(CRect rect) {
+	float* zBuffer = new float[rect.Width() * rect.Height()];
+	for (int i = 0; i < rect.Height(); i++) {
+		for (int j = 0; j < rect.Width(); j++) {
+			zBuffer[i * rect.Width() + j] = -std::numeric_limits<float>::infinity();;
+		}
+	}
+	return zBuffer;
+}
 
+void fillZBuffer(CRect rect, float* zBuffer, Model* model, Mat4 finalMatrix) {
+	Geometry* geometry = &model->getGeometry();
+	for (Face* face : geometry->getFaces()) {
+		// Go over all pixels, only work with ones inside projected polygon.
+		for (int i = 0; i < rect.Height(); i++) {
+			for (int j = 0; j < rect.Width(); j++) {
+				if (pixelIsInPolygon(i, j, face, finalMatrix)) {
+					float currentDepth = calculateDepthOfPoint(i, j, face, finalMatrix);
+					// Remember, depth is in negative values.
+					if (currentDepth > zBuffer[i * rect.Width() + j]) {
+						zBuffer[i * rect.Width() + j] = currentDepth;
+					}
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
+static bool pixelIsInPolygon(int x, int y, Face* polygon, Mat4 finalMatrix) {
+	int polyCorners = polygon->getVerticies().size();
+	std::vector<Vec4> poly;
+	for (Vertex* vertex : polygon->getVerticies()) {
+		poly.push_back(finalMatrix * vertex->getVec4Coords());
+	}
+	int   j = polyCorners - 1;
+	bool  oddNodes = false;
+
+	for (int i = 0; i < polyCorners; i++) {
+		if ((poly[i].yCoord() < y && poly[j].yCoord() >= y
+			|| poly[j].yCoord() < y && poly[i].yCoord() >= y)
+			&& (poly[i].xCoord() <= x || poly[j].xCoord() <= x)) {
+			oddNodes ^= (poly[i].xCoord() + (y - poly[i].yCoord()) / (poly[j].yCoord() - poly[i].yCoord())*(poly[j].xCoord() - poly[i].xCoord) < x);
+		}
+		j = i;
+	}
+
+	return oddNodes;
+}
+
+float getDepthAtPoint(int x, int y, Face* polygon, Mat4 finalMatrix) {
+	Vec4 p1 = polygon->getVerticies[0];
+	Vec4 p2 = polygon->getVerticies[1];
+	Vec4 p3 = polygon->getVerticies[2];
+	float za = p1.zCoord() - (p1.zCoord() - p2.zCoord()) * ((p1.yCoord() - y) / (p1.yCoord() - p2.yCoord()));
+	float xa = p1.xCoord() - (p1.xCoord() - p2.xCoord()) * ((p1.yCoord() - y) / (p1.yCoord() - p2.yCoord()));
+	float zb = p1.zCoord() - (p1.zCoord() - p2.zCoord()) * ((p1.yCoord() - y) / (p1.yCoord() - p3.yCoord()));
+	float xb = p1.xCoord() - (p1.xCoord() - p2.xCoord()) * ((p1.yCoord() - y) / (p1.yCoord() - p3.yCoord()));;
+	float zp = zb - (zb - za) * ((xb - x) / (xb - xa));
+	return zp;
+}
+
+void Renderer::drawWireframeBackfaceCulling(COLORREF* bitArr, CRect rect, Model* model, COLORREF background) {
+	Geometry* geometry = &model->getGeometry();
+	windowMatrix = generateViewportMatrix(rect);
+	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
+	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
+	float* zBuffer = createZBuffer(rect);
+	for (Edge* edge : geometry->getEdges()) {
+		drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, geometry->getLineClr(), mainRect.Width());
+	}
+	zBuffer = createZBuffer(rect);
+	for (Face* face : geometry->getFaces()) {
+		
+	}
+}
+
+static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth) {
+	Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
+	Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
+
+	Vec4 afterCameraP1 = afterCamera * p1;
+	Vec4 afterCameraP2 = afterCamera * p2;
+	if (afterCameraP2.zCoord() > 0 || afterCameraP1.zCoord() > 0) {
+		return;
+	}
+	p1 = finalMatrix * p1;
+	p2 = finalMatrix * p2;
+	int p1x = p1.xCoord() / p1.wCoord();
+	int p2x = p2.xCoord() / p2.wCoord();
+	int p1y = p1.yCoord() / p1.wCoord();
+	int p2y = p2.yCoord() / p2.wCoord();
+	plotLine(p1x, p1y, p2x, p2y, bitArr, rect, rect.Width(), lineclr);
+}
+
+void Renderer::drawBackground(COLORREF * bitArr, CRect rect, COLORREF clr) {
 	for (int i = rect.left; i < rect.right; i++) {
 		for (int j = rect.top; j < rect.bottom; j++) {
 			bitArr[i  + j * mainRect.Width()] = clr;
@@ -77,6 +180,47 @@ void Renderer::drawBounding(COLORREF * bitArr, CRect rect, Geometry * geometry, 
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 	drawBoundingBox(bitArr, rect, geometry, clr, finalMatrix);
 }
+
+void Renderer::drawBackgoundImageStretch(COLORREF * bitArr, CRect rect, PngWrapper png) {
+	int screenWidth = rect.Width();
+	int screenHeight = rect.Height();
+	int imageWidth = png.GetWidth();
+	int imageHeight = png.GetHeight();
+	for (int i = 0; i < screenHeight; i++) {
+		for (int j = 0; j < screenWidth; j++) {
+			if (png.GetNumChannels() == 3) {
+				int yCoord = (i / screenHeight) * imageHeight;
+				int xCoord = (i / screenWidth) * imageWidth;
+				int c = png.GetValue(xCoord, yCoord);
+				int r = GET_R(c);
+				int g = GET_G(c);
+				int b = GET_B(c);
+				bitArr[i * screenWidth + j] = RGB(r, g, b);
+			}
+		}
+	}
+}
+
+void Renderer::drawBackgoundImageRepeat(COLORREF * bitArr, CRect rect, PngWrapper png) {
+	int screenWidth = rect.Width();
+	int screenHeight = rect.Height();
+	int imageWidth = png.GetWidth();
+	int imageHeight = png.GetHeight();
+	for (int i = 0; i < screenHeight; i++) {
+		for (int j = 0; j < screenWidth; j++) {
+			if (png.GetNumChannels() == 3) {
+				int xCoord = j % imageHeight;
+				int yCoord = i % imageWidth;
+				int c = png.GetValue(xCoord, yCoord);
+				int r = GET_R(c);
+				int g = GET_G(c);
+				int b = GET_B(c);
+				bitArr[i * screenWidth + j] = RGB(r, g, b);
+			}
+		}
+	}
+}
+
 
 void Renderer::drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix) {
 	float mtop, mbottom, mfar, mnear, mright, mleft;

@@ -18,6 +18,18 @@ void Face::addEdge(Edge* edge)
 	edges.push_back(edge);
 }
 
+void Face::addVertex(Vertex * vertex) {
+	//TODO
+}
+
+vector<Vertex*> Face::getVerticies() {
+	//TODO
+}
+
+vector<Edge*> Face::getEdges() {
+	return edges;
+}
+
 Vec4 Face::calculateFaceNormalTarget(Vec4 origin, Mat4 transformationMatrix) {
 	
 	Vec4 sharedVertex(edges[0]->getB()->xCoord(), edges[0]->getB()->yCoord(), edges[0]->getB()->zCoord(), 1);
