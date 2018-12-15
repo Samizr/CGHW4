@@ -13,7 +13,7 @@ public:
 	Face(Edge* firstEdge, Edge* secondEdge, Edge* thirdEdge, Edge* fourthEdge);
 	void addEdge(Edge* edge);
 	//Vec4 calculateNormal(Mat4 transformationMatrix);
-	Vec4 calculateFaceNormalTarget(Vec4 origin, Mat4 transformationMatrix);
+	Vec4 calculateFaceNormalTarget(Vec4 origin, Mat4 transformationMatrix, bool invert);
 	Vec4 calculateMidpoint();
 	~Face();
 };

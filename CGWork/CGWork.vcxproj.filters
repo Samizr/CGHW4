@@ -19,6 +19,9 @@
     <Filter Include="Source Files\Backend">
       <UniqueIdentifier>{fbed07a1-6668-4214-8510-414430283e9a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Frontend">
+      <UniqueIdentifier>{bb6b4c02-c235-4fa1-9e97-f047cf71b885}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CGWork.cpp">
@@ -48,9 +51,6 @@
     <ClCompile Include="StdAfx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MouseSensitivityDialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files\Backend</Filter>
     </ClCompile>
@@ -78,9 +78,6 @@
     <ClCompile Include="Vertex.cpp">
       <Filter>Source Files\Backend</Filter>
     </ClCompile>
-    <ClCompile Include="PerspectiveParametersDialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="LinePlotter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -88,10 +85,16 @@
       <Filter>Source Files\Backend</Filter>
     </ClCompile>
     <ClCompile Include="FinenessControlDialog.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="MouseSensitivityDialog.cpp">
+      <Filter>Source Files\Frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="PerspectiveParametersDialog.cpp">
+      <Filter>Source Files\Frontend</Filter>
     </ClCompile>
     <ClCompile Include="AdvancedDialog.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Frontend</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

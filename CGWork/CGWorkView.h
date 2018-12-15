@@ -47,6 +47,10 @@ private:
 	bool m_bBoxFrame;				//Bounding box activation
 	bool m_bDualView;				//Split screen or not?
 	bool m_bLeftModel;				//Acticating transformations on left model?	
+	bool m_bInvertPolygonNormals;	
+	bool m_bInvertVertexNormals;
+	bool m_bCalculateVertexNormals;
+	bool m_bBackfaceCullingActive;
 	float m_nTranslationSensetivity;   //Mouse sensetivity for translation
 	float m_nRotationSensetivity;		//Mouse sensetivity for rotation
 	float m_nScaleSensetivity;			//Mouse sensetivity for scaling
@@ -56,6 +60,7 @@ private:
 	bool m_nIsSubobjectMode;		
 	COLORREF m_clrBackground;		//Current background color
 	CString m_strItdFileName;		// file name of IRIT data
+
 
 	//Scene, cameras, models and related objects:
 	Scene scene;
@@ -108,7 +113,7 @@ protected:
 	BOOL InitializeCGWork();
 	BOOL SetupViewingFrustum(void);
 	BOOL SetupViewingOrthoConstAspect(void);
-
+	void sceneSetVertexNormalMode();
 	virtual void RenderScene();
 
 
@@ -190,7 +195,9 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 
 	afx_msg void OnViewResetview();
-	afx_msg void OnViewObjectselection();
+	afx_msg void OnViewAdvancedSettings();
+	afx_msg void OnViewBackfaceculling();
+	afx_msg void OnUpdateViewBackfaceculling(CCmdUI *pCmdUI);
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

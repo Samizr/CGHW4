@@ -33,7 +33,6 @@ static AXIS sceneAxisTranslator(int guiID);
 static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
 static void resetModel(Model* model);
 static COLORREF invertRB(COLORREF clr);
-
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
 
@@ -108,7 +107,9 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_SPLITSCREEN, &CCGWorkView::OnUpdateViewSplitscreen)
 	ON_COMMAND(ID_OPTIONS_PERSPECTIVECONTROL, &CCGWorkView::OnOptionsPerspectivecontrol)
 	ON_COMMAND(ID_VIEW_RESETVIEW, &CCGWorkView::OnViewResetview)
-	ON_COMMAND(ID_VIEW_OBJECTSELECTION, &CCGWorkView::OnViewObjectselection)
+	ON_COMMAND(ID_VIEW_OBJECTSELECTION, &CCGWorkView::OnViewAdvancedSettings)
+	ON_COMMAND(ID_VIEW_BACKFACECULLING, &CCGWorkView::OnViewBackfaceculling)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_BACKFACECULLING, &CCGWorkView::OnUpdateViewBackfaceculling)
 END_MESSAGE_MAP()
 
 
@@ -134,6 +135,10 @@ CCGWorkView::CCGWorkView(){
 	m_bVertexNormals = false;
 	m_bIsViewSpace = true;
 	m_bDualView = false;
+	m_bCalculateVertexNormals = true;
+	m_bInvertPolygonNormals = false;
+	m_bInvertVertexNormals = false;
+	m_bBackfaceCullingActive = false;
 	m_nTranslationSensetivity = INITIAL_SENSITIVITY;
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
 	m_nScaleSensetivity = INITIAL_SENSITIVITY * 2;
@@ -319,13 +324,6 @@ void CCGWorkView::OnDraw(CDC* pDC)
 		bitArray = new COLORREF[h * w];
 	}
 
-	for (int i = r.left; i < r.right; i++) {
-		for (int j = r.top; j < r.bottom; j++) {
-			bitArray[i + j * r.Width()] = m_clrBackground;
-		}
-	}
-
-
 	scene.draw(bitArray, r);
 	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
 
@@ -395,6 +393,7 @@ void CCGWorkView::OnFileLoad()
 
 		resetButtons();
 		m_clrBackground = STANDARD_BACKGROUND_COLOR;
+		scene.setBackgroundColor(m_clrBackground);
 
 		if (m_bIsPerspective) {
 			newCamera->Perspective(m_nPerspectiveD, m_nPerspectiveAlpha);
@@ -487,12 +486,7 @@ void CCGWorkView::OnUpdateViewPolyNormals(CCmdUI * pCmdUI)
 void CCGWorkView::OnViewVertexNormals()
 {
 	m_bVertexNormals = !m_bVertexNormals;
-	if (m_bVertexNormals) {
-		scene.enableVertexNormals();
-	}
-	else {
-		scene.disableVertexNormals();
-	}
+	sceneSetVertexNormalMode();
 	Invalidate();
 }
 
@@ -500,6 +494,19 @@ void CCGWorkView::OnUpdateViewVertexNormals(CCmdUI * pCmdUI)
 {
 	pCmdUI->SetCheck(m_bVertexNormals);
 }
+
+void CCGWorkView::OnViewBackfaceculling()
+{
+	m_bBackfaceCullingActive = !m_bBackfaceCullingActive;
+	Invalidate();
+}
+
+
+void CCGWorkView::OnUpdateViewBackfaceculling(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bBackfaceCullingActive);
+}
+
 
 
 // ACTION HANDLERS ///////////////////////////////////////////
@@ -620,6 +627,7 @@ void CCGWorkView::OnOptionsBackgroundColor()
 		//Geometry& geometry = model->getGeometry();
 		//geometry.setBackgroundClr(invertRB(CD.GetColor()));
 		m_clrBackground = invertRB(CD.GetColor());
+		scene.setBackgroundColor(m_clrBackground);
 		Invalidate();
 	}
 }
@@ -912,25 +920,49 @@ void CCGWorkView::OnViewResetview()
 	Invalidate();
 }
 
-static void resetModel(Model* model) {
+void resetModel(Model* model) {
 	if (model == nullptr)
 		return;
 	model->setTransformation(Mat4::Identity());
 	Geometry& geometry = model->getGeometry();
 }
 
+void CCGWorkView::sceneSetVertexNormalMode()
+{
+	if (m_bVertexNormals && m_bCalculateVertexNormals) {
+		scene.setVertexNormalsMode(CALCULATED);
+	}
+	else if (m_bVertexNormals && !m_bCalculateVertexNormals) {
+		scene.setVertexNormalsMode(IMPORTED);
+	}
+	else {
+		scene.setVertexNormalsMode(NONE);
+	}
+}
 
-void CCGWorkView::OnViewObjectselection()
+
+void CCGWorkView::OnViewAdvancedSettings()
 {
 	AdvancedDialog dlg;
 	dlg.maxSubobject = scene.getAllModels().size() - 1;
 	dlg.subChecked = m_nIsSubobjectMode;
+	dlg.invertPolygonNormals = m_bInvertPolygonNormals;
+	dlg.invertVertexNormals = m_bInvertVertexNormals;
+	dlg.importNormals = !m_bCalculateVertexNormals;
+	
 	if (dlg.DoModal() == IDOK) {
 		m_nIsSubobjectMode = dlg.subChecked;
 		m_nSubobject = dlg.subobjectID;
 		scene.setActiveModelID(m_nSubobject);
 		m_nIsSubobjectMode == true ? scene.setSubobjectMode() : scene.setWholeobjectMode();
+		m_bInvertPolygonNormals = dlg.invertPolygonNormals;
+		m_bInvertPolygonNormals == true ? scene.enablePolygonNormalInvert() : scene.disablePolygonNormalInvert();
+		m_bInvertVertexNormals = dlg.invertVertexNormals;
+		m_bInvertVertexNormals == true ? scene.enableVertexNormalInvert() : scene.disableVertexNormalInvert();
+		m_bCalculateVertexNormals = !dlg.importNormals;
+		sceneSetVertexNormalMode();
 	}
+	Invalidate();
 }
 
 void CCGWorkView::resetButtons() {
@@ -940,3 +972,5 @@ void CCGWorkView::resetButtons() {
 	m_bVertexNormals = false;
 	m_bIsViewSpace = true;
 }
+
+

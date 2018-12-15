@@ -132,9 +132,16 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&mainModel->getGeometry()));
 	this->m_renderer.setMainRect(rect);
 
+	this->m_renderer.drawBackgroundColor(bitArr, rect);
+
 	for (std::pair<int, Model*> pair : models) {
 		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
-		m_renderer.drawWireframe(bitArr, rect, pair.second);
+		if (withBackfaceCulling) {
+		//	m_renderer.drawWireframeBackfaceCulling(bitArr, rect, pair.second);
+		}
+		else {
+			m_renderer.drawWireframe(bitArr, rect, pair.second);
+		}
 	}
 	if (withBoundingBox && !subobjectDraw) {
 		Geometry* geometry = &mainModel->getGeometry();
@@ -147,18 +154,58 @@ void Scene::disablePolygonNormals()
 	m_renderer.disablePolygonNormals();
 }
 
+void Scene::disablePolygonNormalInvert()
+{
+	this->m_renderer.disablePolygonNormalInvert();
+}
+
+void Scene::disableVertexNormalInvert()
+{
+	this->m_renderer.disableVertexNormalInvert();
+}
+
+void Scene::enableBackfaceCulling()
+{
+	withBackfaceCulling = true;
+}
+
+void Scene::disableBackfaceCulling()
+{
+	withBackfaceCulling = false;
+}
+
 void Scene::enablePolygonNormals()
 {
-	m_renderer.enablePolygonNormals();
+	this->m_renderer.enablePolygonNormals();
 }
 
-void Scene::enableVertexNormals() {
-	this->m_renderer.enableVertexNormals();
+void Scene::enablePolygonNormalInvert()
+{
+	this->m_renderer.enablePolygonNormalInvert();
 }
 
-void Scene::disableVertexNormals() {
-	this->m_renderer.disableVertexNormals();
+void Scene::enableVertexNormalInvert()
+{
+	this->m_renderer.enableVertexNormalInvert();
 }
+
+void Scene::setVertexNormalsMode(VNMode mode)
+{
+	this->m_renderer.setVertexNormalMode(mode);
+}
+
+void Scene::setBackgroundColor(COLORREF clr)
+{
+	this->m_renderer.setBackgroundClr(clr);
+}
+
+//void Scene::enableVertexNormals() {
+//	this->m_renderer.enableVertexNormals();
+//}
+//
+//void Scene::disableVertexNormals() {
+//	this->m_renderer.disableVertexNormals();
+//}
 
 void Scene::enableDualView()
 {
@@ -170,12 +217,10 @@ void Scene::disableDualView()
 	dualView = false;
 }
 
-
 void Scene::enableBoundingBox() {
 	m_renderer.enableBoundingBox();
 	withBoundingBox = true;
 }
-
 
 void Scene::disableBoundingBox() {
 	m_renderer.disableBoundingBox();
@@ -184,8 +229,6 @@ void Scene::disableBoundingBox() {
 
 int Scene::cameraIdGenerator = 0;
 int Scene::modelIdGenerator = 0;
-
-
 
 static Mat4 generateNormalizationMatrix(Geometry* geometry) {
 	float sumX, sumY, sumZ, deltaX, deltaY, deltaZ;
