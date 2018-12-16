@@ -20,6 +20,7 @@ static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix,
 bool edgeIntersectsWithBeam(int yBeam, Edge* edge, Mat4 finalMatrix);
 float getDepthAtPoint(int x, int y, Face* polygon, Mat4 finalMatrix);
 static bool isSilhouetteEdge(Edge* edge, Mat4 transformationMatrix);
+static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png)
 
 #define NORMAL_LENGTH_FACTOR 13
 
@@ -197,19 +198,8 @@ void Renderer::drawBackgoundImageStretch(COLORREF * bitArr, CRect rect, PngWrapp
 		for (int j = 0; j < screenWidth; j++) {
 			int yCoord = (float(i) / screenHeight) * imageHeight;
 			int xCoord = (float(j) / screenWidth) * imageWidth;
-			int r, g, b;
-			int c = png->GetValue(xCoord, yCoord);
-			if (png->GetNumChannels() == 1) {
-				r = c;
-				g = c;
-				b = c;
-			}
-			if (png->GetNumChannels() == 3) {
-				r = GET_R(c);
-				g = GET_G(c);
-				b = GET_B(c);
-			}
-			bitArr[j + screenWidth * ((screenHeight - 1) - i)] = RGB(r, g, b);
+			int color = extractColorFromPng(xCoord, yCoord, png);
+			bitArr[j + screenWidth * ((screenHeight - 1) - i)] = color;
 		}
 	}
 }
@@ -223,21 +213,37 @@ void Renderer::drawBackgoundImageRepeat(COLORREF * bitArr, CRect rect, PngWrappe
 		for (int j = 0; j < screenWidth; j++) {
 			int xCoord = j % imageWidth;
 			int yCoord = i % imageHeight;
-			int r, g, b;
-			int c = png->GetValue(xCoord, yCoord);
-			if (png->GetNumChannels() == 1) {
-				r = c;
-				g = c;
-				b = c;
-			}
-			if (png->GetNumChannels() == 3) {
-				r = GET_R(c);
-				g = GET_G(c);
-				b = GET_B(c);
-			}
-			bitArr[j + screenWidth * ((screenHeight - 1) - i)] = RGB(r, g, b);
+			int color = extractColorFromPng(xCoord, yCoord, png);
+			bitArr[j + screenWidth * ((screenHeight - 1) - i)] = color;
 		}
 	}
+}
+
+static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png) {
+	int c = png->GetValue(xCoord, yCoord);
+	int r = 0, g = 0, b = 0;
+	if (png->GetNumChannels() == 1) {
+		r = c;
+		g = c;
+		b = c;
+	}
+	if (png->GetNumChannels() == 3 || png->GetNumChannels() == 4) {
+		r = GET_R(c);
+		g = GET_G(c);
+		b = GET_B(c);
+	}
+	return RGB(r, g, b);
+}
+
+void Renderer::renderToPng(COLORREF * bitArr, CRect rect, char* nameOfFile) {
+	PngWrapper png = PngWrapper(nameOfFile, rect.Width(), rect.Height());
+	for (int i = 0; i < rect.Height(); i++) {
+		for (int j = 0; j < rect.Width(); j++) {
+			png.SetValue(i, j, bitArr[j + rect.Width() * ((rect.Height() - 1) - i)]);
+		}
+	}
+	png.WritePng();
+	return;
 }
 
 
