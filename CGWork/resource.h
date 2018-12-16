@@ -12,6 +12,7 @@
 #define IDD_PERSPECTIVEPARS_DLG         143
 #define IDD_FINENESSCONTROL_DLG         147
 #define IDD_ADVANCED_DLG                153
+#define IDD_FILE_RENDERING              157
 #define IDC_LIGHT_SPACE                 1010
 #define IDC_RADIO_LIGHT1                1017
 #define IDC_RADIO_LIGHT2                1018
@@ -45,8 +46,11 @@
 #define IDC_EDIT1                       1063
 #define IDC_PERS_D_PARAM                1063
 #define IDC_SUBOBJECT_NUMBER            1063
+#define IDC_WIDTH_CONTROL               1063
 #define IDC_RICHEDIT21                  1064
 #define IDC_PERS_ALPHA_PARAM            1064
+#define IDC_EDIT2                       1064
+#define IDC_HEIGHT_CONTROL              1064
 #define IDC_FINENESSVALUE               1070
 #define IDC_SUBCHECK                    1076
 #define IDC_INVERT_VERTEX_NORMALS       1078
@@ -54,6 +58,7 @@
 #define IDC_IMPORT_NORMALS              1080
 #define IDC_CALCULATE_NORMALS           1081
 #define IDC_IMPORTNORMALS               1081
+#define IDC_BUTTON1                     1082
 #define ID_FILE_LOAD                    32771
 #define ID_VIEW_ORTHOGRAPHIC            32772
 #define ID_VIEW_PERSPECTIVE             32773
@@ -113,9 +118,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        157
+#define _APS_NEXT_RESOURCE_VALUE        159
 #define _APS_NEXT_COMMAND_VALUE         32845
-#define _APS_NEXT_CONTROL_VALUE         1082
+#define _APS_NEXT_CONTROL_VALUE         1083
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

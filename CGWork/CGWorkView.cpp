@@ -24,6 +24,7 @@ static char THIS_FILE[] = __FILE__;
 #include "FinenessControlDialog.h"
 #include "PerspectiveParametersDialog.h"
 #include "AdvancedDialog.h"
+#include "FileRenderingDialog.h"
 
 // For Status Bar access
 #include "MainFrm.h"
@@ -1011,6 +1012,7 @@ void CCGWorkView::OnBackgroundStrechmode()
 {
 	m_bRepeatMode = false;
 	scene.disableRepeatMode();
+	Invalidate();
 }
 
 
@@ -1018,6 +1020,7 @@ void CCGWorkView::OnBackgroundRepeatmode()
 {
 	m_bRepeatMode = true;	
 	scene.enableRepeatMode();
+	Invalidate();
 }
 
 
@@ -1041,5 +1044,6 @@ void CCGWorkView::OnSolidrenderingToscreen()
 
 void CCGWorkView::OnSolidrenderingTofile()
 {
+	FileRenderingDialog dlg;
 
 }
