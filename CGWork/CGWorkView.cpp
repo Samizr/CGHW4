@@ -719,7 +719,6 @@ void CCGWorkView::OnUpdateLightShadingGouraud(CCmdUI* pCmdUI)
 void CCGWorkView::OnLightConstants()
 {
 	CLightDialog dlg;
-
 	for (int id = LIGHT_ID_1; id < MAX_LIGHT; id++)
 	{
 		dlg.SetDialogData((LightID)id, m_lights[id]);
@@ -731,8 +730,10 @@ void CCGWorkView::OnLightConstants()
 		for (int id = LIGHT_ID_1; id < MAX_LIGHT; id++)
 		{
 			m_lights[id] = dlg.GetDialogData((LightID)id);
+			scene.setLightSource(m_lights[id], id);
 		}
 		m_ambientLight = dlg.GetDialogData(LIGHT_ID_AMBIENT);
+		scene.setAmbientLight(m_ambientLight);
 	}
 	Invalidate();
 }
