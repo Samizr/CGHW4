@@ -5,6 +5,7 @@ Vertex::Vertex() {
 	this->_xCoord = 0.0;
 	this->_yCoord = 0.0;
 	this->_zCoord = 0.0;
+	importedNormal = nullptr;
 }
 
 Vertex::Vertex(float x, float y, float z) {
@@ -38,6 +39,16 @@ Vec4 Vertex::calculateVertexNormalTarget(Mat4 transformationMatrix, bool invert)
 
 Vec4 Vertex::getVec4Coords(){
 	return Vec4(_xCoord, _yCoord, _zCoord, 1);
+}
+
+Vec4 * Vertex::getNormal()
+{
+	return importedNormal;
+}
+
+void Vertex::setNormal(Vec4 * normal)
+{
+	importedNormal = normal;
 }
 
 float Vertex::xCoord() {

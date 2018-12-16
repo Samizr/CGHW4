@@ -59,7 +59,10 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
 	if (vertexNormals == CALCULATED) {
-		drawVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		drawCalculatedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+	}
+	if (vertexNormals == IMPORTED) {
+		drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
 //	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
 }
@@ -147,22 +150,42 @@ void Renderer::drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry,
 }
 
 
-void Renderer::drawVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix) {
+void Renderer::drawCalculatedVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix) {
 	for (Vertex* vertex : geometry->getVertices()) {
-		Vec4 vertexVector = Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
-		Vec4 currentVertex = transformationMatrix * vertexVector;
-		if ((cameraMatrix * currentVertex).zCoord() > 0) {
+		Vec4 origin = transformationMatrix * Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
+		if ((cameraMatrix * origin).zCoord() > 0) {
 			continue;
 		}
 		Vec4 target = vertex->calculateVertexNormalTarget(transformationMatrix, invertVertexNormals);
 		if ((cameraMatrix * target).zCoord() > 0) {
 			continue;
 		}
-		currentVertex = restMatrix * currentVertex;
+		origin = restMatrix * origin;
 		target = restMatrix * target;
-		float p1Factor = currentVertex.wCoord();
+		float p1Factor = origin.wCoord();
 		float p2Factor = target.wCoord();
-		plotLine(currentVertex.xCoord() / p1Factor, currentVertex.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, mainRect.Width(), normalClr);
+		plotLine(origin.xCoord() / p1Factor, origin.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, mainRect.Width(), normalClr);
+	}
+}
+
+void Renderer::drawImportedVertexNormals(COLORREF * bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix)
+{
+	for (Vertex* vertex : geometry->getVertices()) {
+		Vec4 origin = transformationMatrix * Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
+		Vec4 target = transformationMatrix * (*vertex->getNormal());
+		if (invertVertexNormals) {
+			target = target * (-1);
+			target[3] = (-1) * target[3];
+		}
+		Mat4 translate = Mat4::Translate(Vec4(origin.xCoord(), origin.yCoord(), origin.zCoord(), 1));
+		Mat4 scaling = Mat4::Scale(Vec4(0.2, 0.2, 0.2, 1));
+		target = translate * (scaling * (target));
+
+		origin = restMatrix * origin;
+		target = restMatrix * target;
+		float p1Factor = origin.wCoord();
+		float p2Factor = target.wCoord();
+		plotLine(origin.xCoord() / p1Factor, origin.yCoord() / p1Factor, target.xCoord() / p2Factor, target.yCoord() / p2Factor, bitArr, rect, mainRect.Width(), normalClr);
 	}
 }
 
@@ -171,7 +194,6 @@ void Renderer::drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geome
 	std::list<Face*> faces = geometry->getFaces();
 	for (Face* face : faces) {
 		Vec4 midpoint = transformationMatrix * face->calculateMidpoint();
-		//Normal Clipping:
 		if ((cameraMatrix * midpoint).zCoord() > 0) {
 			continue;
 		}

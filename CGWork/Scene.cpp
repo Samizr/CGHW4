@@ -125,6 +125,8 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	if (activeModel == -1 || activeCamera == -1) {
 		return;
 	}
+	//tester line:
+	//this->m_renderer.setVertexNormalMode(IMPORTED);
 
 	Camera* camera = cameras[activeCamera];
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());

@@ -34,8 +34,8 @@ void AdvancedDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_SUBOBJECT_NUMBER, subobjectID);
 	//DDV_MinMaxInt(pDX, subobjectID, 0, maxSubobject);
 	DDX_Check(pDX, IDC_INVERT_VERTEX_NORMALS, invertVertexNormals);
-	DDX_Check(pDX, IDC_ADVANCED_DIALOG, invertPolygonNormals);
-	DDX_Radio(pDX, IDC_IMPORT_NORMALS, importNormals);
+	DDX_Check(pDX, IDC_INVERT_POLYGON_NORMALS, invertPolygonNormals);
+	DDX_Check(pDX, IDC_IMPORTNORMALS, importNormals);
 }
 
 

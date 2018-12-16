@@ -49,7 +49,9 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_WM_CREATE()
 	ON_WM_DESTROY()
 	ON_WM_SIZE()
-	ON_COMMAND(ID_FILE_LOAD, OnFileLoad)
+	ON_COMMAND(ID_FILE_LOAD_OBJECT, OnFileLoadObject)
+	ON_COMMAND(ID_FILE_LOADBACKGROUND, OnFileLoadBackground)
+
 	ON_WM_TIMER()
 
 	//TOOLBAR - View Function Mapping
@@ -142,9 +144,10 @@ CCGWorkView::CCGWorkView(){
 	m_nTranslationSensetivity = INITIAL_SENSITIVITY;
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
 	m_nScaleSensetivity = INITIAL_SENSITIVITY * 2;
-	m_nSubobject = -1;
+	m_nSubobject = 0;
 	m_nIsSubobjectMode = false;
 	m_clrBackground = STANDARD_BACKGROUND_COLOR;
+	bitArray = nullptr;
 
 	// Transformations Quantitive Setup:
 	translationQuota = 1.2;
@@ -237,17 +240,12 @@ BOOL CCGWorkView::InitializeCGWork()
 	m_pDbDC->CreateCompatibleDC(m_pDC);
 	m_pDbBitMap = CreateCompatibleBitmap(m_pDC->m_hDC, r.right, r.bottom);
 	m_pDbDC->SelectObject(m_pDbBitMap);
+	scene.setBackgroundColor(m_clrBackground);
+	scene.draw(bitArray ,r);
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
 
-	bitArray = new COLORREF[w * h];
-
-	for (int i = 0; i < r.Width(); i++) {
-		for (int j = 0; j < r.Height(); j++) {
-			bitArray[(i - r.left) + ((r.right - r.left) * (j - r.top))] = STANDARD_BACKGROUND_COLOR;
-		}
-	}
 
 	return TRUE;
 }
@@ -319,11 +317,11 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
 	initializeBMI(bminfo, r);
+
 	if (bitArray != nullptr) {
 		delete bitArray;
-		bitArray = new COLORREF[h * w];
 	}
-
+	bitArray = new COLORREF[h * w];
 	scene.draw(bitArray, r);
 	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
 
@@ -362,7 +360,7 @@ void CCGWorkView::RenderScene() {
 }
 
 
-void CCGWorkView::OnFileLoad()
+void CCGWorkView::OnFileLoadObject()
 {
 	TCHAR szFilters[] = _T("IRIT Data Files (*.itd)|*.itd|All Files (*.*)|*.*||");
 
@@ -370,13 +368,9 @@ void CCGWorkView::OnFileLoad()
 
 	if (dlg.DoModal() == IDOK) {
 		::loadedGeometry.clear();
-		m_strItdFileName = dlg.GetPathName();		// Full path and filename
-		PngWrapper p;
-
 		loadedScene.clear();
-
+		m_strItdFileName = dlg.GetPathName();		// Full path and filename
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
-		// Open the file and read it.
 		
 		// Does not reload the model if requested.
 		scene = loadedScene;
@@ -395,12 +389,23 @@ void CCGWorkView::OnFileLoad()
 		m_clrBackground = STANDARD_BACKGROUND_COLOR;
 		scene.setBackgroundColor(m_clrBackground);
 
+
 		if (m_bIsPerspective) {
 			newCamera->Perspective(m_nPerspectiveD, m_nPerspectiveAlpha);
 		}
 
 		Invalidate();	// force a WM_PAINT for drawing.
 	}
+
+}
+
+void CCGWorkView::OnFileLoadBackground()
+{
+	TCHAR szFilters[] = _T("PNG Image Files (*.png)|*.png|All Files (*.*)|*.*||");
+	CFileDialog dlg(TRUE, _T("png"), _T("*.png"), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters);
+	
+	m_strItdFileName = dlg.GetPathName();		// Full path and filename
+	PngWrapper p;
 
 }
 
@@ -944,10 +949,11 @@ void CCGWorkView::sceneSetVertexNormalMode()
 void CCGWorkView::OnViewAdvancedSettings()
 {
 	AdvancedDialog dlg;
-	dlg.maxSubobject = scene.getAllModels().size() - 1;
 	dlg.subChecked = m_nIsSubobjectMode;
-	dlg.invertPolygonNormals = m_bInvertPolygonNormals;
+	dlg.subobjectID = m_nSubobject;
+	dlg.maxSubobject = scene.getAllModels().size() - 1;
 	dlg.invertVertexNormals = m_bInvertVertexNormals;
+	dlg.invertPolygonNormals = m_bInvertPolygonNormals;
 	dlg.importNormals = !m_bCalculateVertexNormals;
 	
 	if (dlg.DoModal() == IDOK) {
@@ -972,5 +978,7 @@ void CCGWorkView::resetButtons() {
 	m_bVertexNormals = false;
 	m_bIsViewSpace = true;
 }
+
+
 
 

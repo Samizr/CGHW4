@@ -26,7 +26,6 @@ public:
 	int subobjectID;
 
 	BOOL invertVertexNormals;
-	BOOL invertPolygonNormals;
+	BOOL invertPolygonNormals;	
 	BOOL importNormals;
-	
 };

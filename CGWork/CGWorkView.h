@@ -135,7 +135,8 @@ protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnDestroy();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnFileLoad();
+	afx_msg void OnFileLoadObject();
+	afx_msg void OnFileLoadBackground();
 
 	//TOOLBAR - View Functions
 	afx_msg void OnViewBoxFrame();
