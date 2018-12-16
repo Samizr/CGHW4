@@ -52,6 +52,7 @@ private:
 	bool m_bCalculateVertexNormals;
 	bool m_bBackfaceCullingActive;
 	bool m_bWithSilhouette;
+	bool m_bRepeatMode;					//Strech or Repeat mode for background
 	float m_nTranslationSensetivity;   //Mouse sensetivity for translation
 	float m_nRotationSensetivity;		//Mouse sensetivity for rotation
 	float m_nScaleSensetivity;			//Mouse sensetivity for scaling
@@ -203,6 +204,12 @@ public:
 	afx_msg void OnViewSilhouette();
 	afx_msg void OnUpdateViewSilhouette(CCmdUI *pCmdUI);
 	afx_msg void OnOptionsSilhouettecolor();
+	afx_msg void OnBackgroundStrechmode();
+	afx_msg void OnBackgroundRepeatmode();
+	afx_msg void OnUpdateBackgroundStrechmode(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateBackgroundRepeatmode(CCmdUI *pCmdUI);
+	afx_msg void OnSolidrenderingToscreen();
+	afx_msg void OnSolidrenderingTofile();
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

@@ -39,6 +39,7 @@ class Scene {
 	PngWrapper* pngImage;
 	bool withPngBackground;
 	bool withSilhouette;
+	bool repeatMode;
 
 public:
 	Scene();
@@ -70,6 +71,8 @@ public:
 	void enableVertexNormalInvert();
 	void enableBackfaceCulling();
 	void enableSilhouettes();
+	void enablePNGBackground();
+	void enableRepeatMode();
 	void setVertexNormalsMode(VNMode mode);
 	void setBackgroundColor(COLORREF clr);
 	void setSilhouetteColor(COLORREF clr);
@@ -79,6 +82,8 @@ public:
 	void disableVertexNormalInvert();
 	void disableBackfaceCulling();
 	void disableSilhouettes();
+	void disablePNGBackground();
+	void disableRepeatMode();
 	//void disableVertexNormals();
 	//void enableVertexNormals();
 	void enableDualView();

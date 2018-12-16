@@ -21,6 +21,8 @@ Scene::Scene()
 	this->withBackfaceCulling = false;
 	this->withBoundingBox = false;
 	this->withSilhouette = false;
+	this->withPngBackground = false;
+	this->repeatMode = false;
 }
 
 int Scene::addModel(Model* model){
@@ -136,24 +138,27 @@ void Scene::setActiveModelID(int id)
 }
 
 void Scene::draw(COLORREF* bitArr, CRect rect) {
+	//DRAW BACKGROUND
+	if (withPngBackground && !repeatMode) {
+		this->m_renderer.drawBackgoundImageStretch(bitArr, rect, pngImage);
+	}
+	else if (withPngBackground && repeatMode) {
+		this->m_renderer.drawBackgoundImageRepeat(bitArr, rect, pngImage);
+	}
+	else {
+		this->m_renderer.drawBackgroundColor(bitArr, rect);
+	}
+
+	//DRAW MODELS
 	if (activeModel == -1 || activeCamera == -1) {
 		return;
 	}
-	//tester line:
-	//this->m_renderer.setVertexNormalMode(IMPORTED);
 
 	Camera* camera = cameras[activeCamera];
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
 	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
 	this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&mainModel->getGeometry()));
 	this->m_renderer.setMainRect(rect);
-
-	if (true) {
-		this->m_renderer.drawBackgoundImageStretch(bitArr, rect, pngImage);
-	}
-	else {
-		this->m_renderer.drawBackgroundColor(bitArr, rect);
-	}
 
 	for (std::pair<int, Model*> pair : models) {
 		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
@@ -164,10 +169,12 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 			m_renderer.drawWireframe(bitArr, rect, pair.second);
 		}
 	}
+	//DRAW BOUNDING BOX
 	if (withBoundingBox && !subobjectDraw) {
 		Geometry* geometry = &mainModel->getGeometry();
 		m_renderer.drawBounding(bitArr, rect, geometry, geometry->getLineClr());
 	}
+	//DRAW SILHOUETTE
 	if (withSilhouette) {
 		Geometry* geometry = &mainModel->getGeometry();
 
@@ -200,6 +207,16 @@ void Scene::enableSilhouettes()
 	withSilhouette = true;
 }
 
+void Scene::enablePNGBackground()
+{
+	withPngBackground = true;
+}
+
+void Scene::enableRepeatMode()
+{
+	repeatMode = true;
+}
+
 void Scene::disableBackfaceCulling()
 {
 	withBackfaceCulling = false;
@@ -208,6 +225,16 @@ void Scene::disableBackfaceCulling()
 void Scene::disableSilhouettes()
 {
 	withSilhouette = false;
+}
+
+void Scene::disablePNGBackground()
+{
+	withPngBackground = false;
+}
+
+void Scene::disableRepeatMode()
+{
+	repeatMode = false;
 }
 
 void Scene::enablePolygonNormals()

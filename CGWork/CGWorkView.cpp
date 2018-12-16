@@ -92,7 +92,7 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_COMMAND(ID_BACKGROUNDCOLOR, OnOptionsBackgroundColor)
 	ON_COMMAND(ID_NORMALCOLOR, OnOptionsNormalcolor)
 	ON_COMMAND(ID_OPTIONS_MOUSESENSITIVITY, OnOptionsMousesensitivity)
-	ON_COMMAND(ID_SILHOUETTECOLOR, &CCGWorkView::OnOptionsSilhouettecolor)
+	ON_COMMAND(ID_SILHOUETTECOLOR, OnOptionsSilhouettecolor)
 
 	//Shading Function Mapping - (Not related to HW2)
 	ON_COMMAND(ID_LIGHT_SHADING_FLAT, OnLightShadingFlat)
@@ -115,6 +115,12 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_BACKFACECULLING, &CCGWorkView::OnUpdateViewBackfaceculling)
 	ON_COMMAND(ID_VIEW_SILHOUETTE, &CCGWorkView::OnViewSilhouette)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_SILHOUETTE, &CCGWorkView::OnUpdateViewSilhouette)
+	ON_COMMAND(ID_BACKGROUND_STRECHMODE, &CCGWorkView::OnBackgroundStrechmode)
+	ON_COMMAND(ID_BACKGROUND_REPEATMODE, &CCGWorkView::OnBackgroundRepeatmode)
+	ON_UPDATE_COMMAND_UI(ID_BACKGROUND_STRECHMODE, &CCGWorkView::OnUpdateBackgroundStrechmode)
+	ON_UPDATE_COMMAND_UI(ID_BACKGROUND_REPEATMODE, &CCGWorkView::OnUpdateBackgroundRepeatmode)
+	ON_COMMAND(ID_SOLIDRENDERING_TOSCREEN, &CCGWorkView::OnSolidrenderingToscreen)
+	ON_COMMAND(ID_SOLIDRENDERING_TOFILE, &CCGWorkView::OnSolidrenderingTofile)
 END_MESSAGE_MAP()
 
 
@@ -145,6 +151,7 @@ CCGWorkView::CCGWorkView(){
 	m_bInvertVertexNormals = false;
 	m_bBackfaceCullingActive = false;
 	m_bWithSilhouette = false;
+	m_bRepeatMode = false;
 	m_nTranslationSensetivity = INITIAL_SENSITIVITY;
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
 	m_nScaleSensetivity = INITIAL_SENSITIVITY * 2;
@@ -416,7 +423,8 @@ void CCGWorkView::OnFileLoadBackground()
 		OutputDebugStringA(fileName);
 		p->SetFileName(fileName);
 		p->ReadPng();
-		loadedScene.setPngBackgroundImage(p);
+		scene.setPngBackgroundImage(p);
+		scene.enableBackgroundImage();
 		Invalidate();
 	}
 }
@@ -886,12 +894,6 @@ void CCGWorkView::transform(Direction direction)
 		break;
 	}
 
-	//CODE FOR SENEING SUBOBJECT BACK TO ITS PLACE:
-	//if (m_nIsSubobjectMode) {
-	//	center[3] = 1;
-	//	model->prependToTransformation(Mat4::Translate(center));
-	//}
-
 }
 
 void CCGWorkView::OnOptionsFinenesscontrol()
@@ -944,6 +946,8 @@ void CCGWorkView::OnViewResetview()
 	for (std::pair<int, Model*> pair : scene.getAllModels()) {
 		resetModel(pair.second);
 	}
+	scene.disableBackgroundImage();
+	scene.disableRepeatMode();
 	Invalidate();
 }
 
@@ -1003,3 +1007,39 @@ void CCGWorkView::resetButtons() {
 
 
 
+void CCGWorkView::OnBackgroundStrechmode()
+{
+	m_bRepeatMode = false;
+	scene.disableRepeatMode();
+}
+
+
+void CCGWorkView::OnBackgroundRepeatmode()
+{
+	m_bRepeatMode = true;	
+	scene.enableRepeatMode();
+}
+
+
+void CCGWorkView::OnUpdateBackgroundStrechmode(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(!m_bRepeatMode);
+}
+
+
+void CCGWorkView::OnUpdateBackgroundRepeatmode(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bRepeatMode);
+}
+
+
+void CCGWorkView::OnSolidrenderingToscreen()
+{
+	// TODO: Add your command handler code here
+}
+
+
+void CCGWorkView::OnSolidrenderingTofile()
+{
+
+}
