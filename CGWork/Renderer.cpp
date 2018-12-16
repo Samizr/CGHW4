@@ -20,7 +20,7 @@ static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix,
 bool edgeIntersectsWithBeam(int yBeam, Edge* edge, Mat4 finalMatrix);
 float getDepthAtPoint(int x, int y, Face* polygon, Mat4 finalMatrix);
 static bool isSilhouetteEdge(Edge* edge, Mat4 transformationMatrix);
-static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png)
+static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png);
 
 #define NORMAL_LENGTH_FACTOR 13
 
@@ -102,10 +102,6 @@ void fillZBuffer(CRect rect, float* zBuffer, Model* model, Mat4 finalMatrix) {
 		}
 	}
 }
-
-
-
-
 
 static bool pixelIsInPolygon(int x, int y, Face* polygon, Mat4 finalMatrix) {
 	int polyCorners = polygon->getVerticies().size();

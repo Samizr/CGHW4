@@ -34,7 +34,18 @@ void FileRenderingDialog::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(FileRenderingDialog, CDialogEx)
+	ON_BN_CLICKED(IDC_SAVEAS, &FileRenderingDialog::OnBnClickedSaveas)
 END_MESSAGE_MAP()
 
 
 // FileRenderingDialog message handlers
+
+
+void FileRenderingDialog::OnBnClickedSaveas()
+{
+	TCHAR szFilters[] = _T("PNG Image Files (*.png)|*.png|All Files (*.*)|*.*||");
+	CFileDialog dlg(FALSE, _T("png"), _T("*.png"), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters);
+	if (dlg.DoModal() == IDOK) {
+		desiredPath = dlg.GetPathName();
+	}
+}

@@ -21,6 +21,8 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
+	CString desiredPath;
 	int desiredWidth;
 	int desiredHeight;
+	afx_msg void OnBnClickedSaveas();
 };

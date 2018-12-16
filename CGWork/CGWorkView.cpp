@@ -417,7 +417,6 @@ void CCGWorkView::OnFileLoadBackground()
 	CFileDialog dlg(TRUE, _T("png"), _T("*.png"), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters);
 	if (dlg.DoModal() == IDOK) {
 		m_strItdFileName = dlg.GetPathName();		// Full path and filename
-		//CStringA fileName(m_strItdFileName);
 		PngWrapper* p = new PngWrapper();
 		CStringA charstr(m_strItdFileName);
 		const char* fileName = charstr;
@@ -1045,5 +1044,22 @@ void CCGWorkView::OnSolidrenderingToscreen()
 void CCGWorkView::OnSolidrenderingTofile()
 {
 	FileRenderingDialog dlg;
-
+	CRect currentRect, outputRect;
+	GetClientRect(&currentRect);
+	dlg.desiredHeight = currentRect.Height();
+	dlg.desiredWidth = currentRect.Width();
+	CString targetPath;
+	if (dlg.DoModal() == IDOK) {
+		outputRect.left = 0;
+		outputRect.top = 0;
+		outputRect.right = dlg.desiredWidth;
+		outputRect.bottom = dlg.desiredHeight;
+		targetPath = dlg.desiredPath;
+	}
+	//LEAVE TO FIRAS TO FIX 
+	//AS HE HAD FIXED THIS ABOVE.
+	//CStringA charstr(targetPath);
+	//char* fileName = charstr;
+	//auto pngArray = new COLORREF[outputRect.Width() * outputRect.Height()];
+	//scene.getRenderer().renderToPng(pngArray, outputRect, fileName);
 }

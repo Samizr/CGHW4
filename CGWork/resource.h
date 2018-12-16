@@ -49,7 +49,6 @@
 #define IDC_WIDTH_CONTROL               1063
 #define IDC_RICHEDIT21                  1064
 #define IDC_PERS_ALPHA_PARAM            1064
-#define IDC_EDIT2                       1064
 #define IDC_HEIGHT_CONTROL              1064
 #define IDC_FINENESSVALUE               1070
 #define IDC_SUBCHECK                    1076
@@ -59,6 +58,7 @@
 #define IDC_CALCULATE_NORMALS           1081
 #define IDC_IMPORTNORMALS               1081
 #define IDC_BUTTON1                     1082
+#define IDC_SAVEAS                      1082
 #define ID_FILE_LOAD                    32771
 #define ID_VIEW_ORTHOGRAPHIC            32772
 #define ID_VIEW_PERSPECTIVE             32773
