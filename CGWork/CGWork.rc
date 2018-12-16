@@ -86,9 +86,15 @@ BEGIN
     POPUP "&File"
     BEGIN
         MENUITEM "&Load Object",                ID_FILE_LOAD_OBJECT
-        MENUITEM "&Load Background",            ID_FILE_LOADBACKGROUND
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "Background"
+    BEGIN
+        MENUITEM "&Load Background",            ID_FILE_LOADBACKGROUND
+        MENUITEM SEPARATOR
+        MENUITEM "Strech Mode",                 ID_BACKGROUND_STRECHMODE
+        MENUITEM "Repeat Mode",                 ID_BACKGROUND_REPEATMODE
     END
     POPUP "&View"
     BEGIN
@@ -121,6 +127,11 @@ BEGIN
         MENUITEM "&X",                          ID_AXIS_X
         MENUITEM "&Y",                          ID_AXIS_Y
         MENUITEM "&Z",                          ID_AXIS_Z
+    END
+    POPUP "Solid Rendering"
+    BEGIN
+        MENUITEM "To Screen...",                ID_SOLIDRENDERING_TOSCREEN
+        MENUITEM "To File...",                  ID_SOLIDRENDERING_TOFILE
     END
     POPUP "&Options"
     BEGIN
