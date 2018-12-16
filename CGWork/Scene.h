@@ -11,14 +11,20 @@
 
 #include <stdio.h>
 #include <map>
+#include <array>
 #include "Mat4.h"
 #include "Camera.h"
 #include "Model.h"
 #include "Renderer.h"
+#include "Light.h"
+
+#define NUM_LIGHT_SOURCES 7
 
 class Scene {
 	std::map<int, Model*> models;
 	std::map<int, Camera*> cameras;
+	std::array<LightParams, NUM_LIGHT_SOURCES> lightSources;
+	LightParams ambientLight;
 	Model* mainModel;
 	int activeCamera;
 	int activeModel;
@@ -50,6 +56,8 @@ public:
 	Model* getActiveModel();
 	Model* getSecondActiveModel();
 	Camera* getActiveCamera();
+	void setAmbientLight(LightParams light);
+	void setLightSource(LightParams light, int id);
 
 	void clear();
 	void setActiveModelID(int id);

@@ -10,7 +10,8 @@
 
 static Mat4 generateNormalizationMatrix(Geometry* geometry);
 
-Scene::Scene(){
+Scene::Scene() 
+{
 	this->activeCamera = -1;
 	this->activeModel = -1;
 	this->secondActiveModel = -1;
@@ -108,6 +109,16 @@ Camera* Scene::getActiveCamera() {
 		return nullptr;
 	}
 	return cameras[activeCamera];
+}
+
+void Scene::setAmbientLight(LightParams light)
+{
+	ambientLight = light;
+}
+
+void Scene::setLightSource(LightParams light, int id)
+{
+	lightSources[id] = light;
 }
 
 void Scene::clear()

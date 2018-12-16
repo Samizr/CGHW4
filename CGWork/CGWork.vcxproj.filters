@@ -36,16 +36,7 @@
     <ClCompile Include="iritSkel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LightDialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MainFrm.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MaterialDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PngWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="StdAfx.cpp">
@@ -78,9 +69,6 @@
     <ClCompile Include="Vertex.cpp">
       <Filter>Source Files\Backend</Filter>
     </ClCompile>
-    <ClCompile Include="LinePlotter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Face.cpp">
       <Filter>Source Files\Backend</Filter>
     </ClCompile>
@@ -95,6 +83,18 @@
     </ClCompile>
     <ClCompile Include="AdvancedDialog.cpp">
       <Filter>Source Files\Frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="LightDialog.cpp">
+      <Filter>Source Files\Frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="LinePlotter.cpp">
+      <Filter>Source Files\Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialDlg.cpp">
+      <Filter>Source Files\Frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="PngWrapper.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
