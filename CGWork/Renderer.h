@@ -13,6 +13,7 @@
 #include "Model.h"
 #include "stdafx.h"
 #include "Mat4.h"
+#include "PngWrapper.h"
 
 #define STANDARD_NORMAL_COLOR RGB(0,255,0)
 
@@ -41,11 +42,13 @@ class Renderer {
 	void drawCalculatedVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawImportedVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
+	void drawSilhouette(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix, Mat4 transformationMatrix);
 
 public:
 	Renderer();
 	void drawBackgroundColor(COLORREF* bitArr, CRect rect);
 	void drawWireframe(COLORREF* bitArr, CRect rect, Model* model);
+	void drawWireframeBackfaceCulling(COLORREF* bitArr, CRect rect, Model* model, COLORREF background);
 	void setObjectWorldMatrix(Mat4& matrix);
 	void setCameraMatrix(Mat4& matrix);
 	void setProjectionMatrix(Mat4& matrix);
@@ -63,8 +66,8 @@ public:
 	void disablePolygonNormals();
 	void disablePolygonNormalInvert();
 	void disableVertexNormalInvert();
-	//void disableVertexNormals();
-	//void enableVertexNormals();
 	void drawBounding(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr);
+	void drawBackgoundImageStretch(COLORREF* bitArr, CRect rect, PngWrapper png);
+	void drawBackgoundImageRepeat(COLORREF* bitArr, CRect rect, PngWrapper png);
 };
 #endif /* Renderer_h */
