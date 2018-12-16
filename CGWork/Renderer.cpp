@@ -188,42 +188,54 @@ void Renderer::drawBounding(COLORREF * bitArr, CRect rect, Geometry * geometry, 
 	drawBoundingBox(bitArr, rect, geometry, clr, finalMatrix);
 }
 
-void Renderer::drawBackgoundImageStretch(COLORREF * bitArr, CRect rect, PngWrapper png) {
+void Renderer::drawBackgoundImageStretch(COLORREF * bitArr, CRect rect, PngWrapper* png) {
 	int screenWidth = rect.Width();
 	int screenHeight = rect.Height();
-	int imageWidth = png.GetWidth();
-	int imageHeight = png.GetHeight();
+	int imageWidth = png->GetWidth();
+	int imageHeight = png->GetHeight();
 	for (int i = 0; i < screenHeight; i++) {
 		for (int j = 0; j < screenWidth; j++) {
-			if (png.GetNumChannels() == 3) {
-				int yCoord = (i / screenHeight) * imageHeight;
-				int xCoord = (i / screenWidth) * imageWidth;
-				int c = png.GetValue(xCoord, yCoord);
-				int r = GET_R(c);
-				int g = GET_G(c);
-				int b = GET_B(c);
-				bitArr[i * screenWidth + j] = RGB(r, g, b);
+			int yCoord = (float(i) / screenHeight) * imageHeight;
+			int xCoord = (float(j) / screenWidth) * imageWidth;
+			int r, g, b;
+			int c = png->GetValue(xCoord, yCoord);
+			if (png->GetNumChannels() == 1) {
+				r = c;
+				g = c;
+				b = c;
 			}
+			if (png->GetNumChannels() == 3) {
+				r = GET_R(c);
+				g = GET_G(c);
+				b = GET_B(c);
+			}
+			bitArr[j + screenWidth * ((screenHeight - 1) - i)] = RGB(r, g, b);
 		}
 	}
 }
 
-void Renderer::drawBackgoundImageRepeat(COLORREF * bitArr, CRect rect, PngWrapper png) {
+void Renderer::drawBackgoundImageRepeat(COLORREF * bitArr, CRect rect, PngWrapper* png) {
 	int screenWidth = rect.Width();
 	int screenHeight = rect.Height();
-	int imageWidth = png.GetWidth();
-	int imageHeight = png.GetHeight();
+	int imageWidth = png->GetWidth();
+	int imageHeight = png->GetHeight();
 	for (int i = 0; i < screenHeight; i++) {
 		for (int j = 0; j < screenWidth; j++) {
-			if (png.GetNumChannels() == 3) {
-				int xCoord = j % imageHeight;
-				int yCoord = i % imageWidth;
-				int c = png.GetValue(xCoord, yCoord);
-				int r = GET_R(c);
-				int g = GET_G(c);
-				int b = GET_B(c);
-				bitArr[i * screenWidth + j] = RGB(r, g, b);
+			int xCoord = j % imageWidth;
+			int yCoord = i % imageHeight;
+			int r, g, b;
+			int c = png->GetValue(xCoord, yCoord);
+			if (png->GetNumChannels() == 1) {
+				r = c;
+				g = c;
+				b = c;
 			}
+			if (png->GetNumChannels() == 3) {
+				r = GET_R(c);
+				g = GET_G(c);
+				b = GET_B(c);
+			}
+			bitArr[j + screenWidth * ((screenHeight - 1) - i)] = RGB(r, g, b);
 		}
 	}
 }

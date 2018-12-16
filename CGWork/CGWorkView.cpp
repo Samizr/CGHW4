@@ -11,7 +11,7 @@ using std::cout;
 using std::endl;
 #include "MaterialDlg.h"
 #include "LightDialog.h"
-
+#include "cstring"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -403,10 +403,18 @@ void CCGWorkView::OnFileLoadBackground()
 {
 	TCHAR szFilters[] = _T("PNG Image Files (*.png)|*.png|All Files (*.*)|*.*||");
 	CFileDialog dlg(TRUE, _T("png"), _T("*.png"), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters);
-	
-	m_strItdFileName = dlg.GetPathName();		// Full path and filename
-	PngWrapper p;
-
+	if (dlg.DoModal() == IDOK) {
+		m_strItdFileName = dlg.GetPathName();		// Full path and filename
+		//CStringA fileName(m_strItdFileName);
+		PngWrapper* p = new PngWrapper();
+		CStringA charstr(m_strItdFileName);
+		const char* fileName = charstr;
+		OutputDebugStringA(fileName);
+		p->SetFileName(fileName);
+		p->ReadPng();
+		loadedScene.setPngBackgroundImage(p);
+		Invalidate();
+	}
 }
 
 

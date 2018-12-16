@@ -134,7 +134,12 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&mainModel->getGeometry()));
 	this->m_renderer.setMainRect(rect);
 
-	this->m_renderer.drawBackgroundColor(bitArr, rect);
+	if (true) {
+		this->m_renderer.drawBackgoundImageStretch(bitArr, rect, pngImage);
+	}
+	else {
+		this->m_renderer.drawBackgroundColor(bitArr, rect);
+	}
 
 	for (std::pair<int, Model*> pair : models) {
 		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
@@ -217,6 +222,18 @@ void Scene::enableDualView()
 void Scene::disableDualView()
 {
 	dualView = false;
+}
+
+void Scene::setPngBackgroundImage(PngWrapper* pngImage) {
+	this->pngImage = pngImage;
+}
+
+void Scene::enableBackgroundImage() {
+	this->withPngBackground = true;
+}
+
+void Scene::disableBackgroundImage() {
+	this->withPngBackground = false;
 }
 
 void Scene::enableBoundingBox() {

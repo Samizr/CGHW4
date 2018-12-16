@@ -30,6 +30,8 @@ class Scene {
 	static int modelIdGenerator;
 	bool withBoundingBox;
 	bool withBackfaceCulling;
+	PngWrapper* pngImage;
+	bool withPngBackground;
 
 public:
 	Scene();
@@ -69,6 +71,9 @@ public:
 	//void enableVertexNormals();
 	void enableDualView();
 	void disableDualView();
-};
 
+	void setPngBackgroundImage(PngWrapper* pngImage);
+	void enableBackgroundImage();
+	void disableBackgroundImage();
+};
 #endif /* Scene_h */

@@ -67,7 +67,7 @@ public:
 	void disablePolygonNormalInvert();
 	void disableVertexNormalInvert();
 	void drawBounding(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr);
-	void drawBackgoundImageStretch(COLORREF* bitArr, CRect rect, PngWrapper png);
-	void drawBackgoundImageRepeat(COLORREF* bitArr, CRect rect, PngWrapper png);
+	void drawBackgoundImageStretch(COLORREF* bitArr, CRect rect, PngWrapper* png);
+	void drawBackgoundImageRepeat(COLORREF* bitArr, CRect rect, PngWrapper* png);
 };
 #endif /* Renderer_h */
