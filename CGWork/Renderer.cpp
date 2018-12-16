@@ -32,6 +32,7 @@ Renderer::Renderer() {
 	invertPolygonNormals = false;
 	invertVertexNormals = false;
 	normalClr = STANDARD_NORMAL_COLOR;
+	silhouetteClr = STANDARD_NORMAL_COLOR;
 }
 
 void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
@@ -70,7 +71,6 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 	if (vertexNormals == IMPORTED) {
 		drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
-	drawSilhouette(bitArr, rect, geometry, RGB(0,255,0), finalMatrix, objectWorldMatrix);
 //	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
 }
 
@@ -282,11 +282,12 @@ void Renderer::drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry
 	}
 }
 
-void Renderer::drawSilhouette(COLORREF * bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix, Mat4 transformationMatrix) {
+void Renderer::drawSilhouette(COLORREF * bitArr, CRect rect, Geometry * geometry) {
+	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
 	for (Edge* edge : geometry->getEdges()) {
-		if (isSilhouetteEdge(edge, transformationMatrix)) {
-			drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, clr, rect.Width());
+		if (isSilhouetteEdge(edge, objectWorldMatrix)) {
+			drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, silhouetteClr, rect.Width());
 		}
 	}
 }
@@ -449,6 +450,11 @@ void Renderer::setNormalClr(COLORREF clr)
 void Renderer::setBackgroundClr(COLORREF clr)
 {
 	backgroundClr = clr;
+}
+
+void Renderer::setSilhouetteClr(COLORREF clr)
+{
+	silhouetteClr = clr;
 }
 
 void Renderer::disableBoundingBox() {

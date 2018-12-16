@@ -17,6 +17,9 @@ Scene::Scene(){
 	this->dualView = false;
 	this->subobjectDraw = false;
 	this->mainModel = nullptr;
+	this->withBackfaceCulling = false;
+	this->withBoundingBox = false;
+	this->withSilhouette = false;
 }
 
 int Scene::addModel(Model* model){
@@ -154,6 +157,11 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 		Geometry* geometry = &mainModel->getGeometry();
 		m_renderer.drawBounding(bitArr, rect, geometry, geometry->getLineClr());
 	}
+	if (withSilhouette) {
+		Geometry* geometry = &mainModel->getGeometry();
+
+		m_renderer.drawSilhouette(bitArr, rect, geometry);
+	}
 }
 
 void Scene::disablePolygonNormals()
@@ -176,9 +184,19 @@ void Scene::enableBackfaceCulling()
 	withBackfaceCulling = true;
 }
 
+void Scene::enableSilhouettes()
+{
+	withSilhouette = true;
+}
+
 void Scene::disableBackfaceCulling()
 {
 	withBackfaceCulling = false;
+}
+
+void Scene::disableSilhouettes()
+{
+	withSilhouette = false;
 }
 
 void Scene::enablePolygonNormals()
@@ -204,6 +222,11 @@ void Scene::setVertexNormalsMode(VNMode mode)
 void Scene::setBackgroundColor(COLORREF clr)
 {
 	this->m_renderer.setBackgroundClr(clr);
+}
+
+void Scene::setSilhouetteColor(COLORREF clr)
+{
+	this->m_renderer.setSilhouetteClr(clr);
 }
 
 //void Scene::enableVertexNormals() {

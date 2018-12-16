@@ -64,6 +64,7 @@ BEGIN
     BUTTON      ID_BOXFRAME
     BUTTON      ID_POLYNORMALS
     BUTTON      ID_VERTEXNORMALS
+    BUTTON      ID_VIEW_SILHOUETTE
     SEPARATOR
     BUTTON      ID_VIEWSPACE
     BUTTON      ID_OBJECTSPACE
@@ -71,6 +72,7 @@ BEGIN
     BUTTON      ID_LINECOLOR
     BUTTON      ID_BACKGROUNDCOLOR
     BUTTON      ID_NORMALCOLOR
+    BUTTON      ID_SILHOUETTECOLOR
 END
 
 
@@ -100,6 +102,7 @@ BEGIN
         MENUITEM "Polygon Normals",             ID_POLYNORMALS
         MENUITEM "Vertex Normals",              ID_VERTEXNORMALS
         MENUITEM "Backface Culling",            ID_VIEW_BACKFACECULLING
+        MENUITEM "Silhouette",                  ID_VIEW_SILHOUETTE
         MENUITEM SEPARATOR
         MENUITEM "Advanced Settings",           ID_VIEW_OBJECTSELECTION
         MENUITEM "Reset View",                  ID_VIEW_RESETVIEW
@@ -128,6 +131,7 @@ BEGIN
         MENUITEM "Object Color...",             ID_LINECOLOR
         MENUITEM "Background Color...",         ID_BACKGROUNDCOLOR
         MENUITEM "Normals Color...",            ID_NORMALCOLOR
+        MENUITEM "Silhouette Color...",         ID_SILHOUETTECOLOR
     END
     POPUP "&Light"
     BEGIN
@@ -590,7 +594,6 @@ BEGIN
     ID_LINECOLORS           "Line Color\nChoose the desired outline color."
     ID_BOXFRAME             "Draw a bounding box\nDraw a bounding box"
     ID_BACKGROUNDCOLOR      "Background Color\nChoose a background color for the view"
-    ID_VERTEXNORMALS        "Draw Vertex Normals\nDraw Vertex Normals"
     ID_LINECOLOR            "Outline Color\nChoose the color of the model lines."
 END
 

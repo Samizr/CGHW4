@@ -32,6 +32,7 @@ class Scene {
 	bool withBackfaceCulling;
 	PngWrapper* pngImage;
 	bool withPngBackground;
+	bool withSilhouette;
 
 public:
 	Scene();
@@ -60,13 +61,16 @@ public:
 	void enablePolygonNormalInvert();
 	void enableVertexNormalInvert();
 	void enableBackfaceCulling();
+	void enableSilhouettes();
 	void setVertexNormalsMode(VNMode mode);
 	void setBackgroundColor(COLORREF clr);
+	void setSilhouetteColor(COLORREF clr);
 	void disableBoundingBox();
 	void disablePolygonNormals();
 	void disablePolygonNormalInvert();
 	void disableVertexNormalInvert();
 	void disableBackfaceCulling();
+	void disableSilhouettes();
 	//void disableVertexNormals();
 	//void enableVertexNormals();
 	void enableDualView();

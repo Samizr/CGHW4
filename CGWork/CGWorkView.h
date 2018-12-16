@@ -51,6 +51,7 @@ private:
 	bool m_bInvertVertexNormals;
 	bool m_bCalculateVertexNormals;
 	bool m_bBackfaceCullingActive;
+	bool m_bWithSilhouette;
 	float m_nTranslationSensetivity;   //Mouse sensetivity for translation
 	float m_nRotationSensetivity;		//Mouse sensetivity for rotation
 	float m_nScaleSensetivity;			//Mouse sensetivity for scaling
@@ -199,6 +200,9 @@ public:
 	afx_msg void OnViewAdvancedSettings();
 	afx_msg void OnViewBackfaceculling();
 	afx_msg void OnUpdateViewBackfaceculling(CCmdUI *pCmdUI);
+	afx_msg void OnViewSilhouette();
+	afx_msg void OnUpdateViewSilhouette(CCmdUI *pCmdUI);
+	afx_msg void OnOptionsSilhouettecolor();
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

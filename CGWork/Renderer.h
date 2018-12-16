@@ -35,6 +35,7 @@ class Renderer {
 	CRect mainRect;
 	COLORREF normalClr;
 	COLORREF backgroundClr;
+	COLORREF silhouetteClr;
 
 
 	void drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 finalMatrix);
@@ -42,13 +43,13 @@ class Renderer {
 	void drawCalculatedVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawImportedVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
-	void drawSilhouette(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix, Mat4 transformationMatrix);
 
 public:
 	Renderer();
 	void drawBackgroundColor(COLORREF* bitArr, CRect rect);
 	void drawWireframe(COLORREF* bitArr, CRect rect, Model* model);
 	void drawWireframeBackfaceCulling(COLORREF* bitArr, CRect rect, Model* model, COLORREF background);
+	void drawSilhouette(COLORREF * bitArr, CRect rect, Geometry * geometry);
 	void setObjectWorldMatrix(Mat4& matrix);
 	void setCameraMatrix(Mat4& matrix);
 	void setProjectionMatrix(Mat4& matrix);
@@ -57,6 +58,7 @@ public:
 	void setMainRect(CRect rect);
 	void setNormalClr(COLORREF clr);
 	void setBackgroundClr(COLORREF clr);
+	void setSilhouetteClr(COLORREF clr);
 	void enableBoundingBox();
 	void enablePolygonNormals();
 	void enablePolygonNormalInvert();

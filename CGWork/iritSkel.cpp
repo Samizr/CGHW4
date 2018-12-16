@@ -220,6 +220,10 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 			firstVertex = new Vertex(previous->Coord[0], previous->Coord[1], previous->Coord[2]);
 			loadedGeometry.addVertex(firstVertex);
 			subGeometry.addVertex(firstVertex);
+			if (IP_HAS_NORMAL_VRTX(previous)) {
+				Vec4* vNormal = new Vec4(previous->Normal[0], previous->Normal[1], previous->Normal[2], 1);
+				firstVertex->setNormal(vNormal);
+			}
 		}
 		firstVertex->addFace(face);
 		Vertex* previousVertex = firstVertex;
@@ -229,11 +233,11 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 				currentVertex = new Vertex(current->Coord[0], current->Coord[1], current->Coord[2]);
 				loadedGeometry.addVertex(currentVertex);
 				subGeometry.addVertex(currentVertex);
+				if (IP_HAS_NORMAL_VRTX(current)) {
+					Vec4* vNormal = new Vec4(current->Normal[0], current->Normal[1], current->Normal[2], 1);
+					currentVertex->setNormal(vNormal);
+				}
 			}
-			//if (IP_HAS_NORMAL_VRTX(current)) {
-			//	Vec4* vNormal = new Vec4(current->Normal[0], current->Normal[1], current->Normal[2], 0);
-			//	currentVertex->setNormal(vNormal);
-			//}
 			Edge* edgeToAdd = loadedGeometry.getEdge(previousVertex, currentVertex);
 			if (edgeToAdd == nullptr) {
 				edgeToAdd = new Edge(previousVertex, currentVertex);
