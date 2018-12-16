@@ -92,6 +92,7 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_COMMAND(ID_BACKGROUNDCOLOR, OnOptionsBackgroundColor)
 	ON_COMMAND(ID_NORMALCOLOR, OnOptionsNormalcolor)
 	ON_COMMAND(ID_OPTIONS_MOUSESENSITIVITY, OnOptionsMousesensitivity)
+	ON_COMMAND(ID_SILHOUETTECOLOR, &CCGWorkView::OnOptionsSilhouettecolor)
 
 	//Shading Function Mapping - (Not related to HW2)
 	ON_COMMAND(ID_LIGHT_SHADING_FLAT, OnLightShadingFlat)
@@ -112,6 +113,8 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_COMMAND(ID_VIEW_OBJECTSELECTION, &CCGWorkView::OnViewAdvancedSettings)
 	ON_COMMAND(ID_VIEW_BACKFACECULLING, &CCGWorkView::OnViewBackfaceculling)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_BACKFACECULLING, &CCGWorkView::OnUpdateViewBackfaceculling)
+	ON_COMMAND(ID_VIEW_SILHOUETTE, &CCGWorkView::OnViewSilhouette)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_SILHOUETTE, &CCGWorkView::OnUpdateViewSilhouette)
 END_MESSAGE_MAP()
 
 
@@ -141,6 +144,7 @@ CCGWorkView::CCGWorkView(){
 	m_bInvertPolygonNormals = false;
 	m_bInvertVertexNormals = false;
 	m_bBackfaceCullingActive = false;
+	m_bWithSilhouette = false;
 	m_nTranslationSensetivity = INITIAL_SENSITIVITY;
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
 	m_nScaleSensetivity = INITIAL_SENSITIVITY * 2;
@@ -406,7 +410,6 @@ void CCGWorkView::OnFileLoadBackground()
 	
 	m_strItdFileName = dlg.GetPathName();		// Full path and filename
 	PngWrapper p;
-
 }
 
 
@@ -424,10 +427,6 @@ void CCGWorkView::OnViewOrthographic()
 	Invalidate();		// redraw using the new view.
 }
 
-void CCGWorkView::OnUpdateViewOrthographic(CCmdUI* pCmdUI)
-{
-	pCmdUI->SetCheck(m_nView == ID_VIEW_ORTHOGRAPHIC);
-}
 
 void CCGWorkView::OnViewPerspective()
 {
@@ -436,11 +435,6 @@ void CCGWorkView::OnViewPerspective()
 	Camera* activeCamera = scene.getActiveCamera();
 	activeCamera->Perspective(m_nPerspectiveD, m_nPerspectiveAlpha);
 	Invalidate();
-}
-
-void CCGWorkView::OnUpdateViewPerspective(CCmdUI* pCmdUI)
-{
-	pCmdUI->SetCheck(m_nView == ID_VIEW_PERSPECTIVE);
 }
 
 void CCGWorkView::OnViewBoxFrame()
@@ -455,22 +449,6 @@ void CCGWorkView::OnViewBoxFrame()
 	Invalidate();
 }
 
-void CCGWorkView::OnUpdateViewBoxFrame(CCmdUI * pCmdUI)
-{
-	pCmdUI->SetCheck(m_bBoxFrame);
-}
-
-void CCGWorkView::OnActionViewSpace()
-{
-	m_bIsViewSpace = true;
-	Invalidate();
-}
-
-void CCGWorkView::OnUpdateActionViewSpace(CCmdUI * pCmdUI)
-{
-	pCmdUI->SetCheck(m_bIsViewSpace);
-}
-
 void CCGWorkView::OnViewPolyNormals()
 {
 	m_bPolyNormals = !m_bPolyNormals;
@@ -483,9 +461,28 @@ void CCGWorkView::OnViewPolyNormals()
 	Invalidate();
 }
 
-void CCGWorkView::OnUpdateViewPolyNormals(CCmdUI * pCmdUI)
+void CCGWorkView::OnViewSilhouette()
 {
-	pCmdUI->SetCheck(m_bPolyNormals);
+	m_bWithSilhouette = !m_bWithSilhouette;
+	if (m_bWithSilhouette) {
+		scene.enableSilhouettes();
+	}
+	else {
+		scene.disableSilhouettes();
+	}
+	Invalidate();
+}
+
+void CCGWorkView::OnViewBackfaceculling()
+{
+	m_bBackfaceCullingActive = !m_bBackfaceCullingActive;
+	Invalidate();
+}
+
+void CCGWorkView::OnActionViewSpace()
+{
+	m_bIsViewSpace = true;
+	Invalidate();
 }
 
 void CCGWorkView::OnViewVertexNormals()
@@ -495,21 +492,44 @@ void CCGWorkView::OnViewVertexNormals()
 	Invalidate();
 }
 
+void CCGWorkView::OnUpdateViewPerspective(CCmdUI* pCmdUI)
+{
+	pCmdUI->SetCheck(m_nView == ID_VIEW_PERSPECTIVE);
+}
+
+void CCGWorkView::OnUpdateViewOrthographic(CCmdUI* pCmdUI)
+{
+	pCmdUI->SetCheck(m_nView == ID_VIEW_ORTHOGRAPHIC);
+}
+
+void CCGWorkView::OnUpdateViewBoxFrame(CCmdUI * pCmdUI)
+{
+	pCmdUI->SetCheck(m_bBoxFrame);
+}
+
+void CCGWorkView::OnUpdateActionViewSpace(CCmdUI * pCmdUI)
+{
+	pCmdUI->SetCheck(m_bIsViewSpace);
+}
+
+void CCGWorkView::OnUpdateViewPolyNormals(CCmdUI * pCmdUI)
+{
+	pCmdUI->SetCheck(m_bPolyNormals);
+}
+
 void CCGWorkView::OnUpdateViewVertexNormals(CCmdUI * pCmdUI)
 {
 	pCmdUI->SetCheck(m_bVertexNormals);
 }
 
-void CCGWorkView::OnViewBackfaceculling()
-{
-	m_bBackfaceCullingActive = !m_bBackfaceCullingActive;
-	Invalidate();
-}
-
-
 void CCGWorkView::OnUpdateViewBackfaceculling(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bBackfaceCullingActive);
+}
+
+void CCGWorkView::OnUpdateViewSilhouette(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bWithSilhouette);
 }
 
 
@@ -622,15 +642,6 @@ void CCGWorkView::OnOptionsBackgroundColor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		//Model* model;
-		//if (m_bDualView && !m_bLeftModel) {
-		//	model = scene.getSecondActiveModel();
-		//}
-		//else {
-		//	model = scene.getActiveModel();
-		//}
-		//Geometry& geometry = model->getGeometry();
-		//geometry.setBackgroundClr(invertRB(CD.GetColor()));
 		m_clrBackground = invertRB(CD.GetColor());
 		scene.setBackgroundColor(m_clrBackground);
 		Invalidate();
@@ -641,20 +652,21 @@ void CCGWorkView::OnOptionsNormalcolor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		//Model* model;
-		//if (m_bDualView && !m_bLeftModel) {
-		//	model = scene.getSecondActiveModel();
-		//}
-		//else {
-		//	model = scene.getActiveModel();
-		//}
-		//Geometry& geometry = model->getGeometry();		
-		//geometry.setNormalClr(invertRB(CD.GetColor()));
 		scene.getRenderer().setNormalClr(invertRB(CD.GetColor()));
 		Invalidate();
 	}
 }
 
+
+
+void CCGWorkView::OnOptionsSilhouettecolor()
+{
+	CColorDialog CD;
+	if (CD.DoModal() == IDOK) {
+		scene.setSilhouetteColor(invertRB(CD.GetColor()));
+		Invalidate();
+	}
+}
 
 
 void CCGWorkView::OnOptionsMousesensitivity()
@@ -978,7 +990,6 @@ void CCGWorkView::resetButtons() {
 	m_bVertexNormals = false;
 	m_bIsViewSpace = true;
 }
-
 
 
 
