@@ -23,7 +23,6 @@ void Face::addVertex(Vertex * vertex) {
 }
 
 vector<Vertex*> Face::getVerticies() {
-	//TODO
 	return verticies;
 }
 
@@ -32,11 +31,21 @@ vector<Edge*> Face::getEdges() {
 }
 
 Vec4 Face::calculateFaceNormalTarget(Vec4 origin, Mat4 transformationMatrix, bool invert) {
-	
+	Vec4 normal = calculateNormal(transformationMatrix);
+	if (invert) {
+		normal = normal * (-1);
+		normal[3] = (-1) * normal[3];
+	}
+	Mat4 translate = Mat4::Translate(Vec4(origin.xCoord(), origin.yCoord(), origin.zCoord(), 1));
+	Mat4 scaling = Mat4::Scale(Vec4(0.2, 0.2, 0.2, 1));
+	return translate * (scaling * (normal));
+}
+
+Vec4 Face::calculateNormal(Mat4 transformationMatrix) {
 	Vec4 sharedVertex(edges[0]->getB()->xCoord(), edges[0]->getB()->yCoord(), edges[0]->getB()->zCoord(), 1);
 	Vec4 firstVertex(edges[0]->getA()->xCoord(), edges[0]->getA()->yCoord(), edges[0]->getA()->zCoord(), 1);
 	Vec4 secondVertex(edges[1]->getB()->xCoord(), edges[1]->getB()->yCoord(), edges[1]->getB()->zCoord(), 1);
-	
+
 	sharedVertex = transformationMatrix * sharedVertex;
 	firstVertex = transformationMatrix * firstVertex;
 	secondVertex = transformationMatrix * secondVertex;
@@ -44,15 +53,7 @@ Vec4 Face::calculateFaceNormalTarget(Vec4 origin, Mat4 transformationMatrix, boo
 	Vec4 U(firstVertex + (sharedVertex * -1.0));
 	Vec4 V(secondVertex + (sharedVertex * -1.0));
 	Vec4 normal = V.crossProduct(U).normalize();
-	if (invert) {
-		normal = normal * (-1);
-		normal[3] = (-1) * normal[3];
-	}
-
-	Mat4 translate = Mat4::Translate(Vec4(origin.xCoord(), origin.yCoord(), origin.zCoord(), 1));
-	Mat4 scaling = Mat4::Scale(Vec4(0.2, 0.2, 0.2, 1));
-
-	return translate * (scaling * (normal));
+	return normal;
 }
 
 

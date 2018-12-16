@@ -230,6 +230,10 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 				loadedGeometry.addVertex(currentVertex);
 				subGeometry.addVertex(currentVertex);
 			}
+			//if (IP_HAS_NORMAL_VRTX(current)) {
+			//	Vec4* vNormal = new Vec4(current->Normal[0], current->Normal[1], current->Normal[2], 0);
+			//	currentVertex->setNormal(vNormal);
+			//}
 			Edge* edgeToAdd = loadedGeometry.getEdge(previousVertex, currentVertex);
 			if (edgeToAdd == nullptr) {
 				edgeToAdd = new Edge(previousVertex, currentVertex);

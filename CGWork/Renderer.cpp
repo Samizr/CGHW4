@@ -19,6 +19,7 @@ static bool pixelIsInPolygon(int pixelX, int pixelY, Face* polygon, Mat4 finalMa
 static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth);
 bool edgeIntersectsWithBeam(int yBeam, Edge* edge, Mat4 finalMatrix);
 float getDepthAtPoint(int x, int y, Face* polygon, Mat4 finalMatrix);
+static bool isSilhouetteEdge(Edge* edge, Mat4 transformationMatrix);
 
 #define NORMAL_LENGTH_FACTOR 13
 
@@ -66,6 +67,7 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 	if (vertexNormals == CALCULATED) {
 		drawVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
+	drawSilhouette(bitArr, rect, geometry, RGB(0,255,0), finalMatrix, objectWorldMatrix);
 //	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
 }
 
@@ -263,6 +265,30 @@ void Renderer::drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry
 			}
 		}
 	}
+}
+
+void Renderer::drawSilhouette(COLORREF * bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix, Mat4 transformationMatrix) {
+	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
+	for (Edge* edge : geometry->getEdges()) {
+		if (isSilhouetteEdge(edge, transformationMatrix)) {
+			drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, clr, rect.Width());
+		}
+	}
+}
+
+static bool isSilhouetteEdge(Edge* edge, Mat4 transformationMatrix) {
+	bool negativeZNormal = false;
+	bool positiveZNormal = false;
+	for (Face* face : edge->getFaces()) {
+		Vec4 faceNormal = face->calculateNormal(transformationMatrix);
+		if (faceNormal[2] < 0) {
+			negativeZNormal = true;
+		}
+		if (faceNormal[2] > 0) {
+			positiveZNormal = true;
+		}
+	}
+	return positiveZNormal && negativeZNormal;
 }
 
 void Renderer::drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 finalMatrix) {

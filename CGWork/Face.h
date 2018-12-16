@@ -17,7 +17,7 @@ public:
 	vector<Vertex*> getVerticies();
 	vector<Edge*> getEdges();
 	Vec4 calculateFaceNormalTarget(Vec4 origin, Mat4 transformationMatrix, bool invert);
-
+	Vec4 calculateNormal(Mat4 transformationMatrix);
 	Vec4 calculateMidpoint();
 	~Face();
 };
