@@ -34,6 +34,7 @@ static AXIS sceneAxisTranslator(int guiID);
 static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
 static void resetModel(Model* model);
 static COLORREF invertRB(COLORREF clr);
+static void invertRBArray(COLORREF* array, CRect rect);
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
 
@@ -100,6 +101,8 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_UPDATE_COMMAND_UI(ID_LIGHT_SHADING_FLAT, OnUpdateLightShadingFlat)
 	ON_COMMAND(ID_LIGHT_SHADING_GOURAUD, OnLightShadingGouraud)
 	ON_UPDATE_COMMAND_UI(ID_LIGHT_SHADING_GOURAUD, OnUpdateLightShadingGouraud)
+	ON_COMMAND(ID_LIGHT_SHADING_PHONG, OnLightShadingPhong)
+	ON_UPDATE_COMMAND_UI(ID_LIGHT_SHADING_PHONG, OnUpdateLightShadingPhong)
 	ON_COMMAND(ID_LIGHT_CONSTANTS, OnLightConstants)
 	//}}AFX_MSG_MAP
 
@@ -122,6 +125,8 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_UPDATE_COMMAND_UI(ID_BACKGROUND_REPEATMODE, &CCGWorkView::OnUpdateBackgroundRepeatmode)
 	ON_COMMAND(ID_SOLIDRENDERING_TOSCREEN, &CCGWorkView::OnSolidrenderingToscreen)
 	ON_COMMAND(ID_SOLIDRENDERING_TOFILE, &CCGWorkView::OnSolidrenderingTofile)
+
+	ON_COMMAND(ID_LIGHT_MATERIAL, &CCGWorkView::OnLightMaterial)
 END_MESSAGE_MAP()
 
 
@@ -339,6 +344,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 
 	if (pDCToUse != m_pDC)
 	{
+		//invertRBArray(bitArray, r);
 		m_pDC->BitBlt(r.left, r.top, r.right, r.bottom, pDCToUse, r.left, r.top, SRCCOPY);
 	}
 
@@ -722,6 +728,18 @@ void CCGWorkView::OnUpdateLightShadingGouraud(CCmdUI* pCmdUI)
 	pCmdUI->SetCheck(m_nLightShading == ID_LIGHT_SHADING_GOURAUD);
 }
 
+void CCGWorkView::OnLightShadingPhong()
+{
+	m_nLightShading = ID_LIGHT_SHADING_PHONG;
+}
+
+
+void CCGWorkView::OnUpdateLightShadingPhong(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_nLightShading == ID_LIGHT_SHADING_PHONG);
+}
+
+
 // LIGHT SETUP HANDLER ///////////////////////////////////////////
 
 void CCGWorkView::OnLightConstants()
@@ -745,6 +763,29 @@ void CCGWorkView::OnLightConstants()
 	}
 	Invalidate();
 }
+
+
+void CCGWorkView::OnLightMaterial()
+{
+	CMaterialDlg dlg;
+	dlg.SetDialogData(IDC_MATERIAL_AMBIENT, m_lMaterialAmbient);
+	dlg.SetDialogData(IDC_MATERIAL_DIFFUSE, m_lMaterialDiffuse);
+	dlg.SetDialogData(IDC_MATERIAL_SHININESS, m_lMaterialSpecular);
+	dlg.SetDialogData(IDC_MATERIAL_SPECULAR, m_nMaterialCosineFactor);
+
+	if (dlg.DoModal() == IDOK) {
+		scene.setLightAmbientVariable(dlg.m_ambient);
+		scene.setLightDiffuseVariable(dlg.m_diffuse);
+		scene.setLightSpecularVariable(dlg.m_specular);
+		scene.setLightCosineComponent(dlg.m_cosinComponent);
+		m_lMaterialAmbient = dlg.m_ambient;
+		m_lMaterialDiffuse = dlg.m_diffuse;
+		m_lMaterialSpecular = dlg.m_specular;
+		m_nMaterialCosineFactor = dlg.m_cosinComponent;
+	}
+	Invalidate();
+}
+
 
 void CCGWorkView::OnTimer(UINT_PTR nIDEvent)
 {
@@ -956,6 +997,16 @@ void resetModel(Model* model) {
 		return;
 	model->setTransformation(Mat4::Identity());
 	Geometry& geometry = model->getGeometry();
+}
+
+void invertRBArray(COLORREF * array, CRect rect)
+{
+	for (int i = rect.left; i < rect.right; i++) {
+		for (int j = rect.top; j < rect.bottom; j++) {
+			COLORREF newclr = invertRB(array[i + j * rect.Width()]);
+			array[i + j * rect.Width()] = newclr;
+		}
+	}
 }
 
 void CCGWorkView::sceneSetVertexNormalMode()

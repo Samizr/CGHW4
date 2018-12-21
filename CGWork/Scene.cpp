@@ -285,6 +285,60 @@ void Scene::disableDualView()
 	dualView = false;
 }
 
+void Scene::setLightAmbientVariable(double data)
+{
+	ambientFraction = data;
+}
+
+void Scene::setLightDiffuseVariable(double data)
+{
+	diffuseFraction = data;
+}
+
+void Scene::setLightSpecularVariable(double data)
+{
+	specularFraction = data;
+}
+
+void Scene::setLightCosineComponent(double data)
+{
+	cosinComponent = data;
+}
+
+COLORREF Scene::getLightingColor(Vec4 normal, COLORREF originalClr)
+{
+	int origR = GetRValue(originalClr);
+	int origG = GetGValue(originalClr);
+	int origB = GetBValue(originalClr);
+
+	//AMBIENT LIGHT:
+	double R = ambientFraction * origR * ambientLight.colorR / 255;
+	double G = ambientFraction * origG * ambientLight.colorG / 255;
+	double B = ambientFraction * origB * ambientLight.colorB / 255;
+
+	for (LightParams light : lightSources) {
+		if (!light.enabled)
+			continue;
+		if (light.type == LIGHT_TYPE_DIRECTIONAL) {
+			Vec4 lightVec(light.dirX, light.dirY, light.dirZ, 0);
+			float cos_a = lightVec.cosineAngle(normal);
+			R += diffuseFraction * cos_a * origR * light.colorR / 255;
+			G += diffuseFraction * cos_a * origG * light.colorG / 255;
+			B += diffuseFraction * cos_a * origB * light.colorB / 255;
+		}
+		if (light.type == LIGHT_TYPE_POINT) {
+			//THE QUESTION HERE IS SHOULD I CREATE A DIRECTION FROM CORDS - LIGHT_POINT?
+				//IF YES, SHOULD I RECEIVE ONE POINT? BECAUSE IN PHONG IT DEPENDS ON POINT
+			//SECOND QUESTION IS SHOULD I REGARD VIEW/LOCAL? WB IN DIRECTIONAL? 
+		}
+
+
+	}
+	//disable overflow towards end!
+
+	return COLORREF();
+}
+
 void Scene::setPngBackgroundImage(PngWrapper* pngImage) {
 	this->pngImage = pngImage;
 }

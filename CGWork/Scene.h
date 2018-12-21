@@ -23,8 +23,6 @@
 class Scene {
 	std::map<int, Model*> models;
 	std::map<int, Camera*> cameras;
-	std::array<LightParams, NUM_LIGHT_SOURCES> lightSources;
-	LightParams ambientLight;
 	Model* mainModel;
 	int activeCamera;
 	int activeModel;
@@ -40,6 +38,13 @@ class Scene {
 	bool withPngBackground;
 	bool withSilhouette;
 	bool repeatMode;
+	//LIGHTING RELATED:
+	std::array<LightParams, NUM_LIGHT_SOURCES> lightSources;
+	LightParams ambientLight;
+	double ambientFraction;
+	double diffuseFraction;
+	double specularFraction;
+	int cosinComponent;
 
 public:
 	Scene();
@@ -73,6 +78,7 @@ public:
 	void enableSilhouettes();
 	void enablePNGBackground();
 	void enableRepeatMode();
+	void enableDualView();
 	void setVertexNormalsMode(VNMode mode);
 	void setBackgroundColor(COLORREF clr);
 	void setSilhouetteColor(COLORREF clr);
@@ -84,10 +90,16 @@ public:
 	void disableSilhouettes();
 	void disablePNGBackground();
 	void disableRepeatMode();
+	void disableDualView();
 	//void disableVertexNormals();
 	//void enableVertexNormals();
-	void enableDualView();
-	void disableDualView();
+
+	void setLightAmbientVariable(double data);
+	void setLightDiffuseVariable(double data);
+	void setLightSpecularVariable(double data);
+	void setLightCosineComponent(double data);
+
+	COLORREF getLightingColor(Vec4 normal, COLORREF originalClr);
 
 	void setPngBackgroundImage(PngWrapper* pngImage);
 	void enableBackgroundImage();
