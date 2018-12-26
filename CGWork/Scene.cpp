@@ -139,6 +139,7 @@ void Scene::setActiveModelID(int id)
 
 void Scene::draw(COLORREF* bitArr, CRect rect) {
 	//DRAW BACKGROUND
+	this->m_renderer.setMainRect(rect);
 	if (withPngBackground && !repeatMode) {
 		this->m_renderer.drawBackgoundImageStretch(bitArr, rect, pngImage);
 	}
@@ -158,7 +159,6 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
 	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
 	this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&mainModel->getGeometry()));
-	this->m_renderer.setMainRect(rect);
 
 	for (std::pair<int, Model*> pair : models) {
 		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
