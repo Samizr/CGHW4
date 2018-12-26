@@ -124,10 +124,15 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_COMMAND(ID_BACKGROUND_REPEATMODE, &CCGWorkView::OnBackgroundRepeatmode)
 	ON_UPDATE_COMMAND_UI(ID_BACKGROUND_STRECHMODE, &CCGWorkView::OnUpdateBackgroundStrechmode)
 	ON_UPDATE_COMMAND_UI(ID_BACKGROUND_REPEATMODE, &CCGWorkView::OnUpdateBackgroundRepeatmode)
-	ON_COMMAND(ID_SOLIDRENDERING_TOSCREEN, &CCGWorkView::OnSolidrenderingToscreen)
+	ON_COMMAND(ID_LIGHT_MATERIAL, &CCGWorkView::OnLightMaterial)
+
 	ON_COMMAND(ID_SOLIDRENDERING_TOFILE, &CCGWorkView::OnSolidrenderingTofile)
 
-	ON_COMMAND(ID_LIGHT_MATERIAL, &CCGWorkView::OnLightMaterial)
+	ON_COMMAND(ID_SOLIDRENDERING_WIREFRAME, &CCGWorkView::OnWireframeToScreen)
+	ON_COMMAND(ID_SOLIDRENDERING_TOSCREEN, &CCGWorkView::OnSolidrenderingToscreen)
+	ON_UPDATE_COMMAND_UI(ID_SOLIDRENDERING_WIREFRAME, &CCGWorkView::OnUpdateWireframeToScreen)
+	ON_UPDATE_COMMAND_UI(ID_SOLIDRENDERING_TOSCREEN, &CCGWorkView::OnUpdateSolidrenderingToscreen)
+	ON_COMMAND(ID_SOLIDRENDERING_WIREFRAMTOFILE, &CCGWorkView::OnSolidrenderingWireframtofile)
 END_MESSAGE_MAP()
 
 
@@ -162,6 +167,8 @@ CCGWorkView::CCGWorkView(){
 	m_nTranslationSensetivity = INITIAL_SENSITIVITY;
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
 	m_nScaleSensetivity = INITIAL_SENSITIVITY * 2;
+	m_bRenderToScreen = true;
+	m_bIsWireframe = true;
 	m_nSubobject = 0;
 	m_nIsSubobjectMode = false;
 	m_clrBackground = STANDARD_BACKGROUND_COLOR;
@@ -341,7 +348,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	}
 	bitArray = new COLORREF[h * w];
 	scene.draw(bitArray, r);
-	if (m_renderToScreen) {
+	if (m_bRenderToScreen) {
 		SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
 
 		if (pDCToUse != m_pDC)
@@ -1111,11 +1118,31 @@ void CCGWorkView::OnUpdateBackgroundRepeatmode(CCmdUI *pCmdUI)
 	pCmdUI->SetCheck(m_bRepeatMode);
 }
 
+// /////////////// DIFFERENT RENDERING MODES:
 
 void CCGWorkView::OnSolidrenderingToscreen()
 {
-	m_renderToScreen = true;
+	m_bRenderToScreen = true;
+	m_bIsWireframe = false;
 	Invalidate();
+}
+
+void CCGWorkView::OnWireframeToScreen()
+{
+	m_bRenderToScreen = true;
+	m_bIsWireframe = true;
+	Invalidate();
+}
+
+void CCGWorkView::OnUpdateWireframeToScreen(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bIsWireframe);
+}
+
+
+void CCGWorkView::OnUpdateSolidrenderingToscreen(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(!m_bIsWireframe);
 }
 
 
@@ -1136,4 +1163,11 @@ void CCGWorkView::OnSolidrenderingTofile()
 		m_renderToScreen = false;
 		Invalidate();
 	}
+}
+
+
+
+void CCGWorkView::OnSolidrenderingWireframtofile()
+{
+	// TODO: Add your command handler code here
 }

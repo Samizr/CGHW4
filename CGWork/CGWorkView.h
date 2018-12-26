@@ -58,6 +58,10 @@ private:
 	float m_nScaleSensetivity;			//Mouse sensetivity for scaling
 	float m_nPerspectiveD;
 	float m_nPerspectiveAlpha;
+	bool m_bRenderToScreen;
+	bool m_bIsWireframe;
+	bool m_nIsSubobjectMode;
+	int m_nSubobject;
 	int m_nSubobject;	
 	bool m_renderToScreen;
 	bool m_nIsSubobjectMode;	
@@ -216,6 +220,10 @@ public:
 	afx_msg void OnLightShadingPhong();
 	afx_msg void OnUpdateLightShadingPhong(CCmdUI *pCmdUI);
 	afx_msg void OnLightMaterial();
+	afx_msg void OnWireframeToScreen();
+	afx_msg void OnUpdateWireframeToScreen(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateSolidrenderingToscreen(CCmdUI *pCmdUI);
+	afx_msg void OnSolidrenderingWireframtofile();
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

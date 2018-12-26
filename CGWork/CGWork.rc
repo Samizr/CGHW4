@@ -130,8 +130,10 @@ BEGIN
     END
     POPUP "Solid Rendering"
     BEGIN
-        MENUITEM "To Screen...",                ID_SOLIDRENDERING_TOSCREEN
-        MENUITEM "To File...",                  ID_SOLIDRENDERING_TOFILE
+        MENUITEM "Wireframe",                   ID_SOLIDRENDERING_WIREFRAME
+        MENUITEM "Wirefram to file...",         ID_SOLIDRENDERING_WIREFRAMTOFILE
+        MENUITEM "Solid Rendering",             ID_SOLIDRENDERING_TOSCREEN
+        MENUITEM "Solid Rendering to file...",  ID_SOLIDRENDERING_TOFILE
     END
     POPUP "&Options"
     BEGIN
