@@ -23,7 +23,12 @@ void Face::addVertex(Vertex * vertex) {
 }
 
 vector<Vertex*> Face::getVerticies() {
-	return vector<Vertex*>(verticies.begin(), verticies.end());
+	std::vector<Vertex*> verticies;
+	verticies.push_back(edges[0]->getA());
+	for (Edge* edge : edges) {
+		verticies.push_back(edge->getB());
+	}
+	return verticies;
 }
 
 vector<Edge*> Face::getEdges() {

@@ -138,7 +138,7 @@ void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* mo
 		// Go over all inside frame from above pixels, only work with ones inside projected polygon.
 		for (int i = minY; i < maxY; i++) {
 			for (int j = minX; j < maxX; j++) {
-				if (i < 0 || j < 0 || j > rect.Width() || i > rect.Height()) {
+				if (i < 0 || j < 0 || j >= rect.Width() || i >= rect.Height()) {
 					continue;
 				}
 				if (pixelIsInPolygon(j, i, poly)) {
@@ -146,7 +146,7 @@ void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* mo
 					// Remember, depth is in negative values.
 					if (currentDepth > zBuffer[i * rect.Width() + j]) {
 						zBuffer[i * rect.Width() + j] = currentDepth;
-						bitArr[j + rect.Width() * ((rect.Height() - 1) - i)] = geometry->getLineClr();
+						bitArr[i * rect.Width() + j] = geometry->getLineClr();
 					}
 				}
 			}
