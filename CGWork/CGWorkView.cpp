@@ -34,7 +34,7 @@ static AXIS sceneAxisTranslator(int guiID);
 static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
 static void resetModel(Model* model);
 static COLORREF invertRB(COLORREF clr);
-static void writeColorRefArrayToPng(COLORREF* bitArr, char* name, CRect rect);
+static void writeColorRefArrayToPng(COLORREF* bitArr, const char* name, CRect rect);
 static void invertRBArray(COLORREF* array, CRect rect);
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
@@ -350,14 +350,15 @@ void CCGWorkView::OnDraw(CDC* pDC)
 		}
 	}
 	else {
-		writeColorRefArrayToPng(bitArray, "yaSalam.png", r);
+		writeColorRefArrayToPng(bitArray, pngSavePath, r);
+		m_renderToScreen = true;
 	}
 	
 
 
 }
 
-static void writeColorRefArrayToPng(COLORREF* bitArr, char* name, CRect rect) {
+static void writeColorRefArrayToPng(COLORREF* bitArr, const char* name, CRect rect) {
 	PngWrapper pngWrapper(name, rect.Width(), rect.Height());
 	pngWrapper.InitWritePng();
 	for (int i = 0; i < rect.Height(); i++) {
@@ -1121,22 +1122,18 @@ void CCGWorkView::OnSolidrenderingToscreen()
 void CCGWorkView::OnSolidrenderingTofile()
 {
 	FileRenderingDialog dlg;
-	CRect currentRect, outputRect;
+	CRect currentRect;
 	GetClientRect(&currentRect);
 	dlg.desiredHeight = currentRect.Height();
 	dlg.desiredWidth = currentRect.Width();
-	CString targetPath;
 	if (dlg.DoModal() == IDOK) {
 		outputRect.left = 0;
 		outputRect.top = 0;
 		outputRect.right = dlg.desiredWidth;
 		outputRect.bottom = dlg.desiredHeight;
-		targetPath = dlg.desiredPath;
+		CStringA charstr(dlg.desiredPath);
+		pngSavePath = strdup(charstr);
+		m_renderToScreen = false;
+		Invalidate();
 	}
-	//LEAVE TO FIRAS TO FIX 
-	//AS HE HAD FIXED THIS ABOVE.
-	//CStringA charstr(targetPath);
-	//char* fileName = charstr;
-	//auto pngArray = new COLORREF[outputRect.Width() * outputRect.Height()];
-	//scene.getRenderer().renderToPng(pngArray, outputRect, fileName);
 }

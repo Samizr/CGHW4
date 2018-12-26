@@ -60,9 +60,11 @@ private:
 	float m_nPerspectiveAlpha;
 	int m_nSubobject;	
 	bool m_renderToScreen;
-	bool m_nIsSubobjectMode;		
+	bool m_nIsSubobjectMode;	
+	CRect outputRect;
 	COLORREF m_clrBackground;		//Current background color
 	CString m_strItdFileName;		// file name of IRIT data
+	const char* pngSavePath;
 
 
 	//Scene, cameras, models and related objects:
