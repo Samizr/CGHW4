@@ -24,6 +24,7 @@ static char THIS_FILE[] = __FILE__;
 #include "FinenessControlDialog.h"
 #include "PerspectiveParametersDialog.h"
 #include "AdvancedDialog.h"
+#include "FileRenderingDialog.h"
 
 // For Status Bar access
 #include "MainFrm.h"
@@ -34,6 +35,7 @@ static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
 static void resetModel(Model* model);
 static COLORREF invertRB(COLORREF clr);
 static void writeColorRefArrayToPng(COLORREF* bitArr, char* name, CRect rect);
+static void invertRBArray(COLORREF* array, CRect rect);
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
 
@@ -100,6 +102,8 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_UPDATE_COMMAND_UI(ID_LIGHT_SHADING_FLAT, OnUpdateLightShadingFlat)
 	ON_COMMAND(ID_LIGHT_SHADING_GOURAUD, OnLightShadingGouraud)
 	ON_UPDATE_COMMAND_UI(ID_LIGHT_SHADING_GOURAUD, OnUpdateLightShadingGouraud)
+	ON_COMMAND(ID_LIGHT_SHADING_PHONG, OnLightShadingPhong)
+	ON_UPDATE_COMMAND_UI(ID_LIGHT_SHADING_PHONG, OnUpdateLightShadingPhong)
 	ON_COMMAND(ID_LIGHT_CONSTANTS, OnLightConstants)
 	//}}AFX_MSG_MAP
 
@@ -122,6 +126,8 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_UPDATE_COMMAND_UI(ID_BACKGROUND_REPEATMODE, &CCGWorkView::OnUpdateBackgroundRepeatmode)
 	ON_COMMAND(ID_SOLIDRENDERING_TOSCREEN, &CCGWorkView::OnSolidrenderingToscreen)
 	ON_COMMAND(ID_SOLIDRENDERING_TOFILE, &CCGWorkView::OnSolidrenderingTofile)
+
+	ON_COMMAND(ID_LIGHT_MATERIAL, &CCGWorkView::OnLightMaterial)
 END_MESSAGE_MAP()
 
 
@@ -436,7 +442,6 @@ void CCGWorkView::OnFileLoadBackground()
 	CFileDialog dlg(TRUE, _T("png"), _T("*.png"), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters);
 	if (dlg.DoModal() == IDOK) {
 		m_strItdFileName = dlg.GetPathName();		// Full path and filename
-		//CStringA fileName(m_strItdFileName);
 		PngWrapper* p = new PngWrapper();
 		CStringA charstr(m_strItdFileName);
 		const char* fileName = charstr;
@@ -748,6 +753,18 @@ void CCGWorkView::OnUpdateLightShadingGouraud(CCmdUI* pCmdUI)
 	pCmdUI->SetCheck(m_nLightShading == ID_LIGHT_SHADING_GOURAUD);
 }
 
+void CCGWorkView::OnLightShadingPhong()
+{
+	m_nLightShading = ID_LIGHT_SHADING_PHONG;
+}
+
+
+void CCGWorkView::OnUpdateLightShadingPhong(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_nLightShading == ID_LIGHT_SHADING_PHONG);
+}
+
+
 // LIGHT SETUP HANDLER ///////////////////////////////////////////
 
 void CCGWorkView::OnLightConstants()
@@ -771,6 +788,29 @@ void CCGWorkView::OnLightConstants()
 	}
 	Invalidate();
 }
+
+
+void CCGWorkView::OnLightMaterial()
+{
+	CMaterialDlg dlg;
+	dlg.SetDialogData(IDC_MATERIAL_AMBIENT, m_lMaterialAmbient);
+	dlg.SetDialogData(IDC_MATERIAL_DIFFUSE, m_lMaterialDiffuse);
+	dlg.SetDialogData(IDC_MATERIAL_SHININESS, m_lMaterialSpecular);
+	dlg.SetDialogData(IDC_MATERIAL_SPECULAR, m_nMaterialCosineFactor);
+
+	if (dlg.DoModal() == IDOK) {
+		scene.setLightAmbientVariable(dlg.m_ambient);
+		scene.setLightDiffuseVariable(dlg.m_diffuse);
+		scene.setLightSpecularVariable(dlg.m_specular);
+		scene.setLightCosineComponent(dlg.m_cosinComponent);
+		m_lMaterialAmbient = dlg.m_ambient;
+		m_lMaterialDiffuse = dlg.m_diffuse;
+		m_lMaterialSpecular = dlg.m_specular;
+		m_nMaterialCosineFactor = dlg.m_cosinComponent;
+	}
+	Invalidate();
+}
+
 
 void CCGWorkView::OnTimer(UINT_PTR nIDEvent)
 {
@@ -984,6 +1024,16 @@ void resetModel(Model* model) {
 	Geometry& geometry = model->getGeometry();
 }
 
+void invertRBArray(COLORREF * array, CRect rect)
+{
+	for (int i = rect.left; i < rect.right; i++) {
+		for (int j = rect.top; j < rect.bottom; j++) {
+			COLORREF newclr = invertRB(array[i + j * rect.Width()]);
+			array[i + j * rect.Width()] = newclr;
+		}
+	}
+}
+
 void CCGWorkView::sceneSetVertexNormalMode()
 {
 	if (m_bVertexNormals && m_bCalculateVertexNormals) {
@@ -1037,6 +1087,7 @@ void CCGWorkView::OnBackgroundStrechmode()
 {
 	m_bRepeatMode = false;
 	scene.disableRepeatMode();
+	Invalidate();
 }
 
 
@@ -1044,6 +1095,7 @@ void CCGWorkView::OnBackgroundRepeatmode()
 {
 	m_bRepeatMode = true;	
 	scene.enableRepeatMode();
+	Invalidate();
 }
 
 
@@ -1066,7 +1118,25 @@ void CCGWorkView::OnSolidrenderingToscreen()
 }
 
 
-void CCGWorkView::OnSolidrenderingTofile() {
-	m_renderToScreen = false;
-	Invalidate();
+void CCGWorkView::OnSolidrenderingTofile()
+{
+	FileRenderingDialog dlg;
+	CRect currentRect, outputRect;
+	GetClientRect(&currentRect);
+	dlg.desiredHeight = currentRect.Height();
+	dlg.desiredWidth = currentRect.Width();
+	CString targetPath;
+	if (dlg.DoModal() == IDOK) {
+		outputRect.left = 0;
+		outputRect.top = 0;
+		outputRect.right = dlg.desiredWidth;
+		outputRect.bottom = dlg.desiredHeight;
+		targetPath = dlg.desiredPath;
+	}
+	//LEAVE TO FIRAS TO FIX 
+	//AS HE HAD FIXED THIS ABOVE.
+	//CStringA charstr(targetPath);
+	//char* fileName = charstr;
+	//auto pngArray = new COLORREF[outputRect.Width() * outputRect.Height()];
+	//scene.getRenderer().renderToPng(pngArray, outputRect, fileName);
 }

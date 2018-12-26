@@ -211,6 +211,9 @@ public:
 	afx_msg void OnUpdateBackgroundRepeatmode(CCmdUI *pCmdUI);
 	afx_msg void OnSolidrenderingToscreen();
 	afx_msg void OnSolidrenderingTofile();
+	afx_msg void OnLightShadingPhong();
+	afx_msg void OnUpdateLightShadingPhong(CCmdUI *pCmdUI);
+	afx_msg void OnLightMaterial();
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

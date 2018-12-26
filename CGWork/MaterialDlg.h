@@ -9,6 +9,7 @@ class CMaterialDlg : public CDialog
 
 public:
 	CMaterialDlg(CWnd* pParent = NULL);   // standard constructor
+	void SetDialogData(int dataID, double data);
 	virtual ~CMaterialDlg();
 
 // Dialog Data
@@ -25,7 +26,7 @@ public:
     // Diffuse property of the material
     double m_diffuse;
     // shininess property of the material
-    double m_shininess;
+    double m_specular;
     // specular property of the material (integer values only)
-    int m_specular;
+    int m_cosinComponent;
 };
