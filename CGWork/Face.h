@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <set>
 #include "Edge.h"
 #include "Mat4.h"
 using std::vector;
@@ -8,7 +9,7 @@ class Face
 {
 private:
 	vector<Edge*> edges; 
-	vector<Vertex*> verticies;
+	std::set<Vertex*> verticies;
 public:
 	Face();
 	Face(Edge* firstEdge, Edge* secondEdge, Edge* thirdEdge, Edge* fourthEdge);

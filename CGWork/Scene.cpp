@@ -163,7 +163,7 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	for (std::pair<int, Model*> pair : models) {
 		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
 		if (withBackfaceCulling) {
-		//	m_renderer.drawWireframeBackfaceCulling(bitArr, rect, pair.second);
+			m_renderer.drawWireframeBackfaceCulling(bitArr, rect, pair.second);
 		}
 		else {
 			m_renderer.drawWireframe(bitArr, rect, pair.second);

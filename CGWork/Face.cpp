@@ -6,24 +6,24 @@ Face::Face()
 
 Face::Face(Edge* firstEdge, Edge* secondEdge, Edge* thirdEdge, Edge* fourthEdge)
 {
-	edges.push_back(firstEdge);
-	edges.push_back(secondEdge);
-	edges.push_back(thirdEdge);
-	edges.push_back(fourthEdge);
-
+	this->addEdge(firstEdge);
+	this->addEdge(secondEdge);
+	this->addEdge(thirdEdge);
+	this->addEdge(fourthEdge);
 }
 
-void Face::addEdge(Edge* edge)
-{
+void Face::addEdge(Edge* edge) {
 	edges.push_back(edge);
+	verticies.insert(edge->getA());
+	verticies.insert(edge->getB());
 }
 
 void Face::addVertex(Vertex * vertex) {
-	//TODO
+	
 }
 
 vector<Vertex*> Face::getVerticies() {
-	return verticies;
+	return vector<Vertex*>(verticies.begin(), verticies.end());
 }
 
 vector<Edge*> Face::getEdges() {

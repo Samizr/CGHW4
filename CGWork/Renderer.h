@@ -48,7 +48,9 @@ public:
 	Renderer();
 	void drawBackgroundColor(COLORREF* bitArr, CRect rect);
 	void drawWireframe(COLORREF* bitArr, CRect rect, Model* model);
-	void drawWireframeBackfaceCulling(COLORREF* bitArr, CRect rect, Model* model, COLORREF background);
+	void drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* model);
+	void drawWireframeBackfaceCulling(COLORREF* bitArr, CRect rect, Model* model);
+	void drawWireframeZBufferDepth(COLORREF* bitArr, CRect rect, Model* model, COLORREF background);
 	void drawSilhouette(COLORREF * bitArr, CRect rect, Geometry * geometry);
 	void setObjectWorldMatrix(Mat4& matrix);
 	void setCameraMatrix(Mat4& matrix);
@@ -71,6 +73,5 @@ public:
 	void drawBounding(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr);
 	void drawBackgoundImageStretch(COLORREF* bitArr, CRect rect, PngWrapper* png);
 	void drawBackgoundImageRepeat(COLORREF* bitArr, CRect rect, PngWrapper* png);
-	void renderToPng(COLORREF* bitArr, CRect rect, char* nameOfFile);
 };
 #endif /* Renderer_h */

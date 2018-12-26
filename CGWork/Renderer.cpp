@@ -15,12 +15,11 @@
 
 
 static Mat4 generateViewportMatrix(CRect rect);
-static bool pixelIsInPolygon(int pixelX, int pixelY, Face* polygon, Mat4 finalMatrix);
+static bool pixelIsInPolygon(int x, int y, std::vector<Vec4> poly);
 static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth);
-bool edgeIntersectsWithBeam(int yBeam, Edge* edge, Mat4 finalMatrix);
-float getDepthAtPoint(int x, int y, Face* polygon, Mat4 finalMatrix);
+float getDepthAtPoint(int x, int y, std::vector<Vec4> poly);
 static bool isSilhouetteEdge(Edge* edge, Mat4 transformationMatrix);
-static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png)
+static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png);
 
 #define NORMAL_LENGTH_FACTOR 13
 
@@ -36,6 +35,7 @@ Renderer::Renderer() {
 	silhouetteClr = STANDARD_NORMAL_COLOR;
 }
 
+// TODO SWITCH BACK NAMES WITH DRAWWIREFRAME
 void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 
 	Geometry* geometry = &model->getGeometry();
@@ -45,24 +45,8 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
 	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
 	for (Edge* edge : geometry->getEdges()) {
-		Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
-		Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
-
-		Vec4 afterCameraP1 = afterCamera* p1;
-		Vec4 afterCameraP2 = afterCamera * p2;
-		if (afterCameraP2.zCoord() > 0 || afterCameraP1.zCoord() > 0) {
-			continue;
-		}
-		p1 = finalMatrix * p1;
-		p2 = finalMatrix * p2;
-		int p1x = p1.xCoord() / p1.wCoord();
-		int p2x = p2.xCoord() / p2.wCoord();
-		int p1y = p1.yCoord() / p1.wCoord();
-		int p2y = p2.yCoord() / p2.wCoord();
-		plotLine(p1x, p1y, p2x, p2y, bitArr, rect, mainRect.Width() ,geometry->getLineClr());
-
+		drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, geometry->getLineClr(), rect.Width());
 	}
-
 	if (withPolygonNormals) {
 		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
@@ -73,6 +57,21 @@ void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 		drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
 //	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
+}
+
+void Renderer::drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model) {
+	Geometry* geometry = &model->getGeometry();
+	windowMatrix = generateViewportMatrix(rect);
+	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
+	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
+	for (Face* face : geometry->getFaces()) {
+		if (face->calculateNormal(objectWorldMatrix)[2] > 0) {
+			for (Edge* edge : face->getEdges()) {
+				drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, geometry->getLineClr(), rect.Width());
+			}
+		}
+	}
 }
 
 float* createZBuffer(CRect rect) {
@@ -88,11 +87,24 @@ float* createZBuffer(CRect rect) {
 void fillZBuffer(CRect rect, float* zBuffer, Model* model, Mat4 finalMatrix) {
 	Geometry* geometry = &model->getGeometry();
 	for (Face* face : geometry->getFaces()) {
-		// Go over all pixels, only work with ones inside projected polygon.
-		for (int i = 0; i < rect.Height(); i++) {
-			for (int j = 0; j < rect.Width(); j++) {
-				if (pixelIsInPolygon(i, j, face, finalMatrix)) {
-					float currentDepth = getDepthAtPoint(i, j, face, finalMatrix);
+		int minX = rect.Width();
+		int minY = rect.Height();
+		int maxX = 0;
+		int maxY = 0;
+		std::vector<Vec4> poly;
+		for (Vertex* vertex : face->getVerticies()) {
+			Vec4 currPoint = finalMatrix * vertex->getVec4Coords();
+			poly.push_back(currPoint);
+			minX = min(currPoint.xCoord(), minX);
+			minY = min(currPoint.yCoord(), minY);
+			maxX = max(currPoint.xCoord(), maxX);
+			maxY = max(currPoint.yCoord(), maxY);
+		}
+		// Go over all inside frame from above pixels, only work with ones inside projected polygon.
+		for (int i = minY; i < maxY; i++) {
+			for (int j = minX; j < maxX; j++) {
+				if (pixelIsInPolygon(j, i, poly)) {
+					float currentDepth = getDepthAtPoint(j, i, poly);
 					// Remember, depth is in negative values.
 					if (currentDepth > zBuffer[i * rect.Width() + j]) {
 						zBuffer[i * rect.Width() + j] = currentDepth;
@@ -103,16 +115,69 @@ void fillZBuffer(CRect rect, float* zBuffer, Model* model, Mat4 finalMatrix) {
 	}
 }
 
-
-
-
-
-static bool pixelIsInPolygon(int x, int y, Face* polygon, Mat4 finalMatrix) {
-	int polyCorners = polygon->getVerticies().size();
-	std::vector<Vec4> poly;
-	for (Vertex* vertex : polygon->getVerticies()) {
-		poly.push_back(finalMatrix * vertex->getVec4Coords());
+void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* model) {
+	Geometry* geometry = &model->getGeometry();
+	windowMatrix = generateViewportMatrix(rect);
+	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
+	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
+	for (Face* face : geometry->getFaces()) {
+		int minX = rect.Width();
+		int minY = rect.Height();
+		int maxX = 0;
+		int maxY = 0;
+		std::vector<Vec4> poly;
+		for (Vertex* vertex : face->getVerticies()) {
+			Vec4 currPoint = finalMatrix * vertex->getVec4Coords();
+			poly.push_back(currPoint);
+			minX = min(currPoint.xCoord(), minX);
+			minY = min(currPoint.yCoord(), minY);
+			maxX = max(currPoint.xCoord(), maxX);
+			maxY = max(currPoint.yCoord(), maxY);
+		}
+		// Go over all inside frame from above pixels, only work with ones inside projected polygon.
+		for (int i = minY; i < maxY; i++) {
+			for (int j = minX; j < maxX; j++) {
+				if (pixelIsInPolygon(j, i, poly)) {
+					float currentDepth = getDepthAtPoint(j, i, poly);
+					// Remember, depth is in negative values.
+					if (currentDepth > zBuffer[i * rect.Width() + j]) {
+						zBuffer[i * rect.Width() + j] = currentDepth;
+						bitArr[j + rect.Width() * ((rect.Height() - 1) - i)] = geometry->getLineClr();
+					}
+				}
+			}
+		}
 	}
+}
+
+static float* calulateDepthOfPixels(Face* polygon, Mat4 finalMatrix, CRect rect) {
+	float* depth = createZBuffer(rect);
+	std::vector<Vec4> poly;
+	int minX = rect.Width();
+	int minY = rect.Height();
+	int maxX = 0;
+	int maxY = 0;
+	for (Vertex* vertex : polygon->getVerticies()) {
+		Vec4 currPoint = finalMatrix * vertex->getVec4Coords();
+		poly.push_back(currPoint);
+		minX = min(currPoint.xCoord(), minX);
+		minY = min(currPoint.yCoord(), minY);
+		maxX = max(currPoint.xCoord(), maxX);
+		maxY = max(currPoint.yCoord(), maxY);
+	}
+	for (int i = minY; i < maxY; i++) {
+		for (int j = minX; j < maxX; j++) {
+			if (pixelIsInPolygon(j, i, poly)) {
+				depth[j + i * rect.Width()] = (getDepthAtPoint(j, i, poly));
+			}
+		}
+	}
+	return depth;
+}
+
+static bool pixelIsInPolygon(int x, int y, std::vector<Vec4> poly) {
+	int polyCorners = poly.size();
 	int   j = polyCorners - 1;
 	bool  oddNodes = false;
 
@@ -124,14 +189,13 @@ static bool pixelIsInPolygon(int x, int y, Face* polygon, Mat4 finalMatrix) {
 		}
 		j = i;
 	}
-
 	return oddNodes;
 }
 
-float getDepthAtPoint(int x, int y, Face* polygon, Mat4 finalMatrix) {
-	Vec4 p1 = polygon->getVerticies()[0]->getVec4Coords();
-	Vec4 p2 = polygon->getVerticies()[1]->getVec4Coords();
-	Vec4 p3 = polygon->getVerticies()[2]->getVec4Coords();
+float getDepthAtPoint(int x, int y, std::vector<Vec4> poly) {
+	Vec4 p1 = poly[0];
+	Vec4 p2 = poly[1];
+	Vec4 p3 = poly[2];
 	float za = p1.zCoord() - (p1.zCoord() - p2.zCoord()) * ((p1.yCoord() - y) / (p1.yCoord() - p2.yCoord()));
 	float xa = p1.xCoord() - (p1.xCoord() - p2.xCoord()) * ((p1.yCoord() - y) / (p1.yCoord() - p2.yCoord()));
 	float zb = p1.zCoord() - (p1.zCoord() - p2.zCoord()) * ((p1.yCoord() - y) / (p1.yCoord() - p3.yCoord()));
@@ -140,26 +204,41 @@ float getDepthAtPoint(int x, int y, Face* polygon, Mat4 finalMatrix) {
 	return zp;
 }
 
-void Renderer::drawWireframeBackfaceCulling(COLORREF* bitArr, CRect rect, Model* model, COLORREF background) {
+// change back names
+void Renderer::drawWireframeZBufferDepth(COLORREF* bitArr, CRect rect, Model* model, COLORREF backgroundClr) {
 	Geometry* geometry = &model->getGeometry();
 	windowMatrix = generateViewportMatrix(rect);
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
 	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
 	float* zBuffer = createZBuffer(rect);
-	for (Edge* edge : geometry->getEdges()) {
-		drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, geometry->getLineClr(), mainRect.Width());
-	}
-	zBuffer = createZBuffer(rect);
+	fillZBuffer(rect, zBuffer, model, finalMatrix);
 	for (Face* face : geometry->getFaces()) {
-		
+		float* depth = calulateDepthOfPixels(face, finalMatrix, rect);
+		for (Edge *edge : face->getEdges()) {
+			Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
+			Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
+
+			Vec4 afterCameraP1 = afterCamera * p1;
+			Vec4 afterCameraP2 = afterCamera * p2;
+			if (afterCameraP2.zCoord() > 0 || afterCameraP1.zCoord() > 0) {
+				return;
+			}
+			p1 = finalMatrix * p1;
+			p2 = finalMatrix * p2;
+			int p1x = p1.xCoord() / p1.wCoord();
+			int p2x = p2.xCoord() / p2.wCoord();
+			int p1y = p1.yCoord() / p1.wCoord();
+			int p2y = p2.yCoord() / p2.wCoord();
+			plotLineWithDepth(p1x, p1y, p2x, p2y,zBuffer, depth, bitArr, rect, rect.Width(), geometry->getLineClr());
+		}
+		free(depth);
 	}
 }
 
 static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth) {
 	Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
 	Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
-
 	Vec4 afterCameraP1 = afterCamera * p1;
 	Vec4 afterCameraP2 = afterCamera * p2;
 	if (afterCameraP2.zCoord() > 0 || afterCameraP1.zCoord() > 0) {
@@ -174,9 +253,7 @@ static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix,
 	plotLine(p1x, p1y, p2x, p2y, bitArr, rect, rect.Width(), lineclr);
 }
 
-
-void Renderer::drawBackgroundColor(COLORREF * bitArr, CRect rect)
-{
+void Renderer::drawBackgroundColor(COLORREF * bitArr, CRect rect) {
 	for (int i = rect.left; i < rect.right; i++) {
 		for (int j = rect.top; j < rect.bottom; j++) {
 			bitArr[i  + j * mainRect.Width()] = backgroundClr;
@@ -234,18 +311,6 @@ static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png) {
 	}
 	return RGB(r, g, b);
 }
-
-void Renderer::renderToPng(COLORREF * bitArr, CRect rect, char* nameOfFile) {
-	PngWrapper png = PngWrapper(nameOfFile, rect.Width(), rect.Height());
-	for (int i = 0; i < rect.Height(); i++) {
-		for (int j = 0; j < rect.Width(); j++) {
-			png.SetValue(i, j, bitArr[j + rect.Width() * ((rect.Height() - 1) - i)]);
-		}
-	}
-	png.WritePng();
-	return;
-}
-
 
 void Renderer::drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix) {
 	float mtop, mbottom, mfar, mnear, mright, mleft;

@@ -33,6 +33,7 @@ static AXIS sceneAxisTranslator(int guiID);
 static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
 static void resetModel(Model* model);
 static COLORREF invertRB(COLORREF clr);
+static void writeColorRefArrayToPng(COLORREF* bitArr, char* name, CRect rect);
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
 
@@ -334,16 +335,35 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	}
 	bitArray = new COLORREF[h * w];
 	scene.draw(bitArray, r);
-	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
+	if (m_renderToScreen) {
+		SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
 
-	if (pDCToUse != m_pDC)
-	{
-		m_pDC->BitBlt(r.left, r.top, r.right, r.bottom, pDCToUse, r.left, r.top, SRCCOPY);
+		if (pDCToUse != m_pDC)
+		{
+			m_pDC->BitBlt(r.left, r.top, r.right, r.bottom, pDCToUse, r.left, r.top, SRCCOPY);
+		}
 	}
+	else {
+		writeColorRefArrayToPng(bitArray, "yaSalam.png", r);
+	}
+	
 
 
 }
 
+static void writeColorRefArrayToPng(COLORREF* bitArr, char* name, CRect rect) {
+	PngWrapper pngWrapper(name, rect.Width(), rect.Height());
+	pngWrapper.InitWritePng();
+	for (int i = 0; i < rect.Height(); i++) {
+		for (int j = 0; j < rect.Width(); j++) {
+			int red = GetRValue(invertRB(bitArr[j + rect.Width() * ((rect.Height() - 1) - i)]));
+			int green = GetGValue(invertRB(bitArr[j + rect.Width() * ((rect.Height() - 1) - i)]));
+			int blue = GetBValue(invertRB(bitArr[j + rect.Width() * ((rect.Height() - 1) - i)]));
+			pngWrapper.SetValue(j, i, SET_RGB(red, green, blue));
+		}
+	}
+	pngWrapper.WritePng();
+}
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView CGWork Finishing and clearing...
 
@@ -387,12 +407,12 @@ void CCGWorkView::OnFileLoadObject()
 		scene = loadedScene;
 		scene.setRenderer(renderer);
 		::loadedGeometry.setLineClr(scene.getModel(0)->getGeometry().getLineClr()); //SETS THE MAIN MODEL COLOR TO BE SIMILAR TO THE FIRST COLOR IN SCENE
-		auto newModel = new Model(::loadedGeometry);
+		Model* newModel = new Model(::loadedGeometry);
 		scene.setMainModel(newModel); 
 		float distance = (::loadedGeometry.getMaxZ() - ::loadedGeometry.getMinZ());
 		m_nPerspectiveD = 3 * distance;
 		m_nPerspectiveAlpha = distance;
-		auto newCamera = new Camera();
+		Camera* newCamera = new Camera();
 		scene.addCamera(newCamera);
 		newCamera->LookAt(Vec4(0, 0, 3 * distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
 
@@ -493,6 +513,12 @@ void CCGWorkView::OnViewSilhouette()
 void CCGWorkView::OnViewBackfaceculling()
 {
 	m_bBackfaceCullingActive = !m_bBackfaceCullingActive;
+	if (m_bBackfaceCullingActive) {
+		scene.enableBackfaceCulling();
+	}
+	else {
+		scene.disableBackfaceCulling();
+	}
 	Invalidate();
 }
 
@@ -1035,11 +1061,12 @@ void CCGWorkView::OnUpdateBackgroundRepeatmode(CCmdUI *pCmdUI)
 
 void CCGWorkView::OnSolidrenderingToscreen()
 {
-	// TODO: Add your command handler code here
+	m_renderToScreen = true;
+	Invalidate();
 }
 
 
-void CCGWorkView::OnSolidrenderingTofile()
-{
-
+void CCGWorkView::OnSolidrenderingTofile() {
+	m_renderToScreen = false;
+	Invalidate();
 }

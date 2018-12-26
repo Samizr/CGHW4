@@ -59,6 +59,7 @@ private:
 	float m_nPerspectiveD;
 	float m_nPerspectiveAlpha;
 	int m_nSubobject;	
+	bool m_renderToScreen;
 	bool m_nIsSubobjectMode;		
 	COLORREF m_clrBackground;		//Current background color
 	CString m_strItdFileName;		// file name of IRIT data
