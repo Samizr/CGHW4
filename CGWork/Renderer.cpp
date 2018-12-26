@@ -256,7 +256,7 @@ static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix,
 void Renderer::drawBackgroundColor(COLORREF * bitArr, CRect rect) {
 	for (int i = rect.left; i < rect.right; i++) {
 		for (int j = rect.top; j < rect.bottom; j++) {
-			bitArr[i  + j * mainRect.Width()] = backgroundClr;
+			bitArr[i  + j * rect.Width()] = backgroundClr;
 		}
 	}
 }

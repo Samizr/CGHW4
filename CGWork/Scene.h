@@ -38,6 +38,7 @@ class Scene {
 	bool withPngBackground;
 	bool withSilhouette;
 	bool repeatMode;
+	bool wireframeMode;
 	//LIGHTING RELATED:
 	std::array<LightParams, NUM_LIGHT_SOURCES> lightSources;
 	LightParams ambientLight;
@@ -45,6 +46,8 @@ class Scene {
 	double diffuseFraction;
 	double specularFraction;
 	int cosinComponent;
+	void drawWireframe(COLORREF* bitArr, CRect rect);
+	void drawSolid(COLORREF* bitArr, CRect rect);
 
 public:
 	Scene();
@@ -57,6 +60,8 @@ public:
 
 	Model* getMainModel();
 	void setMainModel(Model* model);
+	void setWireframeMode();
+	void setSolidMode();
 	void setSubobjectMode();
 	void setWholeobjectMode();
 	Model* getModel(int id);
@@ -91,9 +96,6 @@ public:
 	void disablePNGBackground();
 	void disableRepeatMode();
 	void disableDualView();
-	//void disableVertexNormals();
-	//void enableVertexNormals();
-
 	void setLightAmbientVariable(double data);
 	void setLightDiffuseVariable(double data);
 	void setLightSpecularVariable(double data);

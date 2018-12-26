@@ -9,7 +9,7 @@
 #include "Scene.h"
 
 static Mat4 generateNormalizationMatrix(Geometry* geometry);
-
+static float* createZBuffer(CRect rect);
 Scene::Scene() 
 {
 	this->activeCamera = -1;
@@ -23,6 +23,7 @@ Scene::Scene()
 	this->withSilhouette = false;
 	this->withPngBackground = false;
 	this->repeatMode = false;
+	this->wireframeMode = true;
 }
 
 int Scene::addModel(Model* model){
@@ -65,6 +66,14 @@ Model * Scene::getMainModel()
 void Scene::setMainModel(Model * model)
 {
 	mainModel = model;
+}
+
+void Scene::setWireframeMode(){
+	wireframeMode = true;
+}
+
+void Scene::setSolidMode(){
+	wireframeMode = false;
 }
 
 void Scene::setSubobjectMode()
@@ -160,15 +169,13 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&mainModel->getGeometry()));
 	this->m_renderer.setMainRect(rect);
 
-	for (std::pair<int, Model*> pair : models) {
-		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
-		if (withBackfaceCulling) {
-			m_renderer.drawWireframeBackfaceCulling(bitArr, rect, pair.second);
-		}
-		else {
-			m_renderer.drawWireframe(bitArr, rect, pair.second);
-		}
+	if (wireframeMode) {
+		drawWireframe(bitArr, rect);
 	}
+	else {
+		drawSolid(bitArr, rect);
+	}
+	
 	//DRAW BOUNDING BOX
 	if (withBoundingBox && !subobjectDraw) {
 		Geometry* geometry = &mainModel->getGeometry();
@@ -180,6 +187,42 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 
 		m_renderer.drawSilhouette(bitArr, rect, geometry);
 	}
+}
+
+void Scene::drawWireframe(COLORREF* bitArr, CRect rect) {
+	for (std::pair<int, Model*> pair : models) {
+		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
+		if (withBackfaceCulling) {
+			m_renderer.drawWireframeBackfaceCulling(bitArr, rect, pair.second);
+		}
+		else {
+			m_renderer.drawWireframe(bitArr, rect, pair.second);
+		}
+	}
+}
+
+void Scene::drawSolid(COLORREF* bitArr, CRect rect) {
+	float* zBuffer = createZBuffer(rect);
+	for (std::pair<int, Model*> pair : models) {
+		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
+		if (withBackfaceCulling) {
+			//m_renderer.drawWireframeBackfaceCulling(bitArr, rect, pair.second);
+		}
+		else {
+			m_renderer.drawSolid(bitArr, zBuffer, rect, pair.second);
+		}
+	}
+	free(zBuffer);
+}
+
+float* createZBuffer(CRect rect) {
+	float* zBuffer = new float[rect.Width() * rect.Height()];
+	for (int i = 0; i < rect.Height(); i++) {
+		for (int j = 0; j < rect.Width(); j++) {
+			zBuffer[i * rect.Width() + j] = -std::numeric_limits<float>::infinity();;
+		}
+	}
+	return zBuffer;
 }
 
 void Scene::disablePolygonNormals()
@@ -266,14 +309,6 @@ void Scene::setSilhouetteColor(COLORREF clr)
 {
 	this->m_renderer.setSilhouetteClr(clr);
 }
-
-//void Scene::enableVertexNormals() {
-//	this->m_renderer.enableVertexNormals();
-//}
-//
-//void Scene::disableVertexNormals() {
-//	this->m_renderer.disableVertexNormals();
-//}
 
 void Scene::enableDualView()
 {

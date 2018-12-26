@@ -132,7 +132,7 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_COMMAND(ID_SOLIDRENDERING_TOSCREEN, &CCGWorkView::OnSolidrenderingToscreen)
 	ON_UPDATE_COMMAND_UI(ID_SOLIDRENDERING_WIREFRAME, &CCGWorkView::OnUpdateWireframeToScreen)
 	ON_UPDATE_COMMAND_UI(ID_SOLIDRENDERING_TOSCREEN, &CCGWorkView::OnUpdateSolidrenderingToscreen)
-	ON_COMMAND(ID_SOLIDRENDERING_WIREFRAMTOFILE, &CCGWorkView::OnSolidrenderingWireframtofile)
+	ON_COMMAND(ID_SOLIDRENDERING_WIREFRAMTOFILE, &CCGWorkView::OnWireframTofile)
 END_MESSAGE_MAP()
 
 
@@ -338,6 +338,9 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	CRect r;
 
 	GetClientRect(&r);
+	if (!m_bRenderToScreen) {
+		r = outputRect;
+	}
 	CDC *pDCToUse = m_pDbDC;
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
@@ -347,7 +350,14 @@ void CCGWorkView::OnDraw(CDC* pDC)
 		delete bitArray;
 	}
 	bitArray = new COLORREF[h * w];
-	scene.draw(bitArray, r);
+	if (m_bIsWireframe) {
+		scene.setWireframeMode();
+		scene.draw(bitArray, r);
+	}
+	else {
+		scene.setSolidMode();
+		scene.draw(bitArray, r);
+	}
 	if (m_bRenderToScreen) {
 		SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
 
@@ -358,7 +368,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	}
 	else {
 		writeColorRefArrayToPng(bitArray, pngSavePath, r);
-		m_renderToScreen = true;
+		m_bRenderToScreen = true;
 	}
 	
 
@@ -1160,14 +1170,30 @@ void CCGWorkView::OnSolidrenderingTofile()
 		outputRect.bottom = dlg.desiredHeight;
 		CStringA charstr(dlg.desiredPath);
 		pngSavePath = strdup(charstr);
-		m_renderToScreen = false;
+		m_bRenderToScreen = false;
+		m_bIsWireframe = false;
 		Invalidate();
 	}
 }
 
 
 
-void CCGWorkView::OnSolidrenderingWireframtofile()
+void CCGWorkView::OnWireframTofile()
 {
-	// TODO: Add your command handler code here
+	FileRenderingDialog dlg;
+	CRect currentRect;
+	GetClientRect(&currentRect);
+	dlg.desiredHeight = currentRect.Height();
+	dlg.desiredWidth = currentRect.Width();
+	if (dlg.DoModal() == IDOK) {
+		outputRect.left = 0;
+		outputRect.top = 0;
+		outputRect.right = dlg.desiredWidth;
+		outputRect.bottom = dlg.desiredHeight;
+		CStringA charstr(dlg.desiredPath);
+		pngSavePath = strdup(charstr);
+		m_bRenderToScreen = false;
+		m_bIsWireframe = true;
+		Invalidate();
+	}
 }
