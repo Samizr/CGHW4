@@ -148,6 +148,7 @@ void Scene::setActiveModelID(int id)
 
 void Scene::draw(COLORREF* bitArr, CRect rect) {
 	//DRAW BACKGROUND
+	this->m_renderer.setMainRect(rect);
 	if (withPngBackground && !repeatMode) {
 		this->m_renderer.drawBackgoundImageStretch(bitArr, rect, pngImage);
 	}
@@ -167,7 +168,6 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
 	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
 	this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&mainModel->getGeometry()));
-	this->m_renderer.setMainRect(rect);
 
 	if (wireframeMode) {
 		drawWireframe(bitArr, rect);
