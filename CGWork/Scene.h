@@ -11,14 +11,11 @@
 
 #include <stdio.h>
 #include <map>
-#include <array>
 #include "Mat4.h"
 #include "Camera.h"
 #include "Model.h"
 #include "Renderer.h"
-#include "Light.h"
 
-#define NUM_LIGHT_SOURCES 7
 
 class Scene {
 	std::map<int, Model*> models;
@@ -87,6 +84,7 @@ public:
 	void setVertexNormalsMode(VNMode mode);
 	void setBackgroundColor(COLORREF clr);
 	void setSilhouetteColor(COLORREF clr);
+	void setLightingMode(LightMode mode);
 	void disableBoundingBox();
 	void disablePolygonNormals();
 	void disablePolygonNormalInvert();

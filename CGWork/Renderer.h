@@ -10,15 +10,22 @@
 #define Renderer_h
 
 #include <stdio.h>
+#include <array>
+#include "Light.h"
 #include "Model.h"
 #include "stdafx.h"
 #include "Mat4.h"
 #include "PngWrapper.h"
 
 #define STANDARD_NORMAL_COLOR RGB(0,255,0)
+#define NUM_LIGHT_SOURCES 7
 
 enum VNMode {
 	NONE, IMPORTED, CALCULATED
+};
+
+enum LightMode {
+	FLAT, GOURAUD, PHONG
 };
 
 class Renderer {
@@ -36,6 +43,7 @@ class Renderer {
 	COLORREF normalClr;
 	COLORREF backgroundClr;
 	COLORREF silhouetteClr;
+	LightMode lightingMode;
 
 
 	void drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 finalMatrix);
@@ -43,12 +51,11 @@ class Renderer {
 	void drawCalculatedVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawImportedVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
-
 public:
 	Renderer();
 	void drawBackgroundColor(COLORREF* bitArr, CRect rect);
 	void drawWireframe(COLORREF* bitArr, CRect rect, Model* model);
-	void drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* model);
+	void drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* model, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
 	void drawWireframeBackfaceCulling(COLORREF* bitArr, CRect rect, Model* model);
 	void drawWireframeZBufferDepth(COLORREF* bitArr, CRect rect, Model* model, COLORREF background);
 	void drawSilhouette(COLORREF * bitArr, CRect rect, Geometry * geometry);
@@ -61,6 +68,7 @@ public:
 	void setNormalClr(COLORREF clr);
 	void setBackgroundClr(COLORREF clr);
 	void setSilhouetteClr(COLORREF clr);
+	void setLightingMode(LightMode mode);
 	void enableBoundingBox();
 	void enablePolygonNormals();
 	void enablePolygonNormalInvert();

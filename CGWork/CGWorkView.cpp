@@ -267,11 +267,25 @@ BOOL CCGWorkView::InitializeCGWork()
 	m_pDbDC->SelectObject(m_pDbBitMap);
 	scene.setBackgroundColor(m_clrBackground);
 	scene.draw(bitArray ,r);
+	scene.setLightingMode(FLAT);
+	scene.setLightAmbientVariable(m_lMaterialAmbient);
+	scene.setLightDiffuseVariable(m_lMaterialDiffuse);
+	scene.setLightSpecularVariable(m_lMaterialSpecular);
+	scene.setLightCosineComponent(m_nMaterialCosineFactor);	
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
-
-
+	//LIGHTING DBG
+	m_lights[0].colorR = 255;
+	m_lights[0].colorG = 255;
+	m_lights[0].colorB = 255;
+	m_lights[0].dirX = 0;
+	m_lights[0].dirY = 0;
+	m_lights[0].dirZ = 2;
+	m_lights[0].enabled = true;
+	m_lights[0].type = LIGHT_TYPE_DIRECTIONAL;
+	scene.setLightSource(m_lights[0], 0);
+	//RMV ALL BEFORE
 	return TRUE;
 }
 
@@ -754,6 +768,7 @@ void CCGWorkView::OnOptionsMousesensitivity()
 void CCGWorkView::OnLightShadingFlat()
 {
 	m_nLightShading = ID_LIGHT_SHADING_FLAT;
+	scene.setLightingMode(FLAT);
 }
 
 void CCGWorkView::OnUpdateLightShadingFlat(CCmdUI* pCmdUI)
@@ -764,6 +779,7 @@ void CCGWorkView::OnUpdateLightShadingFlat(CCmdUI* pCmdUI)
 void CCGWorkView::OnLightShadingGouraud()
 {
 	m_nLightShading = ID_LIGHT_SHADING_GOURAUD;
+	scene.setLightingMode(GOURAUD);
 }
 
 void CCGWorkView::OnUpdateLightShadingGouraud(CCmdUI* pCmdUI)
@@ -774,6 +790,7 @@ void CCGWorkView::OnUpdateLightShadingGouraud(CCmdUI* pCmdUI)
 void CCGWorkView::OnLightShadingPhong()
 {
 	m_nLightShading = ID_LIGHT_SHADING_PHONG;
+	scene.setLightingMode(PHONG);
 }
 
 

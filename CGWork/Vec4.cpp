@@ -32,7 +32,7 @@ Vec4 Vec4::operator*(const float& a) const {
 // dot product
 Vec4 Vec4::operator*(const Vec4& other) const {
 	return Vec4(this->_xCoord * other._xCoord, this->_yCoord * other._yCoord,
-		this->_wCoord * other._wCoord, this->_zCoord * other._zCoord);
+		this->_zCoord * other._zCoord, this->_wCoord * other._wCoord);
 }
 
 // multiplication of row and col. useful for matrix calculations
@@ -88,8 +88,8 @@ float Vec4::cosineAngle(const Vec4& other)
 	Vec4 dotProduct = (*this) * other;
 	float sum = dotProduct._xCoord + dotProduct._yCoord + dotProduct._zCoord;
 	float thisDivisor = sqrt(pow(_xCoord, 2) + pow(_yCoord, 2) + pow(_zCoord, 2));
-	float otherDivisor = sqrt(pow(dotProduct._xCoord, 2) + pow(dotProduct._yCoord, 2) + pow(dotProduct._zCoord, 2));
-	return sum/(thisDivisor * otherDivisor);
+	float otherDivisor = sqrt(pow(other._xCoord, 2) + pow(other._yCoord, 2) + pow(other._zCoord, 2));
+	return abs(sum/(thisDivisor * otherDivisor));
 }
 
 Vec4 Vec4::crossProduct(const Vec4& other) const {

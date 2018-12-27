@@ -20,6 +20,8 @@ static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix,
 float getDepthAtPoint(int x, int y, std::vector<Vec4> poly);
 static bool isSilhouetteEdge(Edge* edge, Mat4 transformationMatrix);
 static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png);
+static COLORREF getLightingColor(Vec4 normal, COLORREF originalClr, const std::array<LightParams, NUM_LIGHT_SOURCES> &lightSources, const LightParams& ambientLight, double* materialParams);
+
 
 #define NORMAL_LENGTH_FACTOR 13
 
@@ -115,12 +117,13 @@ void fillZBuffer(CRect rect, float* zBuffer, Model* model, Mat4 finalMatrix) {
 	}
 }
 
-void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* model) {
+void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* model, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams){
 	Geometry* geometry = &model->getGeometry();
 	windowMatrix = generateViewportMatrix(rect);
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
 	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
+	COLORREF clr = STANDARD_OBJECT_COLOR;
 	for (Face* face : geometry->getFaces()) {
 		int minX = rect.Width();
 		int minY = rect.Height();
@@ -135,6 +138,8 @@ void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* mo
 			maxX = max(currPoint.xCoord(), maxX);
 			maxY = max(currPoint.yCoord(), maxY);
 		}
+		if (lightingMode == FLAT) 
+			COLORREF clr = getLightingColor(face->calculateNormal(objectWorldMatrix), geometry->getLineClr(), lightSources, ambientLight, materialParams);
 		// Go over all inside frame from above pixels, only work with ones inside projected polygon.
 		for (int i = minY; i < maxY; i++) {
 			for (int j = minX; j < maxX; j++) {
@@ -146,7 +151,8 @@ void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* mo
 					// Remember, depth is in negative values.
 					if (currentDepth > zBuffer[i * rect.Width() + j]) {
 						zBuffer[i * rect.Width() + j] = currentDepth;
-						bitArr[i * rect.Width() + j] = geometry->getLineClr();
+						//bitArr[i * rect.Width() + j] = geometry->getLineClr();
+						bitArr[i * rect.Width() + j] = clr;
 					}
 				}
 			}
@@ -531,6 +537,11 @@ void Renderer::setSilhouetteClr(COLORREF clr)
 	silhouetteClr = clr;
 }
 
+void Renderer::setLightingMode(LightMode mode)
+{
+	lightingMode = mode;
+}
+
 void Renderer::disableBoundingBox() {
 	withBounding = false;
 }
@@ -574,6 +585,48 @@ void Renderer::enableVertexNormalInvert()
 void Renderer::setVertexNormalMode(VNMode mode)
 {
 	vertexNormals = mode;
+}
+
+COLORREF getLightingColor(Vec4 normal, COLORREF originalClr, const std::array<LightParams, NUM_LIGHT_SOURCES> &lightSources, const LightParams& ambientLight, double* materialParams)
+{
+	int origR = GetRValue(originalClr);
+	int origG = GetGValue(originalClr);
+	int origB = GetBValue(originalClr);
+	double ambientFraction = materialParams[0];
+	double diffuseFraction = materialParams[1];
+	double specularFraction = materialParams[2];
+	double cosinComponent = materialParams[3];
+	//AMBIENT LIGHT:
+	double R = ambientFraction * origR * ambientLight.colorR / 255;
+	double G = ambientFraction * origG * ambientLight.colorG / 255;
+	double B = ambientFraction * origB * ambientLight.colorB / 255;
+
+	for (LightParams light : lightSources) {
+		if (!light.enabled)
+			continue;
+		if (light.type == LIGHT_TYPE_DIRECTIONAL) {
+			Vec4 lightVec(light.dirX, light.dirY, light.dirZ, 0);
+			float cos_a = normal.cosineAngle(lightVec);
+			R += diffuseFraction * cos_a * origR * light.colorR / 255;
+			G += diffuseFraction * cos_a * origG * light.colorG / 255;
+			B += diffuseFraction * cos_a * origB * light.colorB / 255;
+		}
+		if (light.type == LIGHT_TYPE_POINT) {
+			//THE QUESTION HERE IS SHOULD I CREATE A DIRECTION FROM CORDS - LIGHT_POINT?
+				//IF YES, SHOULD I RECEIVE ONE POINT? BECAUSE IN PHONG IT DEPENDS ON POINT
+			//SECOND QUESTION IS SHOULD I REGARD VIEW/LOCAL? WB IN DIRECTIONAL? 
+		}
+
+
+	}
+	//disable overflow towards end!
+	R = R > 255 ? 255 : R;
+	G = G > 255 ? 255 : G;
+	B = B > 255 ? 255 : B;
+	R = R < 0 ? 0 : R;
+	G = G < 0 ? 0 : G;
+	B = B < 0 ? 0 : B;
+	return RGB(R, G, B);
 }
 //
 //void Renderer::enableVertexNormals() {

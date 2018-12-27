@@ -203,13 +203,14 @@ void Scene::drawWireframe(COLORREF* bitArr, CRect rect) {
 
 void Scene::drawSolid(COLORREF* bitArr, CRect rect) {
 	float* zBuffer = createZBuffer(rect);
+	double materialComponents[4] = { ambientFraction, diffuseFraction, specularFraction, cosinComponent };
 	for (std::pair<int, Model*> pair : models) {
 		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
 		if (withBackfaceCulling) {
 			//m_renderer.drawWireframeBackfaceCulling(bitArr, rect, pair.second);
 		}
 		else {
-			m_renderer.drawSolid(bitArr, zBuffer, rect, pair.second);
+			m_renderer.drawSolid(bitArr, zBuffer, rect, pair.second, lightSources, ambientLight, materialComponents);
 		}
 	}
 	free(zBuffer);
@@ -310,6 +311,11 @@ void Scene::setSilhouetteColor(COLORREF clr)
 	this->m_renderer.setSilhouetteClr(clr);
 }
 
+void Scene::setLightingMode(LightMode mode)
+{
+	this->m_renderer.setLightingMode(mode);
+}
+
 void Scene::enableDualView()
 {
 	dualView = true;
@@ -338,40 +344,6 @@ void Scene::setLightSpecularVariable(double data)
 void Scene::setLightCosineComponent(double data)
 {
 	cosinComponent = data;
-}
-
-COLORREF Scene::getLightingColor(Vec4 normal, COLORREF originalClr)
-{
-	int origR = GetRValue(originalClr);
-	int origG = GetGValue(originalClr);
-	int origB = GetBValue(originalClr);
-
-	//AMBIENT LIGHT:
-	double R = ambientFraction * origR * ambientLight.colorR / 255;
-	double G = ambientFraction * origG * ambientLight.colorG / 255;
-	double B = ambientFraction * origB * ambientLight.colorB / 255;
-
-	for (LightParams light : lightSources) {
-		if (!light.enabled)
-			continue;
-		if (light.type == LIGHT_TYPE_DIRECTIONAL) {
-			Vec4 lightVec(light.dirX, light.dirY, light.dirZ, 0);
-			float cos_a = lightVec.cosineAngle(normal);
-			R += diffuseFraction * cos_a * origR * light.colorR / 255;
-			G += diffuseFraction * cos_a * origG * light.colorG / 255;
-			B += diffuseFraction * cos_a * origB * light.colorB / 255;
-		}
-		if (light.type == LIGHT_TYPE_POINT) {
-			//THE QUESTION HERE IS SHOULD I CREATE A DIRECTION FROM CORDS - LIGHT_POINT?
-				//IF YES, SHOULD I RECEIVE ONE POINT? BECAUSE IN PHONG IT DEPENDS ON POINT
-			//SECOND QUESTION IS SHOULD I REGARD VIEW/LOCAL? WB IN DIRECTIONAL? 
-		}
-
-
-	}
-	//disable overflow towards end!
-
-	return COLORREF();
 }
 
 void Scene::setPngBackgroundImage(PngWrapper* pngImage) {
