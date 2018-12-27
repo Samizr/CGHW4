@@ -15,11 +15,13 @@
 
 
 static Mat4 generateViewportMatrix(CRect rect);
-static bool pixelIsInPolygon(int x, int y, std::vector<Vec4> poly);
+static bool pixelIsInPolygon(float x, float y, std::vector<Vec4> poly);
 static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth);
 float getDepthAtPoint(int x, int y, std::vector<Vec4> poly);
 static bool isSilhouetteEdge(Edge* edge, Mat4 transformationMatrix);
 static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png);
+static bool beamIntersects(Vec4 p1, Vec4 p2, float x, float y);
+static bool pointOnLine(Vec4 p1, Vec4 p2, float x, float y);
 
 #define NORMAL_LENGTH_FACTOR 13
 
@@ -169,8 +171,8 @@ static float* calulateDepthOfPixels(Face* polygon, Mat4 finalMatrix, CRect rect)
 		maxX = max(currPoint.xCoord(), maxX);
 		maxY = max(currPoint.yCoord(), maxY);
 	}
-	for (int i = minY; i < maxY; i++) {
-		for (int j = minX; j < maxX; j++) {
+	for (int i = minY; i <= maxY; i++) {
+		for (int j = minX; j <= maxX; j++) {
 			if (pixelIsInPolygon(j, i, poly)) {
 				depth[j + i * rect.Width()] = (getDepthAtPoint(j, i, poly));
 			}
@@ -179,20 +181,82 @@ static float* calulateDepthOfPixels(Face* polygon, Mat4 finalMatrix, CRect rect)
 	return depth;
 }
 
-static bool pixelIsInPolygon(int x, int y, std::vector<Vec4> poly) {
+static bool pixelIsInPolygon1(float x, float y, std::vector<Vec4> poly) {
 	int polyCorners = poly.size();
 	int   j = polyCorners - 1;
 	bool  oddNodes = false;
 
 	for (int i = 0; i < polyCorners; i++) {
-		if ((poly[i].yCoord() < y && poly[j].yCoord() >= y
-			|| poly[j].yCoord() < y && poly[i].yCoord() >= y)
+		if (poly[i].xCoord() == x && poly[i].yCoord() == y) {
+			return true;
+		}
+		if ((poly[i].yCoord() <= y && poly[j].yCoord() >= y
+			|| poly[j].yCoord() <= y && poly[i].yCoord() >= y)
 			&& (poly[i].xCoord() <= x || poly[j].xCoord() <= x)) {
 			oddNodes ^= (poly[i].xCoord() + (y - poly[i].yCoord()) / (poly[j].yCoord() - poly[i].yCoord())*(poly[j].xCoord() - poly[i].xCoord()) < x);
 		}
 		j = i;
 	}
 	return oddNodes;
+}
+
+static bool pixelIsInPolygon(float x, float y, std::vector<Vec4> poly) {
+	int polyCorners = poly.size();
+	int   j = polyCorners - 1;
+	bool  oddNodes = false;
+
+	for (int i = 0; i < polyCorners; i++) {
+		if (poly[i].xCoord() == x && poly[i].yCoord() == y) {
+			return true;
+		}
+		if (pointOnLine(poly[i], poly[j], x, y)) {
+			return true;
+		}
+		if (beamIntersects(poly[i], poly[j], x, y)) {
+			oddNodes = !oddNodes;
+		}
+		j = i;
+	}
+	return oddNodes;
+}
+
+bool pointOnLine(Vec4 p1, Vec4 p2, float x, float y) {
+	float lineMaxY = max(p1.yCoord(), p2.yCoord());
+	float lineMinY = min(p1.yCoord(), p2.yCoord());
+	float lineMaxX = max(p1.xCoord(), p2.xCoord());
+	float lineMinX = min(p1.xCoord(), p2.xCoord());
+	if (p1.yCoord() == p2.yCoord()) {
+		return (int)y == (int)p1.yCoord() && x >= lineMinX && x <= lineMaxX;
+	}
+	
+	if (p1.xCoord() == p2.xCoord()) {
+		return (int)x == (int)p1.xCoord() && y >= lineMinY && y <= lineMaxY;
+	}
+	float deltaY = p2.yCoord() - p1.yCoord();
+	float deltaX = p2.xCoord() - p1.xCoord();
+	float c = p1.yCoord() - ((deltaY / deltaX) * p1.xCoord());
+	return (int)((deltaY / deltaX) * x) + c == (int)y;
+}
+
+// check if q lies in the segment created by p1 and p2.
+static bool beamIntersects(Vec4 p1, Vec4 p2, float x, float y) {
+	float lineMaxY = max(p1.yCoord(), p2.yCoord());
+	float lineMinY = min(p1.yCoord(), p2.yCoord());
+	float lineMaxX = max(p1.xCoord(), p2.xCoord());
+	float lineMinX = min(p1.xCoord(), p2.xCoord());
+	if (p1.yCoord() == p2.yCoord()) {
+		return y == p1.yCoord() && x >= lineMinX && x <= lineMaxX;
+	}
+	if (p1.xCoord() == p2.xCoord()) {
+		return x >= p1.xCoord() && y >= lineMinY && y <= lineMaxY;
+	}
+	//float lineMinX = min(p1.xCoord(), p2.xCoord());
+	// value of x at line
+	float deltaY = p2.yCoord() - p1.yCoord();
+	float deltaX = p2.xCoord() - p1.xCoord();
+	float c = p1.yCoord() - ((deltaY / deltaX) * p1.xCoord());
+	float pointOnLine = (y - c) * (deltaX / deltaY);
+	return x >= pointOnLine && y <= lineMaxY && y >= lineMinY;
 }
 
 float getDepthAtPoint(int x, int y, std::vector<Vec4> poly) {
