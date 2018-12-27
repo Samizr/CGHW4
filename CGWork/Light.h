@@ -10,7 +10,6 @@ typedef enum
     LIGHT_ID_5,
     LIGHT_ID_6,
     LIGHT_ID_7,
-    LIGHT_ID_8,
     MAX_LIGHT
 } LightID;
 
