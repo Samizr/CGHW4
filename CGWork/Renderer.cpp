@@ -12,7 +12,7 @@
 #include <limits>
 #include <vector>
 
-
+using std::pair;
 
 static Mat4 generateViewportMatrix(CRect rect);
 static bool pixelIsInPolygon(float x, float y, std::vector<Vec4> poly);
@@ -22,7 +22,18 @@ static bool isSilhouetteEdge(Edge* edge, Mat4 transformationMatrix);
 static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png);
 static bool beamIntersects(Vec4 p1, Vec4 p2, float x, float y);
 static bool pointOnLine(Vec4 p1, Vec4 p2, float x, float y);
+static bool pointOnLineScreen(Vec4 p1, Vec4 p2, int x, int y);
 static COLORREF getLightingColor(Vec4 normal, COLORREF originalClr, const std::array<LightParams, NUM_LIGHT_SOURCES> &lightSources, const LightParams& ambientLight, double* materialParams);
+vector<pair<float, COLORREF>> findIntersectionsColor(int line, vector<pair<Vec4, Vec4>> polyEdges, vector<pair<COLORREF, COLORREF>> polyEdgesColors, int maxX, CRect rect);
+static vector<pair<int, Vec4>> findIntersectionsNormal(int line, vector<Vec4> poly, vector<Vec4> polyNormals, int maxX);
+static COLORREF getInterpolatedColor(double a, COLORREF clr1, COLORREF clr2);
+static Vec4 getInterpolatedNormal(double a, Vec4 nrm1, Vec4 nrm2);
+static float getIntersectionPoint(Vec4 p1, Vec4 p2, int y, CRect r);
+
+
+
+static double distance(int x1, int y1, int x2, int y2);
+
 float distanceBetweenPoints(float x1, float y1, float x2, float y2);
 Vec4 getIntersectionWithLine(Vec4 p1, Vec4 p2, float x, float y);
 std::vector<Vec4> getTriangleWithPointInside(float x, float y, std::vector<Vec4> poly);
@@ -37,6 +48,7 @@ Renderer::Renderer() {
 	vertexNormals = NONE;
 	invertPolygonNormals = false;
 	invertVertexNormals = false;
+	lightingMode = FLAT;
 	normalClr = STANDARD_NORMAL_COLOR;
 	silhouetteClr = STANDARD_NORMAL_COLOR;
 }
@@ -128,24 +140,74 @@ void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* mo
 	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
 	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
 	COLORREF clr = STANDARD_OBJECT_COLOR;
+	int shit = 0;
 	for (Face* face : geometry->getFaces()) {
-		int minX = rect.Width();
-		int minY = rect.Height();
-		int maxX = 0;
-		int maxY = 0;
+		float minX = rect.Width();
+		float minY = rect.Height();
+		float maxX = 0;
+		float maxY = 0;
+		double lineDist;
 		std::vector<Vec4> poly;
+		std::vector<pair<Vec4, Vec4>> polyEdges;
+		std::vector<COLORREF> polyColors;
+		std::vector<pair<COLORREF, COLORREF>> polyEdgesColors;
+		std::vector<Vec4> polyNormals;
+		vector<pair<float, COLORREF>> intersectionPointsCLR;
+		vector<pair<int, Vec4>> intersectionPointsNRM;
 		for (Vertex* vertex : face->getVerticies()) {
 			Vec4 currPoint = finalMatrix * vertex->getVec4Coords();
+			Vec4 transformedNormal = objectWorldMatrix * (*(vertex->getNormal()));
 			poly.push_back(currPoint);
+			polyColors.push_back(getLightingColor(transformedNormal, geometry->getLineClr(), lightSources, ambientLight, materialParams));
+			polyNormals.push_back(transformedNormal);
 			minX = min(currPoint.xCoord(), minX);
 			minY = min(currPoint.yCoord(), minY);
 			maxX = max(currPoint.xCoord(), maxX);
 			maxY = max(currPoint.yCoord(), maxY);
 		}
+		//for (Edge* edge : face->getEdges()) {
+		vector<Edge*> edges = face->getEdges();
+		for (int i = 0; i <= edges.size(); i++) {
+			Vec4 pointA, pointB, normalA, normalB;
+			if (i < edges.size()) {
+				pointA = finalMatrix * edges[i]->getA()->getVec4Coords();
+				pointB = finalMatrix * edges[i]->getB()->getVec4Coords();
+				normalA = objectWorldMatrix * (*(edges[i]->getA()->getNormal()));
+				normalB = objectWorldMatrix * (*(edges[i]->getB()->getNormal()));
+			}
+			else {
+				pointA = finalMatrix * edges[i-1]->getB()->getVec4Coords();
+				pointB = finalMatrix * edges[0]->getA()->getVec4Coords();
+				normalA = objectWorldMatrix * (*(edges[i-1]->getB()->getNormal()));
+				normalB = objectWorldMatrix * (*(edges[0]->getA()->getNormal()));
+
+			}
+			pair<Vec4, Vec4> outEdge;
+			outEdge.first = pointA;
+			outEdge.second = pointB;
+			polyEdges.push_back(outEdge);
+			pair<COLORREF, COLORREF> outColors;
+			outColors.first = getLightingColor(normalA, geometry->getLineClr(), lightSources, ambientLight, materialParams);
+			outColors.second = getLightingColor(normalB, geometry->getLineClr(), lightSources, ambientLight, materialParams);
+			polyEdgesColors.push_back(outColors);
+		}
 		if (lightingMode == FLAT) 
-			COLORREF clr = getLightingColor(face->calculateNormal(objectWorldMatrix), geometry->getLineClr(), lightSources, ambientLight, materialParams);
+			clr = getLightingColor(face->calculateNormal(objectWorldMatrix), geometry->getLineClr(), lightSources, ambientLight, materialParams);
 		// Go over all inside frame from above pixels, only work with ones inside projected polygon.
 		for (int i = minY; i < maxY; i++) {
+			if (lightingMode == GOURAUD) {
+				intersectionPointsCLR = findIntersectionsColor(i, polyEdges, polyEdgesColors, maxX, rect);
+				if (intersectionPointsCLR.size() == 0)
+					continue;
+				if (intersectionPointsCLR.size() >= 3) {
+					shit++; //end of run was 2, shouldn't be a porblem at all.
+				}
+				lineDist = abs(intersectionPointsCLR[0].first - intersectionPointsCLR[1].first);
+			}
+			else if (lightingMode == PHONG) {
+				intersectionPointsNRM = findIntersectionsNormal(i, poly, polyNormals, maxX);
+				lineDist = intersectionPointsNRM[0].first - intersectionPointsNRM[1].first;
+			}
 			for (int j = minX; j < maxX; j++) {
 				if (i < 0 || j < 0 || j >= rect.Width() || i >= rect.Height()) {
 					continue;
@@ -154,14 +216,117 @@ void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* mo
 					float currentDepth = getDepthAtPoint(j, i, poly);
 					// Remember, depth is in negative values.
 					if (currentDepth > zBuffer[i * rect.Width() + j]) {
+						if (lightingMode == GOURAUD) {
+							double pointDist = abs(j - intersectionPointsCLR[0].first);
+							double percentage = lineDist == 0 ? 1 : pointDist / lineDist;
+							clr = getInterpolatedColor(percentage, intersectionPointsCLR[0].second, intersectionPointsCLR[1].second);
+						}
+						else if (lightingMode == PHONG) {
+							double pointDist = j - intersectionPointsNRM[0].first;
+							double percentage = lineDist == 0 ? 1 : pointDist / lineDist;
+							Vec4 normal = getInterpolatedNormal(percentage, intersectionPointsNRM[0].second, intersectionPointsNRM[0].second);
+							clr = getLightingColor(normal, geometry->getLineClr(), lightSources, ambientLight, materialParams);
+						}
 						zBuffer[i * rect.Width() + j] = currentDepth;
-						//bitArr[i * rect.Width() + j] = geometry->getLineClr();
 						bitArr[i * rect.Width() + j] = clr;
 					}
 				}
 			}
 		}
 	}
+}
+
+
+//Finds an x parallel line intersection points with a polynom, assumes line is inside polynom, returns pairs of intersection
+//points (only the x coord) and their colors.
+vector<pair<float, COLORREF>> findIntersectionsColor(int line, vector<pair<Vec4, Vec4>> polyEdges, vector<pair<COLORREF, COLORREF>> polyEdgesColors, int maxX, CRect rect)
+{
+	if (line == 650 && maxX == 1219)
+		int brkpnt = 0;
+	vector<pair<float, COLORREF>> out;
+	int i = 0;
+	for (pair<Vec4, Vec4>& edge : polyEdges) {
+		if ((line >= edge.first.yCoord() && line <= edge.second.yCoord()) || (line <= edge.first.yCoord() && line >= edge.second.yCoord())) {
+			//if ((line >= poly[i].yCoord() && line <= poly[j].yCoord()) || (line >= poly[j].yCoord() && line <= poly[i].yCoord())) {
+			float x = getIntersectionPoint(edge.first, edge.second, line, rect);
+
+			double lineDist = distance(edge.first.xCoord(), edge.first.yCoord(), edge.second.xCoord(), edge.second.yCoord());
+			double pointDist = distance(x, line, edge.second.xCoord(), edge.second.yCoord());
+			double percentage = pointDist / lineDist;
+			pair<float, COLORREF> pair;
+			pair.first = x;
+			pair.second = getInterpolatedColor(percentage, polyEdgesColors[i].first, polyEdgesColors[i].first);
+			out.push_back(pair);
+			i++;
+		}
+	}
+	//ASSERT(out.size() < 3);
+	ASSERT(out.size() != 1);
+	return out;
+}
+
+float getIntersectionPoint(Vec4 p1, Vec4 p2, int y, CRect r) {
+	//int w = r.Width(), h = r.Height();
+	/////////////////////// CALCULATE THIS USING LINEAR EQUATIONS?!
+	//auto arr = new COLORREF[w * h];
+	//plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), arr, r, r.Width(), RGB(0, 255, 0));
+	//for (int i = 0; i < r.Width(); i++) {
+	//	if (arr[i + y * r.Width()] == RGB(0, 255, 0)) {
+	//		delete arr;
+	//		return i;
+	//	}
+	//}
+	//Uses the linear equation from the two points (y = ax + b).
+	float a = (p1.yCoord() - p2.yCoord()) / (p1.xCoord() - p2.xCoord());
+	float b = p1.yCoord() - a * p1.xCoord();
+	float x = (y - b) / a;
+	return x;
+}
+
+
+vector<pair<int, Vec4>> findIntersectionsNormal(int line, vector<Vec4> poly, vector<Vec4> polyNormals, int maxX)
+{
+	vector<pair<int, Vec4>> out;
+	int n = poly.size();
+	for (int i = 0; i < poly.size(); i++) {
+		int j = (i + 1) % n;
+		if ((line >= poly[i].yCoord() && line <= poly[j].yCoord()) || (line >= poly[j].yCoord() && line <= poly[i].yCoord())) {
+			for (int x = 0; x < maxX; x++) {
+				if (pointOnLineScreen(poly[i], poly[j], x, line)) {
+					double lineDist = distance(poly[i].xCoord(), poly[i].yCoord(), poly[j].xCoord(), poly[j].yCoord());
+					double pointDist = distance(x, line, poly[j].xCoord(), poly[j].yCoord());
+					double percentage = pointDist / lineDist;
+					pair<int, Vec4> pair;
+					pair.first = x;
+					pair.second = getInterpolatedNormal(percentage, polyNormals[i], polyNormals[j]);
+					out.push_back(pair);
+					break;
+				}
+			}
+		}
+	}
+	return out;
+}
+
+static COLORREF getInterpolatedColor(double a, COLORREF clr1, COLORREF clr2) {
+	int r = GetRValue(clr2) * (1 - a) + GetRValue(clr1) * a;
+	int g = GetGValue(clr2) * (1 - a) + GetGValue(clr1) * a;
+	int b = GetBValue(clr2) * (1 - a) + GetBValue(clr1) * a;
+	if (r > 255 || g > 255 || b > 255) {
+		return RGB(255, 255, 255);
+	}
+	if (r < 0 || g < 0 || b < 0) {
+		return RGB(0, 0, 0);
+	}
+	return RGB(r, g, b);
+}
+
+static Vec4 getInterpolatedNormal(double a, Vec4 nrm1, Vec4 nrm2) {
+	return nrm1 * a + nrm2 * (1 - a);
+}
+
+static double distance(int x1, int y1, int x2, int y2) {
+	return sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2));
 }
 
 static float* calulateDepthOfPixels(Face* polygon, Mat4 finalMatrix, CRect rect) {
@@ -250,6 +415,30 @@ bool pointOnLine(Vec4 p1, Vec4 p2, float x, float y) {
 	return (int)((deltaY / deltaX) * x) + c == (int)y;
 }
 
+bool pointOnLineScreen(Vec4 p1, Vec4 p2, int x, int y) {
+	x = (int)x;
+	y = (int)y;
+	
+	COLORREF arr[2000 * 2000];
+
+	for (int i = 0; i < 2000; i++) {
+		for (int j = 0; j < 2000; j++) {
+			arr[i + j * 2000] = RGB(0, 0, 0);
+		}
+	}
+
+	CRect r;
+	r.bottom = 2000;
+	r.right = 2000;
+	plotLine(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord(), arr, r, 2000, RGB(0, 0, 255));
+
+	if (RGB(0, 0, 255) == arr[x + y * 2000]) {
+		return true;
+	}
+	return false;
+}
+
+// check if q lies in the segment created by p1 and p2.
 static bool beamIntersects(Vec4 p1, Vec4 p2, float x, float y) {
 	float lineMaxY = max(p1.yCoord(), p2.yCoord());
 	float lineMinY = min(p1.yCoord(), p2.yCoord());
@@ -818,11 +1007,4 @@ COLORREF getLightingColor(Vec4 normal, COLORREF originalClr, const std::array<Li
 	B = B < 0 ? 0 : B;
 	return RGB(R, G, B);
 }
-//
-//void Renderer::enableVertexNormals() {
-//	this->withVertexNormals = true;
-//}
-//
-//void Renderer::disableVertexNormals() {
-//	this->withVertexNormals = false;
-//}
+
