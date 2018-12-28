@@ -48,6 +48,19 @@ std::map<int, Model*>& Scene::getAllModels()
 	return models;
 }
 
+void Scene::loadFromScene(const Scene & other)
+{
+	this->clear();
+	this->models = other.models;
+	this->mainModel = other.mainModel;
+	this->cameras = other.cameras;
+	this->modelIdGenerator = other.modelIdGenerator;
+	this->cameraIdGenerator = other.cameraIdGenerator;
+	this->activeModel = other.activeModel;
+	this->activeCamera = other.activeCamera;
+
+}
+
 void Scene::setRenderer(Renderer & renderer)
 {
 	this->m_renderer = renderer;

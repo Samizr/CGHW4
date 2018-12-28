@@ -18,9 +18,6 @@ void Face::addEdge(Edge* edge) {
 	verticies.insert(edge->getB());
 }
 
-void Face::addVertex(Vertex * vertex) {
-	
-}
 
 vector<Vertex*> Face::getVerticies() {
 	std::vector<Vertex*> verticies;

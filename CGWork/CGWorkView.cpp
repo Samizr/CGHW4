@@ -265,13 +265,13 @@ BOOL CCGWorkView::InitializeCGWork()
 	m_pDbDC->CreateCompatibleDC(m_pDC);
 	m_pDbBitMap = CreateCompatibleBitmap(m_pDC->m_hDC, r.right, r.bottom);
 	m_pDbDC->SelectObject(m_pDbBitMap);
-	scene.setBackgroundColor(m_clrBackground);
-	scene.draw(bitArray ,r);
 	scene.setLightingMode(FLAT);
 	scene.setLightAmbientVariable(m_lMaterialAmbient);
 	scene.setLightDiffuseVariable(m_lMaterialDiffuse);
 	scene.setLightSpecularVariable(m_lMaterialSpecular);
 	scene.setLightCosineComponent(m_nMaterialCosineFactor);	
+	scene.setBackgroundColor(m_clrBackground);
+	scene.draw(bitArray ,r);
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
@@ -364,29 +364,18 @@ void CCGWorkView::OnDraw(CDC* pDC)
 		delete bitArray;
 	}
 	bitArray = new COLORREF[h * w];
-	if (m_bIsWireframe) {
-		scene.setWireframeMode();
-		scene.draw(bitArray, r);
-	}
-	else {
-		scene.setSolidMode();
-		scene.draw(bitArray, r);
-	}
-	if (m_bRenderToScreen) {
-		SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
+	
+	scene.draw(bitArray, r);
+	invertRBArray(bitArray, r);	//SIGNIFICANT PERFORMANCE SLOWDOWN!
+	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
 
-		if (pDCToUse != m_pDC)
-		{
-			m_pDC->BitBlt(r.left, r.top, r.right, r.bottom, pDCToUse, r.left, r.top, SRCCOPY);
-		}
+	if (m_bRenderToScreen && pDCToUse != m_pDC) {
+		m_pDC->BitBlt(r.left, r.top, r.right, r.bottom, pDCToUse, r.left, r.top, SRCCOPY);
 	}
 	else {
 		writeColorRefArrayToPng(bitArray, pngSavePath, r);
 		m_bRenderToScreen = true;
 	}
-	
-
-
 }
 
 static void writeColorRefArrayToPng(COLORREF* bitArr, const char* name, CRect rect) {
@@ -394,9 +383,9 @@ static void writeColorRefArrayToPng(COLORREF* bitArr, const char* name, CRect re
 	pngWrapper.InitWritePng();
 	for (int i = 0; i < rect.Height(); i++) {
 		for (int j = 0; j < rect.Width(); j++) {
-			int red = GetRValue(invertRB(bitArr[j + rect.Width() * ((rect.Height() - 1) - i)]));
-			int green = GetGValue(invertRB(bitArr[j + rect.Width() * ((rect.Height() - 1) - i)]));
-			int blue = GetBValue(invertRB(bitArr[j + rect.Width() * ((rect.Height() - 1) - i)]));
+			int red = GetRValue(bitArr[j + rect.Width() * ((rect.Height() - 1) - i)]);
+			int green = GetGValue(bitArr[j + rect.Width() * ((rect.Height() - 1) - i)]);
+			int blue = GetBValue(bitArr[j + rect.Width() * ((rect.Height() - 1) - i)]);
 			pngWrapper.SetValue(j, i, SET_RGB(red, green, blue));
 		}
 	}
@@ -436,23 +425,29 @@ void CCGWorkView::OnFileLoadObject()
 	CFileDialog dlg(TRUE, _T("itd"), _T("*.itd"), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters);
 
 	if (dlg.DoModal() == IDOK) {
+		
+		//Load New Objects & Models
 		::loadedGeometry.clear();
-		loadedScene.clear();
+		::loadedScene.clear();
 		m_strItdFileName = dlg.GetPathName();		// Full path and filename
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 		
-		// Does not reload the model if requested.
-		scene = loadedScene;
+		//Main Model Initiation 
+		::loadedGeometry.setLineClr(::loadedScene.getModel(0)->getGeometry().getLineClr()); //SETS THE MAIN MODEL COLOR TO BE SIMILAR TO THE FIRST COLOR IN SCENE
+		Model* mainModel = new Model(::loadedGeometry);
+		::loadedScene.setMainModel(mainModel);
+		
+		//Scene Update
 		scene.setRenderer(renderer);
-		::loadedGeometry.setLineClr(scene.getModel(0)->getGeometry().getLineClr()); //SETS THE MAIN MODEL COLOR TO BE SIMILAR TO THE FIRST COLOR IN SCENE
-		Model* newModel = new Model(::loadedGeometry);
-		scene.setMainModel(newModel); 
+		scene.loadFromScene(::loadedScene);
+		
+		//New Camera Initiation:
 		float distance = (::loadedGeometry.getMaxZ() - ::loadedGeometry.getMinZ());
 		m_nPerspectiveD = 3 * distance;
 		m_nPerspectiveAlpha = distance;
 		Camera* newCamera = new Camera();
-		scene.addCamera(newCamera);
 		newCamera->LookAt(Vec4(0, 0, 3 * distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
+		scene.addCamera(newCamera);
 
 		resetButtons();
 		m_clrBackground = STANDARD_BACKGROUND_COLOR;
@@ -546,6 +541,7 @@ void CCGWorkView::OnViewSilhouette()
 	}
 	Invalidate();
 }
+
 
 void CCGWorkView::OnViewBackfaceculling()
 {
@@ -707,12 +703,12 @@ void CCGWorkView::OnOptionsLineColor()
 		Model* model;
 		if (m_nIsSubobjectMode) {
 			Geometry& geometry = scene.getActiveModel()->getGeometry();
-			geometry.setLineClr(invertRB(CD.GetColor()));
+			geometry.setLineClr(CD.GetColor());
 		}
 		else {
 			for (std::pair<int, Model*> pair : scene.getAllModels()) {
 				Geometry& geometry = pair.second->getGeometry();
-				geometry.setLineClr(invertRB(CD.GetColor()));
+				geometry.setLineClr(CD.GetColor());
 			}
 		}
 		Invalidate();
@@ -722,7 +718,7 @@ void CCGWorkView::OnOptionsBackgroundColor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		m_clrBackground = invertRB(CD.GetColor());
+		m_clrBackground = CD.GetColor();
 		scene.setBackgroundColor(m_clrBackground);
 		Invalidate();
 	}
@@ -732,7 +728,7 @@ void CCGWorkView::OnOptionsNormalcolor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		scene.getRenderer().setNormalClr(invertRB(CD.GetColor()));
+		scene.getRenderer().setNormalClr(CD.GetColor());
 		Invalidate();
 	}
 }
@@ -743,7 +739,7 @@ void CCGWorkView::OnOptionsSilhouettecolor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		scene.setSilhouetteColor(invertRB(CD.GetColor()));
+		scene.setSilhouetteColor(CD.GetColor());
 		Invalidate();
 	}
 }
@@ -769,6 +765,7 @@ void CCGWorkView::OnLightShadingFlat()
 {
 	m_nLightShading = ID_LIGHT_SHADING_FLAT;
 	scene.setLightingMode(FLAT);
+	Invalidate();
 }
 
 void CCGWorkView::OnUpdateLightShadingFlat(CCmdUI* pCmdUI)
@@ -780,6 +777,7 @@ void CCGWorkView::OnLightShadingGouraud()
 {
 	m_nLightShading = ID_LIGHT_SHADING_GOURAUD;
 	scene.setLightingMode(GOURAUD);
+	Invalidate();
 }
 
 void CCGWorkView::OnUpdateLightShadingGouraud(CCmdUI* pCmdUI)
@@ -791,6 +789,7 @@ void CCGWorkView::OnLightShadingPhong()
 {
 	m_nLightShading = ID_LIGHT_SHADING_PHONG;
 	scene.setLightingMode(PHONG);
+	Invalidate();
 }
 
 
@@ -816,6 +815,8 @@ void CCGWorkView::OnLightConstants()
 		for (int id = LIGHT_ID_1; id < MAX_LIGHT; id++)
 		{
 			m_lights[id] = dlg.GetDialogData((LightID)id);
+			//FIX INVERT RB BUG:
+			//m_lights[id].colorB = 
 			scene.setLightSource(m_lights[id], id);
 		}
 		m_ambientLight = dlg.GetDialogData(LIGHT_ID_AMBIENT);
@@ -1151,6 +1152,7 @@ void CCGWorkView::OnSolidrenderingToscreen()
 {
 	m_bRenderToScreen = true;
 	m_bIsWireframe = false;
+	scene.setSolidMode();
 	Invalidate();
 }
 
@@ -1158,6 +1160,7 @@ void CCGWorkView::OnWireframeToScreen()
 {
 	m_bRenderToScreen = true;
 	m_bIsWireframe = true;
+	scene.setWireframeMode();
 	Invalidate();
 }
 

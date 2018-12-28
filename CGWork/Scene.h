@@ -50,13 +50,14 @@ public:
 	Scene();
 	int addModel(Model* model);
 	int addCamera(Camera* camera);
+	Model* getMainModel();
 	std::map<int, Model*>& getAllModels();
-	
+	void setMainModel(Model* model);
+	//void setAllModels(const std/*:*/:map<int, Model*>& models);
+	void loadFromScene(const Scene& other);
 	void setRenderer(Renderer& renderer);
 	Renderer& getRenderer();
 
-	Model* getMainModel();
-	void setMainModel(Model* model);
 	void setWireframeMode();
 	void setSolidMode();
 	void setSubobjectMode();
@@ -98,8 +99,6 @@ public:
 	void setLightDiffuseVariable(double data);
 	void setLightSpecularVariable(double data);
 	void setLightCosineComponent(double data);
-
-	COLORREF getLightingColor(Vec4 normal, COLORREF originalClr);
 
 	void setPngBackgroundImage(PngWrapper* pngImage);
 	void enableBackgroundImage();
