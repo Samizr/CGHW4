@@ -23,8 +23,10 @@ static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png);
 static bool beamIntersects(Vec4 p1, Vec4 p2, float x, float y);
 static bool pointOnLine(Vec4 p1, Vec4 p2, float x, float y);
 static COLORREF getLightingColor(Vec4 normal, COLORREF originalClr, const std::array<LightParams, NUM_LIGHT_SOURCES> &lightSources, const LightParams& ambientLight, double* materialParams);
-
-
+float distanceBetweenPoints(float x1, float y1, float x2, float y2);
+Vec4 getIntersectionWithLine(Vec4 p1, Vec4 p2, float x, float y);
+std::vector<Vec4> getTriangleWithPointInside(float x, float y, std::vector<Vec4> poly);
+static bool beamIntersectsScanLine(Vec4 p1, Vec4 p2, float x, float y);
 #define NORMAL_LENGTH_FACTOR 13
 
 
@@ -209,16 +211,15 @@ static bool pixelIsInPolygon1(float x, float y, std::vector<Vec4> poly) {
 static bool pixelIsInPolygon(float x, float y, std::vector<Vec4> poly) {
 	int polyCorners = poly.size();
 	int   j = polyCorners - 1;
-	bool  oddNodes = false;
-
+	bool oddNodes = false;
 	for (int i = 0; i < polyCorners; i++) {
-		if (poly[i].xCoord() == x && poly[i].yCoord() == y) {
+		if ((int)poly[i].xCoord() == x && (int)poly[i].yCoord() == y) {
 			return true;
 		}
 		if (pointOnLine(poly[i], poly[j], x, y)) {
 			return true;
 		}
-		if (beamIntersects(poly[i], poly[j], x, y)) {
+		if (beamIntersectsScanLine(poly[i], poly[j], x, y)) {
 			oddNodes = !oddNodes;
 		}
 		j = i;
@@ -231,12 +232,17 @@ bool pointOnLine(Vec4 p1, Vec4 p2, float x, float y) {
 	float lineMinY = min(p1.yCoord(), p2.yCoord());
 	float lineMaxX = max(p1.xCoord(), p2.xCoord());
 	float lineMinX = min(p1.xCoord(), p2.xCoord());
-	if (p1.yCoord() == p2.yCoord()) {
-		return (int)y == (int)p1.yCoord() && x >= lineMinX && x <= lineMaxX;
+	if (((int)p1.yCoord()) == y && ((int)p1.xCoord()) == x) {
+		return true;
 	}
-	
+	if (((int)p2.yCoord()) == y && ((int)p2.xCoord()) == x) {
+		return true;
+	}
+	if (p1.yCoord() == p2.yCoord()) {
+		return (int)y == (int)p1.yCoord() && x >= (int)lineMinX && x <= lineMaxX;
+	}
 	if (p1.xCoord() == p2.xCoord()) {
-		return (int)x == (int)p1.xCoord() && y >= lineMinY && y <= lineMaxY;
+		return (int)x == (int)p1.xCoord() && y >= (int)lineMinY && y <= lineMaxY;
 	}
 	float deltaY = p2.yCoord() - p1.yCoord();
 	float deltaX = p2.xCoord() - p1.xCoord();
@@ -244,28 +250,66 @@ bool pointOnLine(Vec4 p1, Vec4 p2, float x, float y) {
 	return (int)((deltaY / deltaX) * x) + c == (int)y;
 }
 
-// check if q lies in the segment created by p1 and p2.
 static bool beamIntersects(Vec4 p1, Vec4 p2, float x, float y) {
 	float lineMaxY = max(p1.yCoord(), p2.yCoord());
 	float lineMinY = min(p1.yCoord(), p2.yCoord());
 	float lineMaxX = max(p1.xCoord(), p2.xCoord());
 	float lineMinX = min(p1.xCoord(), p2.xCoord());
+	if (((int)p1.yCoord()) == y && ((int)p1.xCoord()) == x) {
+		return true;
+	}
+	if (((int)p2.yCoord()) == y && ((int)p2.xCoord()) == x) {
+		return true;
+	}
 	if (p1.yCoord() == p2.yCoord()) {
-		return y == p1.yCoord() && x >= lineMinX && x <= lineMaxX;
+		return y == ((int)p1.yCoord()) && x >= (int)lineMinX && x <=lineMaxX;
 	}
 	if (p1.xCoord() == p2.xCoord()) {
-		return x >= p1.xCoord() && y >= lineMinY && y <= lineMaxY;
+		return x >= ((int)p1.xCoord()) && y >= (int)lineMinY && y <= lineMaxY;
 	}
-	//float lineMinX = min(p1.xCoord(), p2.xCoord());
-	// value of x at line
 	float deltaY = p2.yCoord() - p1.yCoord();
 	float deltaX = p2.xCoord() - p1.xCoord();
 	float c = p1.yCoord() - ((deltaY / deltaX) * p1.xCoord());
 	float pointOnLine = (y - c) * (deltaX / deltaY);
-	return x >= pointOnLine && y <= lineMaxY && y >= lineMinY;
+	return x >= (int)pointOnLine && y <= lineMaxY && y >= (int)lineMinY;
 }
 
-float getDepthAtPoint(int x, int y, std::vector<Vec4> poly) {
+static bool beamIntersectsScanLine(Vec4 p1, Vec4 p2, float x, float y) {
+	float lineMaxY = max(p1.yCoord(), p2.yCoord());
+	float lineMinY = min(p1.yCoord(), p2.yCoord());
+	float lineMaxX = max(p1.xCoord(), p2.xCoord());
+	float lineMinX = min(p1.xCoord(), p2.xCoord());
+	if (((int)p1.yCoord()) == y && ((int)p1.xCoord()) == x) {
+		return true;
+	}
+	if (((int)p2.yCoord()) == y && ((int)p2.xCoord()) == x) {
+		return true;
+	}
+	if (p1.yCoord() == p2.yCoord()) {
+		//return y == ((int)p1.yCoord()) && x >= (int)lineMinX && x <= lineMaxX;
+		return false;
+	}
+	if (p1.yCoord() >= p2.yCoord()) {
+		if (y == ((int)p1.yCoord())) {
+			return false;
+		}
+	}
+	if (p2.yCoord() >= p1.yCoord()) {
+		if (y == ((int)p2.yCoord())) {
+			return false;
+		}
+	}
+	if (p1.xCoord() == p2.xCoord()) {
+		return x >= ((int)p1.xCoord()) && y >= (int)lineMinY && y <= lineMaxY;
+	}
+	float deltaY = p2.yCoord() - p1.yCoord();
+	float deltaX = p2.xCoord() - p1.xCoord();
+	float c = p1.yCoord() - ((deltaY / deltaX) * p1.xCoord());
+	float pointOnLine = (y - c) * (deltaX / deltaY);
+	return x >= (int)pointOnLine && y <= lineMaxY && y >= (int)lineMinY;
+}
+
+float getDepthAtPoint1(int x, int y, std::vector<Vec4> poly) {
 	Vec4 p1 = poly[0];
 	Vec4 p2 = poly[1];
 	Vec4 p3 = poly[2];
@@ -277,7 +321,89 @@ float getDepthAtPoint(int x, int y, std::vector<Vec4> poly) {
 	return zp;
 }
 
-// change back names
+float getDepthAtPoint(int x, int y, std::vector<Vec4> poly) {
+	if (poly.size() == 2) {
+		int i = 0;
+	}
+	Vec4 p1 = poly[0];
+	Vec4 p2 = poly[1];
+	Vec4 p3 = poly[2];
+	Vec4 intersectionPoints[2];
+	int i = 0;
+	// find the two pairs we intersect with
+	if (poly.size() == 4) {
+		std::vector<Vec4> subset = getTriangleWithPointInside(x, y, poly);
+		p1 = subset[0];
+		p2 = subset[1];
+		p3 = subset[2];
+	}
+	if (beamIntersects(p1, p2, x, y)) {
+		intersectionPoints[i] = getIntersectionWithLine(p1, p2, x, y);
+		i++;
+	}
+	if (beamIntersects(p1, p3, x, y)) {
+		intersectionPoints[i] = getIntersectionWithLine(p1, p3, x, y);
+		i++;
+	}
+	if (beamIntersects(p2, p3, x, y)) {
+		intersectionPoints[i] = getIntersectionWithLine(p2, p3, x, y);
+		i++;
+	}
+	float i1X, i1Y, i2X, i2Y;
+	i1X = intersectionPoints[0].xCoord();
+	i1Y = intersectionPoints[0].yCoord();
+	i2X = intersectionPoints[1].xCoord();
+	i2Y = intersectionPoints[1].yCoord();
+	float totalDistance = distanceBetweenPoints(i1X, i1Y, i2X, i2Y);
+	float distanceToP1 = distanceBetweenPoints(x, y, i1X, i1Y);
+	float alpha = distanceToP1 / totalDistance;
+	return alpha * p1.zCoord() + (1 - alpha) * p2.zCoord();
+}
+
+std::vector<Vec4> getTriangleWithPointInside(float x, float y, std::vector<Vec4> poly) {
+	std::vector<Vec4> subset;
+	for (int i = 0; i < 4; i++) {
+		for (int j = i + 1; j < 4; j++) {
+			for (int k = j + 1; k < 4; k++) {
+				subset.push_back(poly[i]);
+				subset.push_back(poly[j]);
+				subset.push_back(poly[k]);
+				if (pixelIsInPolygon(x, y, subset)) {
+					return subset;
+				}
+				subset.clear();
+			}
+		}
+	}
+}
+
+Vec4 getIntersectionWithLine(Vec4 p1, Vec4 p2, float x, float y) {
+	Vec4 intersection(0, y, 0, 1);
+	float deltaY = p2.yCoord() - p1.yCoord();
+	float deltaX = p2.xCoord() - p1.xCoord();
+	if (p1.xCoord() == p2.xCoord()) {
+		intersection[0] = p1.xCoord();
+	}
+	else if (p1.yCoord() == p2.yCoord()) {
+		intersection[0] == (p1.xCoord() + p2.xCoord()) / 2;
+	}
+	else {
+		float c = p1.yCoord() - ((deltaY / deltaX) * p1.xCoord());
+		intersection[0] = (y - c) * (deltaX / deltaY);
+	}
+	float distanceToP1 = distanceBetweenPoints(intersection[0], intersection[1], p1.xCoord(), p1.yCoord());
+	float distance = distanceBetweenPoints(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord());
+	float alpha = distanceToP1 / distance;
+	intersection[2] = alpha * p1.zCoord() + (1 - alpha) * p2.zCoord();
+	return intersection;
+}
+
+float distanceBetweenPoints(float x1, float y1, float x2, float y2) {
+	float deltaY = y2 - y1;
+	float deltaX = x2 - x1;
+	return sqrt(pow(deltaY, 2) + pow(deltaX, 2));
+}
+
 void Renderer::drawWireframeZBufferDepth(COLORREF* bitArr, CRect rect, Model* model, COLORREF backgroundClr) {
 	Geometry* geometry = &model->getGeometry();
 	windowMatrix = generateViewportMatrix(rect);
