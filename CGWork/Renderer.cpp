@@ -526,15 +526,15 @@ float getDepthAtPoint(int x, int y, std::vector<Vec4> poly) {
 		p2 = subset[1];
 		p3 = subset[2];
 	}
-	if (beamIntersects(p1, p2, x, y)) {
+	if (beamIntersectsScanLine(p1, p2, x, y)) {
 		intersectionPoints[i] = getIntersectionWithLine(p1, p2, x, y);
 		i++;
 	}
-	if (beamIntersects(p1, p3, x, y)) {
+	if (beamIntersectsScanLine(p1, p3, x, y)) {
 		intersectionPoints[i] = getIntersectionWithLine(p1, p3, x, y);
 		i++;
 	}
-	if (beamIntersects(p2, p3, x, y)) {
+	if (beamIntersectsScanLine(p2, p3, x, y)) {
 		intersectionPoints[i] = getIntersectionWithLine(p2, p3, x, y);
 		i++;
 	}
