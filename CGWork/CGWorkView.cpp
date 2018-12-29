@@ -1220,8 +1220,8 @@ void CCGWorkView::activeDebugFeatures1()
 	//for (std::pair<int, Model*> pair : scene.getAllModels()) {
 	//	resetModel(pair.second);
 	//}
-	//scene.setLightingMode(PHONG);
-	::CGSkelFFCState.FineNess = 20;
+	scene.setLightingMode(GOURAUD);
+	::CGSkelFFCState.FineNess = 2;
 	m_lights[0].colorR = 255;
 	m_lights[0].colorG = 255;
 	m_lights[0].colorB = 255;

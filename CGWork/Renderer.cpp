@@ -968,13 +968,13 @@ COLORREF Renderer::getLightingColor(Vec4 normal, COLORREF originalClr, const std
 			G += diffuseFraction * cos_diffuse * origG * light.colorG / 255;
 			B += diffuseFraction * cos_diffuse * origB * light.colorB / 255;
 				//SPECULAR LIGHT:
-			Vec4 viewerVec(0, 0, 12, 0); //FIX THIS!
-			Vec4 specularVec = normal * 2 * (lightVec ^ normal) - lightVec;
-//			Vec4 viewerVec = cameraMatrix.getTranspose() * (-1) * Vec4(1, 1, 1, 0);
-			float cos_specular = pow(specularVec.cosineAngle(viewerVec), cosinComponent);
-			R += specularFraction * cos_specular * light.colorR;
-			G += specularFraction * cos_specular * light.colorG;
-			B += specularFraction * cos_specular * light.colorB;
+//			Vec4 viewerVec(0, 0, 12, 0); //FIX THIS!
+//			Vec4 specularVec = normal * 2 * (lightVec ^ normal) - lightVec;
+////			Vec4 viewerVec = cameraMatrix.getTranspose() * (-1) * Vec4(1, 1, 1, 0);
+//			float cos_specular = pow(specularVec.cosineAngle(viewerVec), cosinComponent);
+//			R += specularFraction * cos_specular * light.colorR;
+//			G += specularFraction * cos_specular * light.colorG;
+//			B += specularFraction * cos_specular * light.colorB;
 		}
 		if (light.type == LIGHT_TYPE_POINT) {
 			//THE QUESTION HERE IS SHOULD I CREATE A DIRECTION FROM CORDS - LIGHT_POINT?
