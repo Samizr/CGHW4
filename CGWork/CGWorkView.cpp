@@ -355,7 +355,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	bitArray = new COLORREF[h * w];
 	
 	//DEBUG, REMOVE!
-	activeDebugFeatures1();
+	//activeDebugFeatures1();
 	//DEBUG END
 
 	scene.draw(bitArray, r);
