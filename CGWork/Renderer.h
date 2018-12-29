@@ -81,5 +81,6 @@ public:
 	void drawBounding(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr);
 	void drawBackgoundImageStretch(COLORREF* bitArr, CRect rect, PngWrapper* png);
 	void drawBackgoundImageRepeat(COLORREF* bitArr, CRect rect, PngWrapper* png);
+	void drawSolidBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model);
 };
 #endif /* Renderer_h */
