@@ -17,6 +17,7 @@ using std::pair;
 static Mat4 generateViewportMatrix(CRect rect);
 static bool pixelIsInPolygon(float x, float y, std::vector<Vec4> poly);
 static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth);
+static void drawFaceSolid(COLORREF* bitArr, CRect rect, Face* face, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth);
 float getDepthAtPoint(int x, int y, std::vector<Vec4> poly);
 static bool isSilhouetteEdge(Edge* edge, Mat4 transformationMatrix);
 static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png);
@@ -32,7 +33,6 @@ static float getIntersectionPoint(Vec4 p1, Vec4 p2, float y);
 
 
 static double distance(int x1, int y1, int x2, int y2);
-
 float distanceBetweenPoints(float x1, float y1, float x2, float y2);
 Vec4 getIntersectionWithLine(Vec4 p1, Vec4 p2, float x, float y);
 std::vector<Vec4> getTriangleWithPointInside(float x, float y, std::vector<Vec4> poly);
@@ -86,6 +86,45 @@ void Renderer::drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model
 		if (face->calculateNormal(objectWorldMatrix)[2] > 0) {
 			for (Edge* edge : face->getEdges()) {
 				drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, geometry->getLineClr(), rect.Width());
+			}
+		}
+	}
+}
+
+void Renderer::drawSolidBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model) {
+	Geometry* geometry = &model->getGeometry();
+	windowMatrix = generateViewportMatrix(rect);
+	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
+	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
+	for (Face* face : geometry->getFaces()) {
+		if (face->calculateNormal(objectWorldMatrix)[2] > 0) {
+			drawFaceSolid(bitArr, rect, face, finalMatrix, afterCamera, geometry->getLineClr(), rect.Width());
+		}
+	}
+}
+
+static void drawFaceSolid(COLORREF* bitArr, CRect rect, Face* face, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth) {
+	int minX = rect.Width();
+	int minY = rect.Height();
+	int maxX = 0;
+	int maxY = 0;
+	std::vector<Vec4> poly;
+	for (Vertex* vertex : face->getVerticies()) {
+		Vec4 currPoint = finalMatrix * vertex->getVec4Coords();
+		currPoint = currPoint * (1 / currPoint.wCoord());
+		poly.push_back(currPoint);
+		minX = min(currPoint.xCoord(), minX);
+		minY = min(currPoint.yCoord(), minY);
+		maxX = max(currPoint.xCoord(), maxX);
+		maxY = max(currPoint.yCoord(), maxY);
+	}
+	// Go over all inside frame from above pixels, only work with ones inside projected polygon.
+	for (int i = minY; i < maxY; i++) {
+		for (int j = minX; j < maxX; j++) {
+			if (pixelIsInPolygon(j, i, poly)) {
+				float currentDepth = getDepthAtPoint(j, i, poly);
+				bitArr[i * rect.Width() + j] = lineclr;
 			}
 		}
 	}
@@ -369,6 +408,9 @@ static bool pixelIsInPolygon(float x, float y, std::vector<Vec4> poly) {
 	int   j = polyCorners - 1;
 	bool oddNodes = false;
 	for (int i = 0; i < polyCorners; i++) {
+		if ((int)x == (int)poly[i].xCoord() && (int)y == (int)poly[i].yCoord()) {
+			return true;
+		}
 		if (beamIntersectsScanLine(poly[i], poly[j], x, y)) {
 			oddNodes = !oddNodes;
 		}
@@ -376,7 +418,6 @@ static bool pixelIsInPolygon(float x, float y, std::vector<Vec4> poly) {
 	}
 	return oddNodes;
 }
-
 
 bool pointOnLine(Vec4 p1, Vec4 p2, int x, int y) {
 	float lineMaxY = max(p1.yCoord(), p2.yCoord());
@@ -424,7 +465,7 @@ bool pointOnLineScreen(Vec4 p1, Vec4 p2, int x, int y) {
 	return false;
 }
 
-// check if q lies in the segment created by p1 and p2.
+
 static bool beamIntersects(Vec4 p1, Vec4 p2, float x, float y) {
 	float lineMaxY = max(p1.yCoord(), p2.yCoord());
 	float lineMinY = min(p1.yCoord(), p2.yCoord());
@@ -505,11 +546,20 @@ float getDepthAtPoint(int x, int y, std::vector<Vec4> poly) {
 			}
 		}
 	}
+	//if (pointOnLine(p1, p2, x, y)) {
+	//	return getIntersectionWithLine(p1, p2, x, y).zCoord();
+	//}
+	//if (pointOnLine(p1, p3, x, y)) {
+	//	return getIntersectionWithLine(p1, p3, x, y).zCoord();
+	//}
+	//if (pointOnLine(p2, p3, x, y)) {
+	//	return getIntersectionWithLine(p2, p3, x, y).zCoord();
+	//}
 	if (beamIntersects(p1, p2, x, y)) {
 		intersectionPoints[i] = getIntersectionWithLine(p1, p2, x, y);
 		i++;
 	}
-	if (beamIntersects(p1, p3, x, y)) {
+	if (beamIntersects(p1, p3, x, y)){
 		intersectionPoints[i] = getIntersectionWithLine(p1, p3, x, y);
 		i++;
 	}
@@ -527,7 +577,6 @@ float getDepthAtPoint(int x, int y, std::vector<Vec4> poly) {
 	i2Z = intersectionPoints[1].zCoord();
 	return i1Z + (i2Z - i1Z)  * ((i1X - x) / (i1X - i2X));
 }
-
 
 
 std::vector<Vec4> getTriangleWithPointInside(float x, float y, std::vector<Vec4> poly) {
