@@ -154,7 +154,7 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	{
 		/* color code */
 		COLORREF clr = RGB(255*objectRGB[0], 255*objectRGB[1], 255*objectRGB[2]);
-		subGeometry.setLineClr(invertRB(clr));
+		subGeometry.setLineClr(clr);
 	}
 	else {
 		subGeometry.setLineClr(STANDARD_OBJECT_COLOR);
@@ -253,16 +253,16 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 			current = current->Pnext;
 
 		} while (current != NULL && previous != PPolygon->PVertex);
-		//if (DBGRequestedSubModel++ == 7) {
+		if (DBGRequestedSubModel++ == 7) {
 			loadedGeometry.addFace(face);
 			subGeometry.addFace(face);
-	//	}
+		}
 		// Added By Firas END.
 		/* Close the polygon. */
 	}
 	Model* model = new Model(subGeometry);
-	//if (DBGRequestedModel++ != 0)
-	//	return true;
+	if (DBGRequestedModel++ != 0)
+		return true;
 	loadedScene.addModel(model);
 	/* Close the object. */
 	return true;
