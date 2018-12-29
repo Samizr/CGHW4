@@ -261,8 +261,8 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 		/* Close the polygon. */
 	}
 	Model* model = new Model(subGeometry);
-	if (DBGRequestedModel++ != 0)
-		return true;
+	//if (DBGRequestedModel++ != 0)
+	//	return true;
 	loadedScene.addModel(model);
 	/* Close the object. */
 	return true;

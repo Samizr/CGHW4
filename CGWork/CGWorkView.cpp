@@ -1222,15 +1222,15 @@ void CCGWorkView::activeDebugFeatures1()
 	//}
 	//scene.setLightingMode(PHONG);
 	::CGSkelFFCState.FineNess = 20;
-	//m_lights[0].colorR = 255;
-	//m_lights[0].colorG = 255;
-	//m_lights[0].colorB = 255;
-	//m_lights[0].dirX = 0;
-	//m_lights[0].dirY = 0;
-	//m_lights[0].dirZ = 2;
-	//m_lights[0].enabled = true;
-	//m_lights[0].type = LIGHT_TYPE_DIRECTIONAL;
-	//scene.setLightSource(m_lights[0], 0);
+	m_lights[0].colorR = 255;
+	m_lights[0].colorG = 255;
+	m_lights[0].colorB = 255;
+	m_lights[0].dirX = 0;
+	m_lights[0].dirY = 0;
+	m_lights[0].dirZ = 2;
+	m_lights[0].enabled = true;
+	m_lights[0].type = LIGHT_TYPE_DIRECTIONAL;
+	scene.setLightSource(m_lights[0], 0);
 	scene.setSolidMode();
 }
 
