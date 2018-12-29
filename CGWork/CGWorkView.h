@@ -184,7 +184,7 @@ protected:
 	afx_msg void OnOptionsNormalcolor();
 	afx_msg void OnOptionsMousesensitivity();
 
-	//LIGHTING OPTIONS (NOT USED IN HW2)
+	//LIGHTING OPTIONS
 	afx_msg void OnLightShadingFlat();
 	afx_msg void OnUpdateLightShadingFlat(CCmdUI* pCmdUI);
 	afx_msg void OnLightShadingGouraud();
@@ -196,6 +196,10 @@ protected:
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+
+	//DEBUG FUNCTIONS!
+	afx_msg void activeDebugFeatures1();
+
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 public:

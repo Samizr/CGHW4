@@ -33,6 +33,7 @@ public:
 	Vec4 crossProduct(const Vec4& other) const;
 	float& operator[](const int& i);
 	bool operator==(const Vec4 vec) const;
+	bool operator!=(const Vec4 vec) const;
 	Vec4 normalize();
 	float cosineAngle(const Vec4& other);
 	float xCoord() const;
