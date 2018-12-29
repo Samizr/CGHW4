@@ -62,6 +62,11 @@ bool Vec4::operator==(const Vec4 vec) const
 	return vec.xCoord() == xCoord() && vec.yCoord() == yCoord() && vec.zCoord() == zCoord() && vec.wCoord() == wCoord();
 }
 
+bool Vec4::operator!=(const Vec4 vec) const
+{
+	return !((*this) == vec);
+}
+
 float Vec4::xCoord() const{
 	return this->_xCoord;
 }

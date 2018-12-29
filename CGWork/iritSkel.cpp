@@ -128,6 +128,8 @@ void CGSkelDumpOneTraversedObject(IPObjectStruct *PObj,
 *****************************************************************************/
 Geometry loadedGeometry;
 Scene loadedScene;
+int DBGRequestedModel = 0;
+int DBGRequestedSubModel = 0;
 bool CGSkelStoreData(IPObjectStruct *PObj)
 {
 	Geometry subGeometry;
@@ -251,12 +253,16 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 			current = current->Pnext;
 
 		} while (current != NULL && previous != PPolygon->PVertex);
-		loadedGeometry.addFace(face);
-		subGeometry.addFace(face);
+		//if (DBGRequestedSubModel++ == 7) {
+			loadedGeometry.addFace(face);
+			subGeometry.addFace(face);
+	//	}
 		// Added By Firas END.
 		/* Close the polygon. */
 	}
 	Model* model = new Model(subGeometry);
+	if (DBGRequestedModel++ != 0)
+		return true;
 	loadedScene.addModel(model);
 	/* Close the object. */
 	return true;

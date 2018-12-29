@@ -28,6 +28,15 @@ Mat4 Mat4::operator+(const Mat4& matrix) const {
 	return Mat4(newRows);
 }
 
+Mat4 Mat4::getTranspose() const {
+	Mat4 out;
+	for (int i = 0; i < 4; i++) {
+		out.cols[i] = rows[i];
+		out.rows[i] = cols[i];
+	}
+	return out;
+}
+
 Mat4 Mat4::operator*(const float& a) const {
 	Vec4 newRows[4];
 	for (int i = 0; i < 4; i++) {

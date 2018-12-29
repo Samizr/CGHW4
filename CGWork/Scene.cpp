@@ -197,7 +197,6 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	//DRAW SILHOUETTE
 	if (withSilhouette) {
 		Geometry* geometry = &mainModel->getGeometry();
-
 		m_renderer.drawSilhouette(bitArr, rect, geometry);
 	}
 }

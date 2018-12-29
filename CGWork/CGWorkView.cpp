@@ -275,17 +275,6 @@ BOOL CCGWorkView::InitializeCGWork()
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
-	//LIGHTING DBG
-	m_lights[0].colorR = 255;
-	m_lights[0].colorG = 255;
-	m_lights[0].colorB = 255;
-	m_lights[0].dirX = 0;
-	m_lights[0].dirY = 0;
-	m_lights[0].dirZ = 2;
-	m_lights[0].enabled = true;
-	m_lights[0].type = LIGHT_TYPE_DIRECTIONAL;
-	scene.setLightSource(m_lights[0], 0);
-	//RMV ALL BEFORE
 	return TRUE;
 }
 
@@ -365,6 +354,10 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	}
 	bitArray = new COLORREF[h * w];
 	
+	//DEBUG, REMOVE!
+	activeDebugFeatures1();
+	//DEBUG END
+
 	scene.draw(bitArray, r);
 	invertRBArray(bitArray, r);	//SIGNIFICANT PERFORMANCE SLOWDOWN!
 	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
@@ -1217,3 +1210,27 @@ void CCGWorkView::OnWireframTofile()
 		Invalidate();
 	}
 }
+
+
+//DEBUG FUNCTIONS:
+void CCGWorkView::activeDebugFeatures1()
+{
+	//resetButtons();
+	//resetModel(scene.getMainModel());
+	//for (std::pair<int, Model*> pair : scene.getAllModels()) {
+	//	resetModel(pair.second);
+	//}
+	//scene.setLightingMode(PHONG);
+	::CGSkelFFCState.FineNess = 20;
+	//m_lights[0].colorR = 255;
+	//m_lights[0].colorG = 255;
+	//m_lights[0].colorB = 255;
+	//m_lights[0].dirX = 0;
+	//m_lights[0].dirY = 0;
+	//m_lights[0].dirZ = 2;
+	//m_lights[0].enabled = true;
+	//m_lights[0].type = LIGHT_TYPE_DIRECTIONAL;
+	//scene.setLightSource(m_lights[0], 0);
+	scene.setSolidMode();
+}
+
