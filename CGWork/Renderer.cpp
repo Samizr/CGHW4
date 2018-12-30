@@ -17,7 +17,6 @@ using std::pair;
 static Mat4 generateViewportMatrix(CRect rect);
 static bool pixelIsInPolygon(float x, float y, std::vector<Vec4> poly);
 static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth);
-static void drawFaceSolid(COLORREF* bitArr, CRect rect, Face* face, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth);
 float getDepthAtPoint(int x, int y, std::vector<Vec4> poly);
 static bool isSilhouetteEdge(Edge* edge, Mat4 transformationMatrix);
 static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png);
@@ -91,7 +90,7 @@ void Renderer::drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model
 	}
 }
 
-void Renderer::drawSolidBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model) {
+void Renderer::drawSolidBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
 	Geometry* geometry = &model->getGeometry();
 	windowMatrix = generateViewportMatrix(rect);
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
@@ -99,17 +98,26 @@ void Renderer::drawSolidBackfaceCulling(COLORREF * bitArr, CRect rect, Model * m
 	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
 	for (Face* face : geometry->getFaces()) {
 		if (face->calculateNormal(objectWorldMatrix)[2] > 0) {
-			drawFaceSolid(bitArr, rect, face, finalMatrix, afterCamera, geometry->getLineClr(), rect.Width());
+			drawFaceSolid(bitArr, rect, face, geometry->getLineClr(), lightSources, ambientLight, materialParams);
 		}
 	}
 }
 
-static void drawFaceSolid(COLORREF* bitArr, CRect rect, Face* face, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth) {
+void Renderer::drawFaceSolid(COLORREF* bitArr, CRect rect, Face* face, COLORREF lineClr, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
 	int minX = rect.Width();
 	int minY = rect.Height();
 	int maxX = 0;
 	int maxY = 0;
+	double lineDist;
+	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+	COLORREF clr = STANDARD_OBJECT_COLOR;
 	std::vector<Vec4> poly;
+	std::vector<pair<Vec4, Vec4>> polyEdges;
+	std::vector<pair<COLORREF, COLORREF>> polyEdgesColors;
+	std::vector<pair<Vec4, Vec4>> polyEdgesNormals;
+	std::vector<pair<Vec4, Vec4>> polyEdgesObjectWorld;
+	vector<pair<float, COLORREF>> intersectionPointsCLR;
+	vector<pair<float, Vec4>> intersectionPointsNRM;
 	for (Vertex* vertex : face->getVerticies()) {
 		Vec4 currPoint = finalMatrix * vertex->getVec4Coords();
 		currPoint = currPoint * (1 / currPoint.wCoord());
@@ -119,12 +127,79 @@ static void drawFaceSolid(COLORREF* bitArr, CRect rect, Face* face, Mat4 finalMa
 		maxX = max(currPoint.xCoord(), maxX);
 		maxY = max(currPoint.yCoord(), maxY);
 	}
+	vector<Edge*> edges = face->getEdges();
+	for (int i = 0; i <= edges.size(); i++) {
+		Vec4 pointAfinal, pointBfinal, pointAobject, pointBobject, normalA, normalB;
+		if (i < edges.size()) {
+			pointAfinal = finalMatrix * edges[i]->getA()->getVec4Coords();
+			pointBfinal = finalMatrix * edges[i]->getB()->getVec4Coords();
+			pointAobject = objectWorldMatrix * edges[i]->getA()->getVec4Coords();
+			pointBobject = objectWorldMatrix * edges[i]->getB()->getVec4Coords();
+			normalA = objectWorldMatrix * (*(edges[i]->getA()->getNormal()));
+			normalB = objectWorldMatrix * (*(edges[i]->getB()->getNormal()));
+		}
+		else if (edges[i - 1]->getB()->getVec4Coords() != edges[0]->getA()->getVec4Coords()) {
+			pointAfinal = finalMatrix * edges[i - 1]->getB()->getVec4Coords();
+			pointBfinal = finalMatrix * edges[0]->getA()->getVec4Coords();
+			pointAobject = objectWorldMatrix * edges[i - 1]->getB()->getVec4Coords();
+			pointBobject = objectWorldMatrix * edges[0]->getA()->getVec4Coords();
+			normalA = objectWorldMatrix * (*(edges[i - 1]->getB()->getNormal()));
+			normalB = objectWorldMatrix * (*(edges[0]->getA()->getNormal()));
+		}
+		pair<Vec4, Vec4> outEdge;
+		outEdge.first = pointAfinal;
+		outEdge.second = pointBfinal;
+		polyEdges.push_back(outEdge);
+		pair<Vec4, Vec4> outNormals;
+		outNormals.first = normalA;
+		outNormals.second = normalB;
+		polyEdgesNormals.push_back(outNormals);
+		pair<Vec4, Vec4> outEdgeObjectWorld;
+		outEdgeObjectWorld.first = pointAobject;
+		outEdgeObjectWorld.second = pointBobject;
+		pair<COLORREF, COLORREF> outColors;
+		outColors.first = getLightingColor(pointAobject, normalA, lineClr, lightSources, ambientLight, materialParams);
+		outColors.second = getLightingColor(pointAobject, normalB, lineClr, lightSources, ambientLight, materialParams);
+		polyEdgesColors.push_back(outColors);
+	}
+	if (lightingMode == FLAT)
+		clr = getLightingColor(face->calculateMidpoint(), face->calculateNormal(objectWorldMatrix), lineClr, lightSources, ambientLight, materialParams);
 	// Go over all inside frame from above pixels, only work with ones inside projected polygon.
 	for (int i = minY; i < maxY; i++) {
+		if (lightingMode == GOURAUD) {
+			intersectionPointsCLR = findIntersectionsColor(i, polyEdges, polyEdgesColors, maxX, rect);
+			lineDist = abs(intersectionPointsCLR[0].first - intersectionPointsCLR[1].first);
+		}
+		else if (lightingMode == PHONG) {
+			intersectionPointsNRM = findIntersectionsNormal(i, polyEdges, polyEdgesNormals);
+			lineDist = abs(intersectionPointsNRM[0].first - intersectionPointsNRM[1].first);
+		}
+		if ((lightingMode == GOURAUD || lightingMode == PHONG) && intersectionPointsNRM.size() == 0 && intersectionPointsCLR.size() == 0)
+			continue;
 		for (int j = minX; j < maxX; j++) {
+			if (i < 0 || j < 0 || j >= rect.Width() || i >= rect.Height())
+				continue;
 			if (pixelIsInPolygon(j, i, poly)) {
 				float currentDepth = getDepthAtPoint(j, i, poly);
-				bitArr[i * rect.Width() + j] = lineclr;
+				if (lightingMode == GOURAUD) {
+					int minId = intersectionPointsCLR[0].first <= intersectionPointsCLR[1].first ? 0 : 1;
+					int maxId = 1 - minId;
+					double pointDist = abs(j - intersectionPointsCLR[minId].first);
+					double percentage = lineDist == 0 ? 1 : pointDist / lineDist;
+					percentage = percentage > 1 ? 1 : percentage;
+					clr = getInterpolatedColor(percentage, intersectionPointsCLR[maxId].second, intersectionPointsCLR[minId].second);
+				}
+				else if (lightingMode == PHONG) {
+					int minId = intersectionPointsNRM[0].first <= intersectionPointsNRM[1].first ? 0 : 1;
+					int maxId = 1 - minId;
+					double pointDist = abs(j - intersectionPointsNRM[minId].first);
+					double percentage = lineDist == 0 ? 1 : pointDist / lineDist;
+					Vec4 normal = getInterpolatedNormal(percentage, intersectionPointsNRM[maxId].second, intersectionPointsNRM[minId].second);
+					Vec4 point(i, j, currentDepth, 0);
+					Vec4 objectSpacePoint = objectWorldMatrix * finalMatrix.getInverse() * point;
+					clr = getLightingColor(objectSpacePoint, normal, lineClr, lightSources, ambientLight, materialParams);
+				}
+				bitArr[i * rect.Width() + j] = clr;
 			}
 		}
 	}
@@ -235,6 +310,7 @@ void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* mo
 			outColors.second = getLightingColor(pointAobject, normalB, geometry->getLineClr(), lightSources, ambientLight, materialParams);
 			polyEdgesColors.push_back(outColors);
 		}
+
 		if (lightingMode == FLAT)
 			clr = getLightingColor(face->calculateMidpoint(), face->calculateNormal(objectWorldMatrix), geometry->getLineClr(), lightSources, ambientLight, materialParams);
 		// Go over all inside frame from above pixels, only work with ones inside projected polygon.
