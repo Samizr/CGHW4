@@ -271,6 +271,7 @@ void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* mo
 		vector<pair<float, Vec4>> intersectionPointsNRM;
 		for (Vertex* vertex : face->getVerticies()) {
 			Vec4 currPoint = finalMatrix * vertex->getVec4Coords();
+			currPoint = currPoint * (1 / currPoint.wCoord());
 			Vec4 transformedNormal = objectWorldMatrix * (*(vertex->getNormal()));
 			poly.push_back(currPoint);
 			minX = min(currPoint.xCoord(), minX);
@@ -283,7 +284,9 @@ void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* mo
 			Vec4 pointAfinal, pointBfinal, pointAobject, pointBobject, normalA, normalB;
 			if (i < edges.size()) {
 				pointAfinal = finalMatrix * edges[i]->getA()->getVec4Coords();
+				pointAfinal = pointAfinal * (1 / pointAfinal.wCoord());
 				pointBfinal = finalMatrix * edges[i]->getB()->getVec4Coords();
+				pointBfinal = pointBfinal * (1 / pointBfinal.wCoord());
 				pointAobject = objectWorldMatrix * edges[i]->getA()->getVec4Coords();
 				pointBobject = objectWorldMatrix * edges[i]->getB()->getVec4Coords();
 				normalA = objectWorldMatrix * (*(edges[i]->getA()->getNormal()));
@@ -291,7 +294,9 @@ void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* mo
 			}
 			else if (edges[i - 1]->getB()->getVec4Coords() != edges[0]->getA()->getVec4Coords()) {
 				pointAfinal = finalMatrix * edges[i - 1]->getB()->getVec4Coords();
+				pointAfinal = pointAfinal * (1 / pointAfinal.wCoord());
 				pointBfinal = finalMatrix * edges[0]->getA()->getVec4Coords();
+				pointBfinal = pointBfinal * (1 / pointBfinal.wCoord());
 				pointAobject = objectWorldMatrix * edges[i - 1]->getB()->getVec4Coords();
 				pointBobject = objectWorldMatrix * edges[0]->getA()->getVec4Coords();
 				normalA = objectWorldMatrix * (*(edges[i - 1]->getB()->getNormal()));
