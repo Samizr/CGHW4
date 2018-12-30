@@ -24,6 +24,7 @@ public:
 	Mat4 operator*(const float& a) const;
 	Mat4 operator+(const Mat4& matrix) const;
 	Mat4 getTranspose() const;
+	Mat4 getInverse() const;
 	Vec4& operator[](const int i);
 	Vec4 Mat4::operator*(const Vec4& vector) const;
 	static Mat4 Identity();

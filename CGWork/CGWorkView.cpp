@@ -485,6 +485,8 @@ void CCGWorkView::OnViewOrthographic()
 	m_nView = ID_VIEW_ORTHOGRAPHIC;
 	m_bIsPerspective = false;
 	Camera* activeCamera = scene.getActiveCamera();
+	if (!activeCamera)
+		return;
 	activeCamera->Ortho();
 	Invalidate();		// redraw using the new view.
 }
@@ -495,6 +497,8 @@ void CCGWorkView::OnViewPerspective()
 	m_nView = ID_VIEW_PERSPECTIVE;
 	m_bIsPerspective = true;
 	Camera* activeCamera = scene.getActiveCamera();
+	if (!activeCamera)
+		return;
 	activeCamera->Perspective(m_nPerspectiveD, m_nPerspectiveAlpha);
 	Invalidate();
 }
@@ -1215,11 +1219,11 @@ void CCGWorkView::OnWireframTofile()
 //DEBUG FUNCTIONS:
 void CCGWorkView::activeDebugFeatures1()
 {
-	//resetButtons();
-	//resetModel(scene.getMainModel());
-	//for (std::pair<int, Model*> pair : scene.getAllModels()) {
-	//	resetModel(pair.second);
-	//}
+	resetButtons();
+	resetModel(scene.getMainModel());
+	for (std::pair<int, Model*> pair : scene.getAllModels()) {
+		resetModel(pair.second);
+	}
 	scene.setLightingMode(GOURAUD);
 	::CGSkelFFCState.FineNess = 2;
 	m_lights[0].colorR = 255;

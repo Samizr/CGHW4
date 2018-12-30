@@ -253,16 +253,16 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 			current = current->Pnext;
 
 		} while (current != NULL && previous != PPolygon->PVertex);
-		//if (DBGRequestedSubModel++ == 7) {
+	//	if (++DBGRequestedSubModel == 4) {
 			loadedGeometry.addFace(face);
 			subGeometry.addFace(face);
-		//}
+	//	}
 		// Added By Firas END.
 		/* Close the polygon. */
 	}
 	Model* model = new Model(subGeometry);
-	//if (DBGRequestedModel++ != 0)
-	//	return true;
+//	if (DBGRequestedModel++ != 0)
+//		return true;
 	loadedScene.addModel(model);
 	/* Close the object. */
 	return true;

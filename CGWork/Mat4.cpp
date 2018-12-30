@@ -7,6 +7,7 @@
 //
 
 #include "mat4.h"
+#include "MatrixInverse.h"
 #include <stdexcept>
 
 Mat4::Mat4() {
@@ -35,6 +36,29 @@ Mat4 Mat4::getTranspose() const {
 		out.rows[i] = cols[i];
 	}
 	return out;
+}
+
+Mat4 Mat4::getInverse() const
+{
+	Mat4 mat = *this;
+	float a[16], aInverted[16];
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			a[i * 4 + j] = mat[i][j];
+		}
+	}
+
+	if (!MatrixInversion(a, 4, aInverted)) {
+		return Identity();
+	}
+	else {
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				mat[i][j] = a[i * 4 + j];
+			}
+		}
+	}
+	return mat;
 }
 
 Mat4 Mat4::operator*(const float& a) const {
@@ -87,11 +111,11 @@ Mat4::Mat4(const Vec4& row0, const Vec4& row1, const Vec4& row2, const Vec4& row
 }
 
 Mat4 Mat4::Translate(Vec4& translationVector) {
-	Vec4 rows[4] = 
-		{ Vec4(1, 0, 0, translationVector[0])
-		, Vec4(0, 1, 0, translationVector[1])
-		, Vec4(0, 0, 1, translationVector[2])
-		, Vec4(0, 0, 0, 1) };
+	Vec4 rows[4] =
+	{ Vec4(1, 0, 0, translationVector[0])
+	, Vec4(0, 1, 0, translationVector[1])
+	, Vec4(0, 0, 1, translationVector[2])
+	, Vec4(0, 0, 0, 1) };
 	return Mat4(rows);
 }
 // angels are in radians.
@@ -102,7 +126,7 @@ Mat4 Mat4::Rotate(int axis, float theta) {
 	float cosTheta, sinTheta;
 	cosTheta = cos(theta);
 	sinTheta = sin(theta);
-	Vec4 rows[4] = {Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1)};
+	Vec4 rows[4] = { Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(0, 0, 1, 0), Vec4(0, 0, 0, 1) };
 	switch (axis) {
 	case 0:
 		rows[1] = Vec4(0, cosTheta, -sinTheta, 0);
@@ -112,7 +136,7 @@ Mat4 Mat4::Rotate(int axis, float theta) {
 		rows[0] = Vec4(cosTheta, 0, sinTheta, 0);
 		rows[2] = Vec4(-sinTheta, 0, cosTheta, 0);
 		break;
-	case 2: 
+	case 2:
 		rows[0] = Vec4(cosTheta, -sinTheta, 0, 0);
 		rows[1] = Vec4(sinTheta, cosTheta, 0, 0);
 		break;

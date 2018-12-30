@@ -94,7 +94,9 @@ float Vec4::cosineAngle(const Vec4& other)
 	float sum = dotProduct._xCoord + dotProduct._yCoord + dotProduct._zCoord;
 	float thisDivisor = sqrt(pow(_xCoord, 2) + pow(_yCoord, 2) + pow(_zCoord, 2));
 	float otherDivisor = sqrt(pow(other._xCoord, 2) + pow(other._yCoord, 2) + pow(other._zCoord, 2));
-	return abs(sum/(thisDivisor * otherDivisor));
+	if (sum == 0)
+		return 0;
+	return sum/(thisDivisor * otherDivisor);
 }
 
 Vec4 Vec4::crossProduct(const Vec4& other) const {
