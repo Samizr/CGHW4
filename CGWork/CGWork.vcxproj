@@ -253,6 +253,7 @@
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="Mat4.h" />
     <ClInclude Include="MaterialDlg.h" />
+    <ClInclude Include="MatrixInverse.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="MouseSensitivityDialog.h" />
     <ClInclude Include="PerspectiveParametersDialog.h" />
