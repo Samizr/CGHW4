@@ -135,7 +135,9 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, CRect rect, Face* face, COLORREF 
 		Vec4 pointAfinal, pointBfinal, pointAobject, pointBobject, normalA, normalB;
 		if (i < edges.size()) {
 			pointAfinal = finalMatrix * edges[i]->getA()->getVec4Coords();
+			pointAfinal = pointAfinal * (1 / pointAfinal.wCoord());
 			pointBfinal = finalMatrix * edges[i]->getB()->getVec4Coords();
+			pointBfinal = pointBfinal * (1 / pointBfinal.wCoord());
 			pointAobject = objectWorldMatrix * edges[i]->getA()->getVec4Coords();
 			pointBobject = objectWorldMatrix * edges[i]->getB()->getVec4Coords();
 			normalA = objectWorldMatrix * (*(edges[i]->getA()->getNormal()));
@@ -143,7 +145,9 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, CRect rect, Face* face, COLORREF 
 		}
 		else if (edges[i - 1]->getB()->getVec4Coords() != edges[0]->getA()->getVec4Coords()) {
 			pointAfinal = finalMatrix * edges[i - 1]->getB()->getVec4Coords();
+			pointAfinal = pointAfinal * (1 / pointAfinal.wCoord());
 			pointBfinal = finalMatrix * edges[0]->getA()->getVec4Coords();
+			pointBfinal = pointBfinal * (1 / pointBfinal.wCoord());
 			pointAobject = objectWorldMatrix * edges[i - 1]->getB()->getVec4Coords();
 			pointBobject = objectWorldMatrix * edges[0]->getA()->getVec4Coords();
 			normalA = objectWorldMatrix * (*(edges[i - 1]->getB()->getNormal()));
