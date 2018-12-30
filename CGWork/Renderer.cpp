@@ -87,6 +87,9 @@ void Renderer::drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model
 			for (Edge* edge : face->getEdges()) {
 				drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, geometry->getLineClr(), rect.Width());
 			}
+			Edge *edge = new Edge(face->getVerticies()[0], face->getVerticies()[face->getVerticies().size() - 1]);
+			drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, geometry->getLineClr(), rect.Width());
+			delete(edge);
 		}
 	}
 }
