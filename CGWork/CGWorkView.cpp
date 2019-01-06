@@ -133,6 +133,8 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_UPDATE_COMMAND_UI(ID_SOLIDRENDERING_WIREFRAME, &CCGWorkView::OnUpdateWireframeToScreen)
 	ON_UPDATE_COMMAND_UI(ID_SOLIDRENDERING_TOSCREEN, &CCGWorkView::OnUpdateSolidrenderingToscreen)
 	ON_COMMAND(ID_SOLIDRENDERING_WIREFRAMTOFILE, &CCGWorkView::OnWireframTofile)
+	ON_COMMAND(ID_PLANE_XY, &CCGWorkView::OnPlaneXy)
+	ON_UPDATE_COMMAND_UI(ID_PLANE_XY, &CCGWorkView::OnUpdatePlaneXy)
 END_MESSAGE_MAP()
 
 
@@ -265,6 +267,7 @@ BOOL CCGWorkView::InitializeCGWork()
 	m_pDbDC->CreateCompatibleDC(m_pDC);
 	m_pDbBitMap = CreateCompatibleBitmap(m_pDC->m_hDC, r.right, r.bottom);
 	m_pDbDC->SelectObject(m_pDbBitMap);
+	scene.setRenderer(renderer);
 	scene.setLightingMode(FLAT);
 	scene.setLightAmbientVariable(m_lMaterialAmbient);
 	scene.setLightDiffuseVariable(m_lMaterialDiffuse);
@@ -354,9 +357,8 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	}
 	bitArray = new COLORREF[h * w];
 	
-	//DEBUG, REMOVE!
+	//DEBUGGING AUTO INITIATOR
 	//activeDebugFeatures1();
-	//DEBUG END
 
 	scene.draw(bitArray, r);
 	invertRBArray(bitArray, r);	//SIGNIFICANT PERFORMANCE SLOWDOWN!
@@ -431,7 +433,7 @@ void CCGWorkView::OnFileLoadObject()
 		::loadedScene.setMainModel(mainModel);
 		
 		//Scene Update
-		scene.setRenderer(renderer);
+		//scene.setRenderer(renderer);
 		scene.loadFromScene(::loadedScene);
 		
 		//New Camera Initiation:
@@ -690,6 +692,17 @@ void CCGWorkView::OnUpdateAxisZ(CCmdUI* pCmdUI)
 	pCmdUI->SetCheck(m_nAxis == ID_AXIS_Z);
 }
 
+void CCGWorkView::OnPlaneXy()
+{
+	m_nAxis = ID_PLANE_XY;
+}
+
+
+void CCGWorkView::OnUpdatePlaneXy(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_nAxis == ID_PLANE_XY);
+}
+
 
 // OPTIONS HANDLERS ///////////////////////////////////////////
 
@@ -869,6 +882,7 @@ AXIS sceneAxisTranslator(int guiID)
 	case ID_AXIS_X: return XAXIS;
 	case ID_AXIS_Y: return YAXIS;
 	case ID_AXIS_Z: return ZAXIS;
+	case ID_PLANE_XY: return XAXIS;
 	default: throw std::bad_exception();
 	}
 }
@@ -903,6 +917,7 @@ void CCGWorkView::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	m_bAllowTransformations = true;
 	m_lnLastXPos = point.x;
+	m_lnLastYPos = point.y;
 	if (m_bDualView) {
 		CRect r;
 		GetClientRect(&r);
@@ -926,12 +941,20 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 	if (!m_bAllowTransformations) {
 		return;
 	}
-	else if (m_lnLastXPos > point.x) {
+	if (m_lnLastXPos > point.x) 
 		transform(POSITIVE);
-	}
-	else if (m_lnLastXPos < point.x) {
+	else if (m_lnLastXPos < point.x) 
 		transform(NEGATIVE);
+	
+	if (m_nAxis == ID_PLANE_XY) {
+		m_nAxis = ID_AXIS_Y;
+		if (m_lnLastYPos < point.y)
+			transform(POSITIVE);
+		else if (m_lnLastYPos > point.y)
+			transform(NEGATIVE);
+		m_nAxis = ID_PLANE_XY;
 	}
+	m_lnLastYPos = point.y;
 	m_lnLastXPos = point.x;
 	Invalidate();
 }
@@ -949,17 +972,6 @@ void CCGWorkView::transform(Direction direction)
 	if (model == nullptr) {
 		return;
 	}
-
-	//CODE FOR SENDING SUBOBJECT TO CENTER:
-	//Geometry& geometry = model->getGeometry();
-	//float centerX = (geometry.getMaxX() + geometry.getMinX()) / 2;
-	//float centerY = (geometry.getMaxY() + geometry.getMinY()) / 2;
-	//float centerZ = (geometry.getMaxZ() + geometry.getMinZ()) / 2;
-
-	//Vec4 center = scene.getMainModel()->getTransformationMatrix() * model->getTransformationMatrix() * Vec4(centerX, centerY, centerZ, -1);
-	//if (m_nIsSubobjectMode) {
-	//	model->prependToTransformation(Mat4::Translate(center * (-1)));
-	//}
 
 	//CODE FOR TRANSFORMATIONS:
 	AXIS sceneAxis = sceneAxisTranslator(m_nAxis);
@@ -989,7 +1001,6 @@ void CCGWorkView::transform(Direction direction)
 			model->scaleViewSpace(sceneAxis, adjustedQuota);
 		else
 			model->scaleObjectSpace(sceneAxis, adjustedQuota);
-		//scalingQuota *= (direction == NEGATIVE ? (float)101/100 : (float)99/100);
 		break;
 	}
 
@@ -1238,4 +1249,6 @@ void CCGWorkView::activeDebugFeatures1()
 	scene.setLightSource(m_lights[0], 0);
 	scene.setSolidMode();
 }
+
+
 

@@ -78,6 +78,7 @@ private:
 	//Mouse movement control section:
 	bool m_bAllowTransformations;	//Set when transformations are allowed
 	LONG m_lnLastXPos;				//Stores the x pos of the last place the mouse visited
+	LONG m_lnLastYPos;				//Stores the y pos of the last place the mouse visited
 	enum Direction {
 		POSITIVE = -1, NEGATIVE = 1
 	};
@@ -225,6 +226,8 @@ public:
 	afx_msg void OnUpdateWireframeToScreen(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateSolidrenderingToscreen(CCmdUI *pCmdUI);
 	afx_msg void OnWireframTofile();
+	afx_msg void OnPlaneXy();
+	afx_msg void OnUpdatePlaneXy(CCmdUI *pCmdUI);
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

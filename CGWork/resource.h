@@ -117,13 +117,16 @@
 #define ID_LIGHT_MATERIAL               32847
 #define ID_SOLIDRENDERING_WIREFRAME     32848
 #define ID_SOLIDRENDERING_WIREFRAMTOFILE 32849
+#define ID_AXIS_XY                      32850
+#define ID_AXIS_XY32851                 32851
+#define ID_PLANE_XY                     32852
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        159
-#define _APS_NEXT_COMMAND_VALUE         32850
+#define _APS_NEXT_COMMAND_VALUE         32853
 #define _APS_NEXT_CONTROL_VALUE         1083
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

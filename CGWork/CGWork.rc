@@ -56,10 +56,9 @@ BEGIN
     BUTTON      ID_ACTION_SCALE
     SEPARATOR
     BUTTON      ID_AXIS_X
-    SEPARATOR
     BUTTON      ID_AXIS_Y
-    SEPARATOR
     BUTTON      ID_AXIS_Z
+    BUTTON      ID_PLANE_XY
     SEPARATOR
     BUTTON      ID_BOXFRAME
     BUTTON      ID_POLYNORMALS
@@ -127,6 +126,8 @@ BEGIN
         MENUITEM "&X",                          ID_AXIS_X
         MENUITEM "&Y",                          ID_AXIS_Y
         MENUITEM "&Z",                          ID_AXIS_Z
+        MENUITEM SEPARATOR
+        MENUITEM "XY Plane",                    ID_PLANE_XY
     END
     POPUP "Solid Rendering"
     BEGIN
