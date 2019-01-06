@@ -1219,12 +1219,13 @@ void CCGWorkView::OnWireframTofile()
 //DEBUG FUNCTIONS:
 void CCGWorkView::activeDebugFeatures1()
 {
-	resetButtons();
-	resetModel(scene.getMainModel());
-	for (std::pair<int, Model*> pair : scene.getAllModels()) {
-		resetModel(pair.second);
-	}
-	scene.setLightingMode(GOURAUD);
+	//resetButtons();
+	//resetModel(scene.getMainModel());
+	//for (std::pair<int, Model*> pair : scene.getAllModels()) {
+	//	resetModel(pair.second);
+	//}
+	scene.setLightingMode(PHONG);
+	//scene.enableBackfaceCulling();
 	::CGSkelFFCState.FineNess = 2;
 	m_lights[0].colorR = 255;
 	m_lights[0].colorG = 255;

@@ -20,6 +20,10 @@
 #define STANDARD_NORMAL_COLOR RGB(0,255,0)
 #define NUM_LIGHT_SOURCES 7
 
+using std::pair;
+using std::array;
+using std::vector;
+
 enum VNMode {
 	NONE, IMPORTED, CALCULATED
 };
@@ -52,8 +56,13 @@ class Renderer {
 	void drawImportedVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
 	COLORREF getLightingColor(Vec4 point, Vec4 normal, COLORREF originalClr, const std::array<LightParams, NUM_LIGHT_SOURCES> &lightSources, const LightParams& ambientLight, double* materialParams);
-	void drawFaceSolid(COLORREF* bitArr, CRect rect, Face* face, COLORREF lineClr, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
-
+	void drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face* face, COLORREF lineClr, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);	vector<pair<Vec4, Vec4>> getEdgesAsVectorVec4(const vector<Edge*> edges, const Mat4 finalMatrix);
+	vector<Vec4> getPolyAsVectorVec4(Face* face, const Mat4 finalMatrix);
+	void getPolyBoundaries(vector<Vec4>& poly, int* minX, int* minY, int* maxX, int* maxY);
+	vector<pair<Vec4, Vec4>> getEdgesNormals(const vector<Edge*> edges, const Mat4 objectWorldMatrix);
+	vector<pair<COLORREF, COLORREF>> getEdgesColors(const vector<Edge*>& edges, const Mat4& objectWorldMatrix, const vector<pair<Vec4, Vec4>>& polyEdgesNormals, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
+	COLORREF getColorGouraud(vector<pair<float, COLORREF>> intersectionPointsCLR, int x);
+	COLORREF getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM, int x, int y, int z, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
 public:
 	Renderer();
 	void drawBackgroundColor(COLORREF* bitArr, CRect rect);
