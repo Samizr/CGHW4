@@ -29,7 +29,7 @@ vector<pair<float, Vec4>> findIntersectionsNormal(int line, vector<pair<Vec4, Ve
 static COLORREF getInterpolatedColor(double a, COLORREF clr1, COLORREF clr2);
 static Vec4 getInterpolatedNormal(double a, Vec4 nrm1, Vec4 nrm2);
 static float getIntersectionPoint(Vec4 p1, Vec4 p2, float y);
-
+static Vec4 getTransformedImportedNormal(const Vec4& normal, const Mat4& transformation);
 
 
 static double distance(int x1, int y1, int x2, int y2);
@@ -97,8 +97,18 @@ void Renderer::drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model
 void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* model, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
 	Geometry* geometry = &model->getGeometry();
 	windowMatrix = generateViewportMatrix(rect);
+	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
 	for (Face* face : geometry->getFaces()) {
 		drawFaceSolid(bitArr, zBuffer, rect, face, geometry->getLineClr(), lightSources, ambientLight, materialParams);
+	}
+	if (withPolygonNormals) {
+		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+	}
+	if (vertexNormals == CALCULATED) {
+		drawCalculatedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+	}
+	if (vertexNormals == IMPORTED) {
+		drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 	}
 }
 
@@ -113,7 +123,7 @@ void Renderer::drawSolidBackfaceCulling(COLORREF * bitArr, CRect rect, Model * m
 }
 
 void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face* face, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
-	
+
 	//Prepare function parameters.
 	int minX = rect.Width(), minY = rect.Height(), maxX = 0, maxY = 0;
 	COLORREF clr;
@@ -130,7 +140,7 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 	// Go over all inside frame from above pixels, only work with ones inside projected polygon.
 	if (lightingMode == FLAT)
 		clr = getLightingColor(face->calculateMidpoint(), face->calculateNormal(objectWorldMatrix), originalClr, lightSources, ambientLight, materialParams);
-	
+
 	for (int i = minY; i < maxY; i++) {
 		intersectionPointsCLR = lightingMode == GOURAUD ? findIntersectionsColor(i, polyEdges, polyEdgesColors) : intersectionPointsCLR;
 		intersectionPointsNRM = lightingMode == PHONG ? findIntersectionsNormal(i, polyEdges, polyEdgesNormals) : intersectionPointsNRM;
@@ -298,6 +308,16 @@ vector<pair<float, Vec4>> findIntersectionsNormal(int line, vector<pair<Vec4, Ve
 
 float getIntersectionPoint(Vec4 p1, Vec4 p2, float y) {
 	return getIntersectionWithLine(p1, p2, 0, y).xCoord();
+}
+
+Vec4 getTransformedImportedNormal(const Vec4 & normal, const Mat4 & transformation)
+{
+	Mat4 noTranslate = transformation;
+	noTranslate[0][3] = 0;
+	noTranslate[1][3] = 0;
+	noTranslate[2][3] = 0;
+
+	return noTranslate * normal;
 }
 
 
@@ -773,11 +793,10 @@ void Renderer::drawCalculatedVertexNormals(COLORREF* bitArr, CRect rect, Geometr
 	}
 }
 
-void Renderer::drawImportedVertexNormals(COLORREF * bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix)
-{
+void Renderer::drawImportedVertexNormals(COLORREF * bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix) {
 	for (Vertex* vertex : geometry->getVertices()) {
 		Vec4 origin = transformationMatrix * Vec4(vertex->xCoord(), vertex->yCoord(), vertex->zCoord(), 1);
-		Vec4 target = transformationMatrix * (*vertex->getNormal());
+		Vec4 target = getTransformedImportedNormal(*vertex->getNormal(), objectWorldMatrix);
 		if (invertVertexNormals) {
 			target = target * (-1);
 			target[3] = (-1) * target[3];
@@ -947,22 +966,27 @@ COLORREF Renderer::getLightingColor(Vec4 point, Vec4 normal, COLORREF originalCl
 		if (!light.enabled) {
 			continue;
 		}
-		else if (light.type == LIGHT_TYPE_DIRECTIONAL) {
+		//Vec4 lightVec = Vec4(light.posX, light.posY, light.posZ, 0);
+		//lightVec = cameraMatrix * lightVec;
+		//point = cameraMatrix * point;
+		if (light.type == LIGHT_TYPE_DIRECTIONAL) {
 			lightVec = Vec4(light.dirX, light.dirY, light.dirZ, 0);
 		}
 		else if (light.type == LIGHT_TYPE_POINT) {
 			lightVec = Vec4(point.xCoord() - light.posX, point.yCoord() - light.posX, point.zCoord() - light.posZ, 0);
-			if (point.zCoord() < 0)
-				continue; //FORCEFUL, REMOVE LATER AND FIND A BETTER SOLUTION (TEST -1 and see what happens)
+			lightVec.normalize();
+			//if (point.zCoord() > 0)
+			//	continue; //FORCEFUL, REMOVE LATER AND FIND A BETTER SOLUTION (TEST -1 and see what happens)
 		}
 		//DIFFUSE LIGHT:
-		float cos_diffuse = abs(lightVec.cosineAngle(normal));
-		R += diffuseFraction * cos_diffuse * origR * light.colorR / 255;
-		G += diffuseFraction * cos_diffuse * origG * light.colorG / 255;
-		B += diffuseFraction * cos_diffuse * origB * light.colorB / 255;
+		float cos_diffuse = lightVec.cosineAngle(normal);
+		if (cos_diffuse > 0) {
+			R += diffuseFraction * cos_diffuse * origR * light.colorR / 255;
+			G += diffuseFraction * cos_diffuse * origG * light.colorG / 255;
+			B += diffuseFraction * cos_diffuse * origB * light.colorB / 255;
+		}
 		//SPECULAR LIGHT:
-		Vec4 viewerVec(0, 0, -cameraMatrix[2][3], 0); //FIX THIS!
-		//Vec4 viewerVec(0, 0, -cameraMatrix[, 0); //FIX THIS!
+		Vec4 viewerVec(0, 0, cameraMatrix[2][3], 0); //FIX THIS!
 		Vec4 specularVec = normal * 2 * (lightVec ^ normal) - lightVec;
 		//Vec4 viewerVec = cameraMatrix.getInverse() * (-1) * Vec4(1, 1, 1, 1);
 		float cos_specular = specularVec.cosineAngle(viewerVec);
@@ -1023,8 +1047,8 @@ vector<pair<Vec4, Vec4>> Renderer::getEdgesNormals(const vector<Edge*> edges, co
 			j = i - 1;
 			k = 0;
 		}
-		Vec4 normalA = objectWorldMatrix * (*(edges[k]->getA()->getNormal()));
-		Vec4 normalB = objectWorldMatrix * (*(edges[j]->getB()->getNormal()));
+		Vec4 normalA = getTransformedImportedNormal(*(edges[k]->getA()->getNormal()), objectWorldMatrix);
+		Vec4 normalB = getTransformedImportedNormal(*(edges[j]->getB()->getNormal()), objectWorldMatrix);
 		pair<Vec4, Vec4> outNormals;
 		outNormals.first = normalA;
 		outNormals.second = normalB;

@@ -63,6 +63,7 @@ class Renderer {
 	vector<pair<COLORREF, COLORREF>> getEdgesColors(const vector<Edge*>& edges, const Mat4& objectWorldMatrix, const vector<pair<Vec4, Vec4>>& polyEdgesNormals, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
 	COLORREF getColorGouraud(vector<pair<float, COLORREF>> intersectionPointsCLR, int x);
 	COLORREF getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM, int x, int y, int z, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
+
 public:
 	Renderer();
 	void drawBackgroundColor(COLORREF* bitArr, CRect rect);

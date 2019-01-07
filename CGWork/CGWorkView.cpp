@@ -275,6 +275,7 @@ BOOL CCGWorkView::InitializeCGWork()
 	scene.setLightCosineComponent(m_nMaterialCosineFactor);	
 	scene.setBackgroundColor(m_clrBackground);
 	scene.draw(bitArray ,r);
+	activeDebugFeatures1();
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
@@ -1235,15 +1236,18 @@ void CCGWorkView::activeDebugFeatures1()
 	//for (std::pair<int, Model*> pair : scene.getAllModels()) {
 	//	resetModel(pair.second);
 	//}
-	scene.setLightingMode(PHONG);
+	scene.setLightingMode(FLAT);
 	//scene.enableBackfaceCulling();
-	::CGSkelFFCState.FineNess = 2;
+	::CGSkelFFCState.FineNess = 20;
 	m_lights[0].colorR = 255;
 	m_lights[0].colorG = 255;
 	m_lights[0].colorB = 255;
+	m_lights[0].posX = 10;
+	m_lights[0].posY = 0;
+	m_lights[0].posZ = 0;
 	m_lights[0].dirX = 0;
 	m_lights[0].dirY = 0;
-	m_lights[0].dirZ = 2;
+	m_lights[0].dirZ = -2;
 	m_lights[0].enabled = true;
 	m_lights[0].type = LIGHT_TYPE_DIRECTIONAL;
 	scene.setLightSource(m_lights[0], 0);
