@@ -275,7 +275,7 @@ BOOL CCGWorkView::InitializeCGWork()
 	scene.setLightCosineComponent(m_nMaterialCosineFactor);	
 	scene.setBackgroundColor(m_clrBackground);
 	scene.draw(bitArray ,r);
-	activeDebugFeatures1();
+	//activeDebugFeatures1();
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
@@ -377,6 +377,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 static void writeColorRefArrayToPng(COLORREF* bitArr, const char* name, CRect rect) {
 	PngWrapper pngWrapper(name, rect.Width(), rect.Height());
 	pngWrapper.InitWritePng();
+	invertRBArray(bitArr, rect);
 	for (int i = 0; i < rect.Height(); i++) {
 		for (int j = 0; j < rect.Width(); j++) {
 			int red = GetRValue(bitArr[j + rect.Width() * ((rect.Height() - 1) - i)]);
@@ -386,6 +387,8 @@ static void writeColorRefArrayToPng(COLORREF* bitArr, const char* name, CRect re
 		}
 	}
 	pngWrapper.WritePng();
+	invertRBArray(bitArr, rect);
+
 }
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView CGWork Finishing and clearing...
