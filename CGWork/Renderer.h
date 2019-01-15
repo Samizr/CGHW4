@@ -48,8 +48,8 @@ class Renderer {
 	COLORREF backgroundClr;
 	COLORREF silhouetteClr;
 	LightMode lightingMode;
-
-
+	float* filters3[4];
+	float* filters5[4];
 	void drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 finalMatrix);
 	void drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawCalculatedVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
@@ -68,9 +68,10 @@ public:
 	Renderer();
 	void drawBackgroundColor(COLORREF* bitArr, CRect rect);
 	void drawWireframe(COLORREF* bitArr, CRect rect, Model* model);
+	void drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model);
 	void drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* model, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
 	void drawSolidBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
-	void drawWireframeZBufferDepth(COLORREF* bitArr, CRect rect, Model* model, COLORREF background);
+	void interpolateFrames(COLORREF *lastFrame, COLORREF *currentFrame, CRect rect, float tValue);
 	void drawSilhouette(COLORREF * bitArr, CRect rect, Geometry * geometry);
 	void setObjectWorldMatrix(Mat4& matrix);
 	void setCameraMatrix(Mat4& matrix);
@@ -94,6 +95,8 @@ public:
 	void drawBounding(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr);
 	void drawBackgoundImageStretch(COLORREF* bitArr, CRect rect, PngWrapper* png);
 	void drawBackgoundImageRepeat(COLORREF* bitArr, CRect rect, PngWrapper* png);
-	void drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model);
+	void superSampleImage(COLORREF* superSampledImage, COLORREF* finalImage, CRect SSRect, CRect finalRect, int filterSize, int filter);
+private: 
+	void initializeFilters();
 };
 #endif /* Renderer_h */

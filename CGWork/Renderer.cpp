@@ -50,6 +50,7 @@ Renderer::Renderer() {
 	lightingMode = FLAT;
 	normalClr = STANDARD_NORMAL_COLOR;
 	silhouetteClr = STANDARD_NORMAL_COLOR;
+	initializeFilters();
 }
 
 // TODO SWITCH BACK NAMES WITH DRAWWIREFRAME
@@ -122,11 +123,38 @@ void Renderer::drawSolidBackfaceCulling(COLORREF * bitArr, CRect rect, Model * m
 	}
 }
 
+void Renderer::interpolateFrames(COLORREF *lastFrame, COLORREF *currentFrame, CRect rect, float tValue) {
+	if (lastFrame == nullptr || currentFrame == nullptr) {
+		return;
+	}
+	if (tValue > 1 || tValue < 0) {
+		throw std::exception("Invalid T Value.");
+	}
+	for (int i = 0; i < rect.Height(); i++) {
+		for (int j = 0; j < rect.Width(); j++) {
+			int currR = GetRValue(currentFrame[i * rect.Width() + j]);
+			int currG = GetGValue(currentFrame[i * rect.Width() + j]);
+			int currB = GetBValue(currentFrame[i * rect.Width() + j]);
+			int lastR = GetRValue(lastFrame[i * rect.Width() + j]);
+			int lastG = GetGValue(lastFrame[i * rect.Width() + j]);
+			int lastB = GetBValue(lastFrame[i * rect.Width() + j]);
+			if (currR > 5) {
+				int hi = 0;
+				hi++;
+			}
+			currR = tValue * lastR + (1 - tValue) * currR;
+			currG = tValue * lastG + (1 - tValue) * currG;
+			currB = tValue * lastB + (1 - tValue) * currB;
+			currentFrame[i * rect.Width() + j] = RGB(currR, currG, currB);
+		}
+	}
+}
+
 void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face* face, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
 
 	//Prepare function parameters.
 	int minX = rect.Width(), minY = rect.Height(), maxX = 0, maxY = 0;
-	COLORREF clr;
+	COLORREF clr = originalClr;
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 	vector<Edge*> edges = face->getEdges();
 	vector<Vec4> poly = getPolyAsVectorVec4(face, finalMatrix);
@@ -263,7 +291,6 @@ vector<pair<float, COLORREF>> findIntersectionsColor(int line, vector<pair<Vec4,
 		newOut.push_back(*highest);
 		return newOut;
 	}
-	//ASSERT(out.size() < 3);
 	ASSERT(out.size() != 1);
 	return out;
 }
@@ -573,38 +600,6 @@ float distanceBetweenPoints(float x1, float y1, float x2, float y2) {
 	return sqrt(pow(deltaY, 2) + pow(deltaX, 2));
 }
 
-
-void Renderer::drawWireframeZBufferDepth(COLORREF* bitArr, CRect rect, Model* model, COLORREF backgroundClr) {
-	Geometry* geometry = &model->getGeometry();
-	windowMatrix = generateViewportMatrix(rect);
-	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
-	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
-	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
-	float* zBuffer = createZBuffer(rect);
-	fillZBuffer(rect, zBuffer, model, finalMatrix);
-	for (Face* face : geometry->getFaces()) {
-		float* depth = calulateDepthOfPixels(face, finalMatrix, rect);
-		for (Edge *edge : face->getEdges()) {
-			Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
-			Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
-
-			Vec4 afterCameraP1 = afterCamera * p1;
-			Vec4 afterCameraP2 = afterCamera * p2;
-			if (afterCameraP2.zCoord() > 0 || afterCameraP1.zCoord() > 0) {
-				return;
-			}
-			p1 = finalMatrix * p1;
-			p2 = finalMatrix * p2;
-			int p1x = p1.xCoord() / p1.wCoord();
-			int p2x = p2.xCoord() / p2.wCoord();
-			int p1y = p1.yCoord() / p1.wCoord();
-			int p2y = p2.yCoord() / p2.wCoord();
-			plotLineWithDepth(p1x, p1y, p2x, p2y, zBuffer, depth, bitArr, rect, rect.Width(), geometry->getLineClr());
-		}
-		free(depth);
-	}
-}
-
 static void drawEdge(COLORREF* bitArr, CRect rect, Edge* edge, Mat4 finalMatrix, Mat4 afterCamera, COLORREF lineclr, int windowWidth) {
 	Vec4 p1(edge->getA()->xCoord(), edge->getA()->yCoord(), edge->getA()->zCoord(), 1);
 	Vec4 p2(edge->getB()->xCoord(), edge->getB()->yCoord(), edge->getB()->zCoord(), 1);
@@ -663,6 +658,55 @@ void Renderer::drawBackgoundImageRepeat(COLORREF * bitArr, CRect rect, PngWrappe
 			bitArr[j + screenWidth * ((screenHeight - 1) - i)] = color;
 		}
 	}
+}
+
+void Renderer::superSampleImage(COLORREF * superSampledImage, COLORREF * finalImage, CRect SSRect, CRect finalRect, int filterSize, int filterID) {
+	// we assume image already is rendered in high resolution (SSRect dimensions);
+	// we now have to go over the high res image and super sample it with the given filter
+	if (filterSize != 3 && filterSize != 5 || filterID < 0 || filterID > 3) {
+		throw std::exception("superSampleSizeNotSupported");
+	}
+	float* filter = (filterSize == 3) ? filters3[filterID] : filters5[filterID];
+	float filterSum = 0;
+	for (int i = 0; i < filterSize * filterSize; i++) {
+		filterSum += filter[i];
+	}
+	// go over the super sampled image by [filterSize x filterSize] squares. 
+	for (int i = 0; i < SSRect.Height(); i += filterSize) {
+		for (int j = 0; j < SSRect.Width(); j += filterSize) {
+			int R = 0, G = 0, B = 0;
+			for (int filterI = 0; filterI < filterSize; filterI++) {
+				for (int filterJ = 0; filterJ < filterSize; filterJ++) {
+					R += (1.0 / filterSum) * GetRValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filter[filterI * filterSize + filterJ];
+					G += (1.0 / filterSum) * GetGValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filter[filterI * filterSize + filterJ];
+					B += (1.0 / filterSum) * GetBValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filter[filterI * filterSize + filterJ];
+				}
+			}
+			R = R > 255 ? 255 : R;
+			G = G > 255 ? 255 : G;
+			B = B > 255 ? 255 : B;
+			R = R < 0 ? 0 : R;
+			G = G < 0 ? 0 : G;
+			B = B < 0 ? 0 : B;
+			finalImage[(i / filterSize) * finalRect.Width() + (j / filterSize)] = RGB(R, G, B);
+		}
+	}
+}
+
+void Renderer::initializeFilters() {
+	// 0 is box filter;
+	// 1 is triangle filter;
+	// 2 is gaussian filter;
+	// 3 is sinc filter;
+	filters3[0] = new float[9]{ 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+	filters3[1] = new float[9]{ 1, 2, 1, 2, 4, 2, 1, 2, 1 };
+	filters3[2] = new float[9]{ 1, 2, 1, 2, 5, 2, 1, 2, 1 };
+	filters3[3] = new float[9]{ 2, 3, 2, 3, 4, 3, 2, 3, 2 };
+	//--------------------------------------------------------
+	filters5[0] = new float[25]{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+	filters5[1] = new float[25]{ 1, 2, 3, 2, 1, 2, 4, 6, 4, 2, 3, 6, 9, 6, 3, 2, 4, 6, 4, 2, 1, 2, 3, 2, 1 };
+	filters5[2] = new float[25]{ 1, 1, 1, 1, 1, 1, 2, 4, 2, 1, 1, 4, 10, 4, 1, 1, 2, 4, 2, 1, 1, 1, 1, 1, 1 };
+	filters5[3] = new float[25]{ -2, -1, 0, -1, -2, -1, 4, 6, 4, -1, 0, 6, 9, 6, 0, -1, 4, 6, 4, -1, -2, -1, 0, -1, -2 };
 }
 
 static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png) {

@@ -212,6 +212,7 @@
     <ClCompile Include="Mat4.cpp" />
     <ClCompile Include="MaterialDlg.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="MotionBlurDialog.cpp" />
     <ClCompile Include="MouseSensitivityDialog.cpp" />
     <ClCompile Include="PerspectiveParametersDialog.cpp" />
     <ClCompile Include="PngWrapper.cpp" />
@@ -230,6 +231,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</BrowseInformation>
     </ClCompile>
+    <ClCompile Include="SuperSamplingAADialog.cpp" />
     <ClCompile Include="Vec4.cpp" />
     <ClCompile Include="Vertex.cpp" />
   </ItemGroup>
@@ -255,6 +257,7 @@
     <ClInclude Include="MaterialDlg.h" />
     <ClInclude Include="MatrixInverse.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="MotionBlurDialog.h" />
     <ClInclude Include="MouseSensitivityDialog.h" />
     <ClInclude Include="PerspectiveParametersDialog.h" />
     <ClInclude Include="PngWrapper.h" />
@@ -287,6 +290,7 @@
     <ClInclude Include="..\include\triv_lib.h" />
     <ClInclude Include="..\include\trng_lib.h" />
     <ClInclude Include="..\include\user_lib.h" />
+    <ClInclude Include="SuperSamplingAADialog.h" />
     <ClInclude Include="Vec4.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>

@@ -109,6 +109,8 @@ BEGIN
         MENUITEM "Backface Culling",            ID_VIEW_BACKFACECULLING
         MENUITEM "Silhouette",                  ID_VIEW_SILHOUETTE
         MENUITEM SEPARATOR
+        MENUITEM "Motion Blur",                 ID_VIEW_MOTIONBLUR
+        MENUITEM SEPARATOR
         MENUITEM "Advanced Settings",           ID_VIEW_OBJECTSELECTION
         MENUITEM "Reset View",                  ID_VIEW_RESETVIEW
     END
@@ -135,6 +137,7 @@ BEGIN
         MENUITEM "Wirefram to file...",         ID_SOLIDRENDERING_WIREFRAMTOFILE
         MENUITEM "Solid Rendering",             ID_SOLIDRENDERING_TOSCREEN
         MENUITEM "Solid Rendering to file...",  ID_SOLIDRENDERING_TOFILE
+        MENUITEM "Super Sampling Anti-Aliasing", ID_SOLIDRENDERING_SUPERSAMPLINGANTI
     END
     POPUP "&Options"
     BEGIN
@@ -342,6 +345,37 @@ BEGIN
     GROUPBOX        "File Dimensions",IDC_STATIC,29,18,151,56
 END
 
+IDD_SUPER_SAMPLING DIALOGEX 0, 0, 309, 176
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,198,155,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,252,155,50,14
+    GROUPBOX        "Filter Size",IDC_FilterSize,32,35,60,84
+    CONTROL         "3x3 Filter",IDC_filter3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,42,63,46,10
+    CONTROL         "5x5 Filter",IDC_filter5,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,42,88,46,10
+    GROUPBOX        "Filter Type",IDC_STATIC,119,35,149,85
+    CONTROL         "Box Filter",IDC_boxFilter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,52,46,10
+    CONTROL         "Triangle Filter",IDC_triangleFilter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,67,59,10
+    CONTROL         "Gaussian Filter",IDC_gaussianFilter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,82,63,10
+    CONTROL         "Sinc Filter",IDC_sincFilter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,97,47,10
+END
+
+IDD_MOTION_BLUR_DLG DIALOGEX 0, 0, 179, 136
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Motion Blur Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,73,115,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,122,115,50,14
+    CONTROL         "Enable",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,21,61,37,10
+    GROUPBOX        "Activation",IDC_STATIC,15,32,52,62
+    GROUPBOX        "Parameters",IDC_STATIC,79,32,84,62
+    EDITTEXT        IDC_EDIT1,113,59,40,14,ES_AUTOHSCROLL
+    LTEXT           "T Value",IDC_STATIC,83,61,24,8
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -444,6 +478,22 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 97
     END
+
+    IDD_SUPER_SAMPLING, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 302
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 169
+    END
+
+    IDD_MOTION_BLUR_DLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 172
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 129
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -500,6 +550,16 @@ BEGIN
 END
 
 IDD_FILE_RENDERING AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SUPER_SAMPLING AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_MOTION_BLUR_DLG AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

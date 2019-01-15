@@ -66,7 +66,12 @@ private:
 	COLORREF m_clrBackground;		//Current background color
 	CString m_strItdFileName;		// file name of IRIT data
 	const char* pngSavePath;
-
+	bool superSampling3;
+	bool superSampling5;
+	int superSamplingFilter;
+	bool m_bWithMotionBlur;
+	float m_fMotionBlurTValue;
+	COLORREF* lastFrame;
 
 	//Scene, cameras, models and related objects:
 	Scene scene;
@@ -228,6 +233,8 @@ public:
 	afx_msg void OnWireframTofile();
 	afx_msg void OnPlaneXy();
 	afx_msg void OnUpdatePlaneXy(CCmdUI *pCmdUI);
+	afx_msg void OnSolidrenderingSupersamplinganti();
+	afx_msg void OnViewMotionblur();
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

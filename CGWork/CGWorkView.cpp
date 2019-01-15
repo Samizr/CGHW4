@@ -25,6 +25,8 @@ static char THIS_FILE[] = __FILE__;
 #include "PerspectiveParametersDialog.h"
 #include "AdvancedDialog.h"
 #include "FileRenderingDialog.h"
+#include "SuperSamplingAADialog.h"
+#include "MotionBlurDialog.h"
 
 // For Status Bar access
 #include "MainFrm.h"
@@ -135,6 +137,8 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_COMMAND(ID_SOLIDRENDERING_WIREFRAMTOFILE, &CCGWorkView::OnWireframTofile)
 	ON_COMMAND(ID_PLANE_XY, &CCGWorkView::OnPlaneXy)
 	ON_UPDATE_COMMAND_UI(ID_PLANE_XY, &CCGWorkView::OnUpdatePlaneXy)
+	ON_COMMAND(ID_SOLIDRENDERING_SUPERSAMPLINGANTI, &CCGWorkView::OnSolidrenderingSupersamplinganti)
+	ON_COMMAND(ID_VIEW_MOTIONBLUR, &CCGWorkView::OnViewMotionblur)
 END_MESSAGE_MAP()
 
 
@@ -194,7 +198,15 @@ CCGWorkView::CCGWorkView(){
 	m_pDbBitMap = NULL;
 	m_pDbDC = NULL;
 
+	//init the supersampling stuff
+	superSampling3 = false;
+	superSampling5 = false;
+	superSamplingFilter = -1;
 
+	//motion blur init 
+	m_bWithMotionBlur = false;
+	m_fMotionBlurTValue = 0.25;
+	lastFrame = nullptr;
 }
 
 CCGWorkView::~CCGWorkView()
@@ -342,34 +354,58 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	ASSERT_VALID(pDoc);
 	if (!pDoc)
 		return;
-	CRect r;
-
-	GetClientRect(&r);
+	CRect renderRect, drawRect;
+	GetClientRect(&renderRect);
+	GetClientRect(&drawRect);
 	if (!m_bRenderToScreen) {
-		r = outputRect;
+		renderRect = outputRect;
+		drawRect = outputRect;
+	}
+	if (superSampling3) {
+		renderRect.left = 0;
+		renderRect.top = 0;
+		renderRect.right = 3 * renderRect.right;
+		renderRect.bottom = 3 * renderRect.bottom;
+	}
+	else if (superSampling5) {
+		renderRect.left = 0;
+		renderRect.top = 0;
+		renderRect.right = 5 * renderRect.right;
+		renderRect.bottom = 5 * renderRect.bottom;
 	}
 	CDC *pDCToUse = m_pDbDC;
-	int h = r.bottom - r.top;
-	int w = r.right - r.left;
-	initializeBMI(bminfo, r);
-
+	int renderH = renderRect.bottom - renderRect.top;
+	int renderW = renderRect.right - renderRect.left;
+	int drawH = drawRect.bottom - drawRect.top;
+	int drawW = drawRect.right - drawRect.left;
+	initializeBMI(bminfo, drawRect);
 	if (bitArray != nullptr) {
-		delete bitArray;
+		if (m_bWithMotionBlur) {
+			free(lastFrame);
+			lastFrame = bitArray;
+		}
+		else {
+			delete bitArray;
+		}
 	}
-	bitArray = new COLORREF[h * w];
-	
-	//DEBUGGING AUTO INITIATOR
-	//activeDebugFeatures1();
-
-	scene.draw(bitArray, r);
-	invertRBArray(bitArray, r);	//SIGNIFICANT PERFORMANCE SLOWDOWN!
-	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, h, bitArray, &bminfo, 0);
-
+	bitArray = new COLORREF[renderH * renderW];
+	scene.draw(bitArray, renderRect);
+	if (superSampling5 || superSampling3) {
+		int filterSize = superSampling3 ? 3 : 5;
+		COLORREF* superSampled = bitArray;
+		bitArray = new COLORREF[drawH * drawW];
+		scene.getRenderer().superSampleImage(superSampled, bitArray, renderRect, drawRect, filterSize, superSamplingFilter);
+	}
+	invertRBArray(bitArray, drawRect);
+	if (m_bWithMotionBlur) {
+		scene.getRenderer().interpolateFrames(lastFrame, bitArray, drawRect, m_fMotionBlurTValue);
+	}
+	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, drawH, bitArray, &bminfo, 0);
 	if (m_bRenderToScreen && pDCToUse != m_pDC) {
-		m_pDC->BitBlt(r.left, r.top, r.right, r.bottom, pDCToUse, r.left, r.top, SRCCOPY);
+		m_pDC->BitBlt(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom, pDCToUse, drawRect.left, drawRect.top, SRCCOPY);
 	}
 	else {
-		writeColorRefArrayToPng(bitArray, pngSavePath, r);
+		writeColorRefArrayToPng(bitArray, pngSavePath, drawRect);
 		m_bRenderToScreen = true;
 	}
 }
@@ -1259,3 +1295,40 @@ void CCGWorkView::activeDebugFeatures1()
 
 
 
+
+
+void CCGWorkView::OnSolidrenderingSupersamplinganti()
+{
+	SuperSamplingAADialog dlg;
+	dlg.isFilter3 = superSampling3;
+	dlg.isFilter5 = superSampling5;
+	for (int i = 0; i < 4; i++) {
+		if (i == superSamplingFilter) {
+			dlg.filterType[i] = TRUE;
+		}
+		else {
+			dlg.filterType[i] = FALSE;
+		}	 
+	}
+	if (dlg.DoModal() == IDOK) {
+		superSampling3 = dlg.isFilter3;
+		superSampling5 = dlg.isFilter5;
+		for (int i = 0; i < 4; i++) {
+			if (dlg.filterType[i]) {
+				superSamplingFilter = i;
+			}
+		}
+		Invalidate();
+	}
+}
+
+
+void CCGWorkView::OnViewMotionblur() {
+	MotionBlurDialog dlg;
+	dlg.motionBlurActive = m_bWithMotionBlur;
+	dlg.motionBlurTValue = m_fMotionBlurTValue;
+	if (dlg.DoModal() == IDOK) {
+		m_bWithMotionBlur = dlg.motionBlurActive;
+		m_fMotionBlurTValue = dlg.motionBlurTValue;
+	}
+}
