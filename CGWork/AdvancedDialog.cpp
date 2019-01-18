@@ -19,6 +19,7 @@ AdvancedDialog::AdvancedDialog(CWnd* pParent /*=nullptr*/)
 	, invertVertexNormals(FALSE)
 	, invertPolygonNormals(FALSE)
 	, importNormals(FALSE)
+	, modelId(0)
 {
 
 }
@@ -32,10 +33,12 @@ void AdvancedDialog::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Check(pDX, IDC_SUBCHECK, subChecked);
 	DDX_Text(pDX, IDC_SUBOBJECT_NUMBER, subobjectID);
-	//DDV_MinMaxInt(pDX, subobjectID, 0, maxSubobject);
 	DDX_Check(pDX, IDC_INVERT_VERTEX_NORMALS, invertVertexNormals);
 	DDX_Check(pDX, IDC_INVERT_POLYGON_NORMALS, invertPolygonNormals);
 	DDX_Check(pDX, IDC_IMPORTNORMALS, importNormals);
+	DDX_Text(pDX, IDC_MODEL_NUMBER, modelId);
+	DDV_MinMaxInt(pDX, subobjectID, 0, maxSubobject);
+	DDV_MinMaxInt(pDX, modelId, 0, maxObject);
 }
 
 

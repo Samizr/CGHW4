@@ -52,6 +52,7 @@ private:
 	bool m_bCalculateVertexNormals;
 	bool m_bBackfaceCullingActive;
 	bool m_bWithSilhouette;
+	bool m_bWithFog;
 	bool m_bRepeatMode;					//Strech or Repeat mode for background
 	float m_nTranslationSensetivity;   //Mouse sensetivity for translation
 	float m_nRotationSensetivity;		//Mouse sensetivity for rotation
@@ -66,9 +67,9 @@ private:
 	COLORREF m_clrBackground;		//Current background color
 	CString m_strItdFileName;		// file name of IRIT data
 	const char* pngSavePath;
-	bool superSampling3;
-	bool superSampling5;
-	int superSamplingFilter;
+	bool m_bSuperSampling3;
+	bool m_bSuperSampling5;
+	int m_nSuperSamplingFilter;
 	bool m_bWithMotionBlur;
 	float m_fMotionBlurTValue;
 	COLORREF* lastFrame;
@@ -102,7 +103,7 @@ private:
 	int m_nLightShading;			// shading: Flat, Gouraud.
 	LightParams m_lights[MAX_LIGHT];	//configurable lights array
 	LightParams m_ambientLight;		//ambient light (only RGB is used)
-
+	FogParams m_fog;
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -168,13 +169,11 @@ protected:
 	afx_msg void OnActionScale();
 	afx_msg void OnActionViewSpace();
 	afx_msg void OnActionObjectSpace();
-	afx_msg void OnViewSplitscreen();
 	afx_msg void OnUpdateActionTranslate(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateActionRotate(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateActionScale(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateActionViewSpace(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateActionObjectSpace(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateViewSplitscreen(CCmdUI *pCmdUI);
 
 	//TOOLBAR - Axis Functions 
 	afx_msg void OnAxisX();
@@ -205,6 +204,8 @@ protected:
 
 	//DEBUG FUNCTIONS!
 	afx_msg void activeDebugFeatures1();
+	afx_msg void activeDebugFeatures2();
+	afx_msg void activeDebugFeatures3();
 
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
@@ -233,6 +234,7 @@ public:
 	afx_msg void OnWireframTofile();
 	afx_msg void OnPlaneXy();
 	afx_msg void OnUpdatePlaneXy(CCmdUI *pCmdUI);
+	afx_msg void OnFogEffects();
 	afx_msg void OnSolidrenderingSupersamplinganti();
 	afx_msg void OnViewMotionblur();
 };

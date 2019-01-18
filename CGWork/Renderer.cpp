@@ -56,29 +56,30 @@ Renderer::Renderer() {
 // TODO SWITCH BACK NAMES WITH DRAWWIREFRAME
 void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 
-	Geometry* geometry = &model->getGeometry();
-
-	windowMatrix = generateViewportMatrix(rect);
-	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
-	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
-	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
-	for (Edge* edge : geometry->getEdges()) {
-		drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, geometry->getLineClr(), rect.Width());
+	for (int i = 0; i < model->getSubGeometriesNum(); i++) {
+		Geometry* geometry = &model->getSubGeometry(i);
+		objectWorldMatrix = model->getSubGeometryTransformationMatrix(i) * model->getTransformationMatrix();
+		windowMatrix = generateViewportMatrix(rect);
+		Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+		Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
+		Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
+		for (Edge* edge : geometry->getEdges()) {
+			drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, geometry->getLineClr(), rect.Width());
+		}
+		if (withPolygonNormals) {
+			drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		}
+		if (vertexNormals == CALCULATED) {
+			drawCalculatedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		}
+		if (vertexNormals == IMPORTED) {
+			drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		}
 	}
-	if (withPolygonNormals) {
-		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
-	}
-	if (vertexNormals == CALCULATED) {
-		drawCalculatedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
-	}
-	if (vertexNormals == IMPORTED) {
-		drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
-	}
-	//	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
 }
 
 void Renderer::drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model) {
-	Geometry* geometry = &model->getGeometry();
+	Geometry* geometry = &model->getMainGeometry();
 	windowMatrix = generateViewportMatrix(rect);
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
@@ -95,26 +96,30 @@ void Renderer::drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model
 	}
 }
 
+
 void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* model, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
-	Geometry* geometry = &model->getGeometry();
-	windowMatrix = generateViewportMatrix(rect);
-	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
-	for (Face* face : geometry->getFaces()) {
-		drawFaceSolid(bitArr, zBuffer, rect, face, geometry->getLineClr(), lightSources, ambientLight, materialParams);
-	}
-	if (withPolygonNormals) {
-		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
-	}
-	if (vertexNormals == CALCULATED) {
-		drawCalculatedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
-	}
-	if (vertexNormals == IMPORTED) {
-		drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+	for (int i = 0; i < model->getSubGeometriesNum(); i++) {
+		Geometry* geometry = &model->getSubGeometry(i);
+		objectWorldMatrix = model->getSubGeometryTransformationMatrix(i) * model->getTransformationMatrix();
+		windowMatrix = generateViewportMatrix(rect);
+		Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
+		for (Face* face : geometry->getFaces()) {
+			drawFaceSolid(bitArr, zBuffer, rect, face, geometry->getLineClr(), lightSources, ambientLight, materialParams);
+		}
+		if (withPolygonNormals) {
+			drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		}
+		if (vertexNormals == CALCULATED) {
+			drawCalculatedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		}
+		if (vertexNormals == IMPORTED) {
+			drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		}
 	}
 }
 
 void Renderer::drawSolidBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
-	Geometry* geometry = &model->getGeometry();
+	Geometry* geometry = &model->getMainGeometry();
 	windowMatrix = generateViewportMatrix(rect);
 	for (Face* face : geometry->getFaces()) {
 		if (face->calculateNormal(objectWorldMatrix)[2] > 0) {
@@ -167,7 +172,7 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 
 	// Go over all inside frame from above pixels, only work with ones inside projected polygon.
 	if (lightingMode == FLAT)
-		clr = getLightingColor(face->calculateMidpoint(), face->calculateNormal(objectWorldMatrix), originalClr, lightSources, ambientLight, materialParams);
+		clr = getColor(face->calculateMidpoint(), face->calculateNormal(objectWorldMatrix), originalClr, lightSources, ambientLight, materialParams);
 
 	for (int i = minY; i < maxY; i++) {
 		intersectionPointsCLR = lightingMode == GOURAUD ? findIntersectionsColor(i, polyEdges, polyEdgesColors) : intersectionPointsCLR;
@@ -179,6 +184,7 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 					continue;
 				clr = lightingMode == GOURAUD ? getColorGouraud(intersectionPointsCLR, j) : clr;
 				clr = lightingMode == PHONG ? getColorPhong(intersectionPointsNRM, j, i, currentDepth, originalClr, lightSources, ambientLight, materialParams) : clr;
+				clr = fog.active ? getColorFog(clr, currentDepth) : clr;
 				bitArr[i * rect.Width() + j] = clr;
 				if (zBuffer)
 					zBuffer[i * rect.Width() + j] = currentDepth;
@@ -208,9 +214,25 @@ COLORREF Renderer::getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM
 	double percentage = lineDist == 0 ? 1 : pointDist / lineDist;
 	percentage = percentage > 1 ? 1 : percentage;
 	Vec4 normal = getInterpolatedNormal(percentage, intersectionPointsNRM[maxId].second, intersectionPointsNRM[minId].second);
-	return getLightingColor(objectSpacePoint, normal, originalClr, lightSources, ambientLight, materialParams);
+	return getColor(objectSpacePoint, normal, originalClr, lightSources, ambientLight, materialParams);
 }
 
+COLORREF Renderer::getColorFog(COLORREF originalClr, float depth)
+{
+	float deltaPos = fog.z_far - abs(depth);
+	float deltaMax = fog.z_far - fog.z_near;
+	float ratio = deltaPos / deltaMax;
+	if (ratio > 1) {
+		return originalClr;
+	}
+	else if (ratio < 0) {
+		return fog.color;
+	}
+	int R = ratio * GetRValue(originalClr) + (1 - ratio) * GetRValue(fog.color);
+	int G = ratio * GetGValue(originalClr) + (1 - ratio) * GetGValue(fog.color);
+	int B = ratio * GetBValue(originalClr) + (1 - ratio) * GetBValue(fog.color);
+	return RGB(R, G, B);
+}
 
 
 float* createZBuffer(CRect rect) {
@@ -224,7 +246,7 @@ float* createZBuffer(CRect rect) {
 }
 
 void fillZBuffer(CRect rect, float* zBuffer, Model* model, Mat4 finalMatrix) {
-	Geometry* geometry = &model->getGeometry();
+	Geometry* geometry = &model->getMainGeometry();
 	for (Face* face : geometry->getFaces()) {
 		int minX = rect.Width();
 		int minY = rect.Height();
@@ -945,6 +967,11 @@ void Renderer::setLightingMode(LightMode mode)
 	lightingMode = mode;
 }
 
+void Renderer::setFogParams(FogParams fog)
+{
+	this->fog = fog;
+}
+
 void Renderer::disableBoundingBox() {
 	withBounding = false;
 }
@@ -990,7 +1017,7 @@ void Renderer::setVertexNormalMode(VNMode mode)
 	vertexNormals = mode;
 }
 
-COLORREF Renderer::getLightingColor(Vec4 point, Vec4 normal, COLORREF originalClr, const std::array<LightParams, NUM_LIGHT_SOURCES> &lightSources, const LightParams& ambientLight, double* materialParams)
+COLORREF Renderer::getColor(Vec4 point, Vec4 normal, COLORREF originalClr, const std::array<LightParams, NUM_LIGHT_SOURCES> &lightSources, const LightParams& ambientLight, double* materialParams)
 {
 	int origR = GetRValue(originalClr);
 	int origG = GetGValue(originalClr);
@@ -1019,8 +1046,6 @@ COLORREF Renderer::getLightingColor(Vec4 point, Vec4 normal, COLORREF originalCl
 		else if (light.type == LIGHT_TYPE_POINT) {
 			lightVec = Vec4(point.xCoord() - light.posX, point.yCoord() - light.posX, point.zCoord() - light.posZ, 0);
 			lightVec.normalize();
-			//if (point.zCoord() > 0)
-			//	continue; //FORCEFUL, REMOVE LATER AND FIND A BETTER SOLUTION (TEST -1 and see what happens)
 		}
 		//DIFFUSE LIGHT:
 		float cos_diffuse = lightVec.cosineAngle(normal);
@@ -1114,8 +1139,8 @@ vector<pair<COLORREF, COLORREF>> Renderer::getEdgesColors(const vector<Edge*>& e
 		Vec4 pointAobject = objectWorldMatrix * edges[k]->getA()->getVec4Coords();
 		Vec4 pointBobject = objectWorldMatrix * edges[j]->getB()->getVec4Coords();
 		pair<COLORREF, COLORREF> outColors;
-		outColors.first = getLightingColor(pointAobject, polyEdgesNormals[k].first, originalClr, lightSources, ambientLight, materialParams);
-		outColors.second = getLightingColor(pointAobject, polyEdgesNormals[j].second, originalClr, lightSources, ambientLight, materialParams);
+		outColors.first = getColor(pointAobject, polyEdgesNormals[k].first, originalClr, lightSources, ambientLight, materialParams);
+		outColors.second = getColor(pointBobject, polyEdgesNormals[j].second, originalClr, lightSources, ambientLight, materialParams);
 		polyEdgesColors.push_back(outColors);
 	}
 	return polyEdgesColors;

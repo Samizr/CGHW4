@@ -195,6 +195,7 @@
     <ClCompile Include="Edge.cpp" />
     <ClCompile Include="FileRenderingDialog.cpp" />
     <ClCompile Include="FinenessControlDialog.cpp" />
+    <ClCompile Include="FogEffectsDialog.cpp" />
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="iritSkel.cpp" />
     <ClCompile Include="LightDialog.cpp" />
@@ -247,10 +248,11 @@
     <ClInclude Include="Edge.h" />
     <ClInclude Include="FileRenderingDialog.h" />
     <ClInclude Include="FinenessControlDialog.h" />
+    <ClInclude Include="Fog.h" />
+    <ClInclude Include="FogEffectsDialog.h" />
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="iritSkel.h" />
     <ClInclude Include="Light.h" />
-    <ClInclude Include="LightDialog.h" />
     <ClInclude Include="LinePlotter.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="Mat4.h" />

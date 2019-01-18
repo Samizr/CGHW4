@@ -15,6 +15,7 @@
 #define IDD_FILE_RENDERING              157
 #define IDD_SUPER_SAMPLING              159
 #define IDD_MOTION_BLUR_DLG             161
+#define IDD_FOGEFFECTS                  163
 #define IDC_LIGHT_SPACE                 1010
 #define IDC_RADIO_LIGHT1                1017
 #define IDC_RADIO_LIGHT2                1018
@@ -52,6 +53,7 @@
 #define IDC_RICHEDIT21                  1064
 #define IDC_PERS_ALPHA_PARAM            1064
 #define IDC_HEIGHT_CONTROL              1064
+#define IDC_FOG_END_Y                   1064
 #define IDC_FINENESSVALUE               1070
 #define IDC_SUBCHECK                    1076
 #define IDC_INVERT_VERTEX_NORMALS       1078
@@ -68,6 +70,11 @@
 #define IDC_gaussianFilter              1088
 #define IDC_sincFilter                  1089
 #define IDC_CHECK1                      1090
+#define IDC_FOG_COLOR                   1091
+#define IDC_FOG_BEGIN_Y                 1092
+#define IDC_ENABLE_FOG                  1093
+#define IDC_MODEL_NUMBER                1094
+#define IDC_RADIO5                      1099
 #define ID_FILE_LOAD                    32771
 #define ID_VIEW_ORTHOGRAPHIC            32772
 #define ID_VIEW_PERSPECTIVE             32773
@@ -132,14 +139,16 @@
 #define ID_PLANE_XY                     32852
 #define ID_SOLIDRENDERING_SUPERSAMPLINGANTI 32853
 #define ID_VIEW_MOTIONBLUR              32854
+#define ID_SHADING_LIGHT                32857
+#define ID_FOG_PARAMETERS               32858
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        163
-#define _APS_NEXT_COMMAND_VALUE         32855
-#define _APS_NEXT_CONTROL_VALUE         1091
+#define _APS_NEXT_RESOURCE_VALUE        165
+#define _APS_NEXT_COMMAND_VALUE         32859
+#define _APS_NEXT_CONTROL_VALUE         1097
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

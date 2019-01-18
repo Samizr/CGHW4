@@ -27,6 +27,8 @@ static char THIS_FILE[] = __FILE__;
 #include "FileRenderingDialog.h"
 #include "SuperSamplingAADialog.h"
 #include "MotionBlurDialog.h"
+#include "FogEffectsDialog.h"
+
 
 // For Status Bar access
 #include "MainFrm.h"
@@ -113,8 +115,6 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_COMMAND(ID_OPTIONS_FINENESSCONTROL, &CCGWorkView::OnOptionsFinenesscontrol)
-	ON_COMMAND(ID_VIEW_SPLITSCREEN, &CCGWorkView::OnViewSplitscreen)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_SPLITSCREEN, &CCGWorkView::OnUpdateViewSplitscreen)
 	ON_COMMAND(ID_OPTIONS_PERSPECTIVECONTROL, &CCGWorkView::OnOptionsPerspectivecontrol)
 	ON_COMMAND(ID_VIEW_RESETVIEW, &CCGWorkView::OnViewResetview)
 	ON_COMMAND(ID_VIEW_OBJECTSELECTION, &CCGWorkView::OnViewAdvancedSettings)
@@ -137,6 +137,7 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_COMMAND(ID_SOLIDRENDERING_WIREFRAMTOFILE, &CCGWorkView::OnWireframTofile)
 	ON_COMMAND(ID_PLANE_XY, &CCGWorkView::OnPlaneXy)
 	ON_UPDATE_COMMAND_UI(ID_PLANE_XY, &CCGWorkView::OnUpdatePlaneXy)
+	ON_COMMAND(ID_FOG_PARAMETERS, &CCGWorkView::OnFogEffects)
 	ON_COMMAND(ID_SOLIDRENDERING_SUPERSAMPLINGANTI, &CCGWorkView::OnSolidrenderingSupersamplinganti)
 	ON_COMMAND(ID_VIEW_MOTIONBLUR, &CCGWorkView::OnViewMotionblur)
 END_MESSAGE_MAP()
@@ -153,7 +154,7 @@ void auxSolidCone(GLdouble radius, GLdouble height) {
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView construction/destruction
 
-CCGWorkView::CCGWorkView(){
+CCGWorkView::CCGWorkView() {
 	//Set default values
 	m_nAxis = ID_AXIS_X;
 	m_nAction = ID_ACTION_ROTATE;
@@ -169,6 +170,13 @@ CCGWorkView::CCGWorkView(){
 	m_bInvertVertexNormals = false;
 	m_bBackfaceCullingActive = false;
 	m_bWithSilhouette = false;
+
+	//Fog Related
+	m_fog.active = false;
+	m_fog.color = 0;
+	m_fog.z_near = 0;
+	m_fog.z_far = 0;
+
 	m_bRepeatMode = false;
 	m_nTranslationSensetivity = INITIAL_SENSITIVITY;
 	m_nRotationSensetivity = INITIAL_SENSITIVITY;
@@ -199,9 +207,9 @@ CCGWorkView::CCGWorkView(){
 	m_pDbDC = NULL;
 
 	//init the supersampling stuff
-	superSampling3 = false;
-	superSampling5 = false;
-	superSamplingFilter = -1;
+	m_bSuperSampling3 = false;
+	m_bSuperSampling5 = false;
+	m_nSuperSamplingFilter = 0;
 
 	//motion blur init 
 	m_bWithMotionBlur = false;
@@ -284,9 +292,10 @@ BOOL CCGWorkView::InitializeCGWork()
 	scene.setLightAmbientVariable(m_lMaterialAmbient);
 	scene.setLightDiffuseVariable(m_lMaterialDiffuse);
 	scene.setLightSpecularVariable(m_lMaterialSpecular);
-	scene.setLightCosineComponent(m_nMaterialCosineFactor);	
+	scene.setLightCosineComponent(m_nMaterialCosineFactor);
 	scene.setBackgroundColor(m_clrBackground);
-	scene.draw(bitArray ,r);
+	scene.draw(bitArray, r);
+	scene.setFogParams(m_fog);
 	//activeDebugFeatures1();
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
@@ -361,13 +370,13 @@ void CCGWorkView::OnDraw(CDC* pDC)
 		renderRect = outputRect;
 		drawRect = outputRect;
 	}
-	if (superSampling3) {
+	if (m_bSuperSampling3) {
 		renderRect.left = 0;
 		renderRect.top = 0;
 		renderRect.right = 3 * renderRect.right;
 		renderRect.bottom = 3 * renderRect.bottom;
 	}
-	else if (superSampling5) {
+	else if (m_bSuperSampling5) {
 		renderRect.left = 0;
 		renderRect.top = 0;
 		renderRect.right = 5 * renderRect.right;
@@ -390,11 +399,11 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	}
 	bitArray = new COLORREF[renderH * renderW];
 	scene.draw(bitArray, renderRect);
-	if (superSampling5 || superSampling3) {
-		int filterSize = superSampling3 ? 3 : 5;
+	if (m_bSuperSampling5 || m_bSuperSampling3) {
+		int filterSize = m_bSuperSampling3 ? 3 : 5;
 		COLORREF* superSampled = bitArray;
 		bitArray = new COLORREF[drawH * drawW];
-		scene.getRenderer().superSampleImage(superSampled, bitArray, renderRect, drawRect, filterSize, superSamplingFilter);
+		scene.getRenderer().superSampleImage(superSampled, bitArray, renderRect, drawRect, filterSize, m_nSuperSamplingFilter);
 	}
 	invertRBArray(bitArray, drawRect);
 	if (m_bWithMotionBlur) {
@@ -460,38 +469,34 @@ void CCGWorkView::OnFileLoadObject()
 	CFileDialog dlg(TRUE, _T("itd"), _T("*.itd"), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters);
 
 	if (dlg.DoModal() == IDOK) {
-		
+
 		//Load New Objects & Models
 		::loadedGeometry.clear();
-		::loadedScene.clear();
-		m_strItdFileName = dlg.GetPathName();		// Full path and filename
+		::loadedModel.clear();
+		m_strItdFileName = dlg.GetPathName();	// Full path and filename
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
-		
-		//Main Model Initiation 
-		::loadedGeometry.setLineClr(::loadedScene.getModel(0)->getGeometry().getLineClr()); //SETS THE MAIN MODEL COLOR TO BE SIMILAR TO THE FIRST COLOR IN SCENE
-		Model* mainModel = new Model(::loadedGeometry);
-		::loadedScene.setMainModel(mainModel);
-		
-		//Scene Update
-		//scene.setRenderer(renderer);
-		scene.loadFromScene(::loadedScene);
-		
-		//New Camera Initiation:
-		float distance = (::loadedGeometry.getMaxZ() - ::loadedGeometry.getMinZ());
-		m_nPerspectiveD = 3 * distance;
-		m_nPerspectiveAlpha = distance;
-		Camera* newCamera = new Camera();
-		newCamera->LookAt(Vec4(0, 0, 3 * distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
-		scene.addCamera(newCamera);
 
-		resetButtons();
+		//Main Model Initiation 
+		Model* newModel = new Model(loadedModel);
+		scene.addModel(newModel);
+		//::loadedGeometry.setLineClr(newModel->getSubGeometry(0).getLineClr()); //SETS THE MAIN MODEL COLOR TO BE SIMILAR TO THE FIRST COLOR IN SCENE
+
+		//New Camera Initiation (IF none exist):
+		if (scene.getActiveCamera() == nullptr) {
+			float distance = (::loadedGeometry.getMaxZ() - ::loadedGeometry.getMinZ());
+			m_nPerspectiveD = 3 * distance;
+			m_nPerspectiveAlpha = distance;
+			Camera* newCamera = new Camera();
+			newCamera->LookAt(Vec4(0, 0, 3 * distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
+			if (m_bIsPerspective) {
+				newCamera->Perspective(m_nPerspectiveD, m_nPerspectiveAlpha);
+			}
+			scene.addCamera(newCamera);
+		}
+
+		//resetButtons();
 		m_clrBackground = STANDARD_BACKGROUND_COLOR;
 		scene.setBackgroundColor(m_clrBackground);
-
-
-		if (m_bIsPerspective) {
-			newCamera->Perspective(m_nPerspectiveD, m_nPerspectiveAlpha);
-		}
 
 		Invalidate();	// force a WM_PAINT for drawing.
 	}
@@ -750,20 +755,20 @@ void CCGWorkView::OnOptionsLineColor()
 {
 	CColorDialog CD;
 	if (CD.DoModal() == IDOK) {
-		Model* model;
+		Model* model = scene.getActiveModel();
 		if (m_nIsSubobjectMode) {
-			Geometry& geometry = scene.getActiveModel()->getGeometry();
-			geometry.setLineClr(CD.GetColor());
+			model->getSubGeometry(m_nSubobject).setLineClr(CD.GetColor());
 		}
 		else {
-			for (std::pair<int, Model*> pair : scene.getAllModels()) {
-				Geometry& geometry = pair.second->getGeometry();
-				geometry.setLineClr(CD.GetColor());
+			model->getMainGeometry().setLineClr(CD.GetColor());
+			for (int i = 0; i < model->getSubGeometriesNum(); i++) {
+				model->getSubGeometry(i).setLineClr(CD.GetColor());
 			}
 		}
 		Invalidate();
 	}
 }
+
 void CCGWorkView::OnOptionsBackgroundColor()
 {
 	CColorDialog CD;
@@ -907,6 +912,20 @@ void CCGWorkView::OnTimer(UINT_PTR nIDEvent)
 }
 
 
+// FOG EFFECTS HANDLING ////////////////////////////////////////////
+void CCGWorkView::OnFogEffects()
+{
+	FogEffectsDialog dlg;
+	dlg.fog = m_fog;
+	if (dlg.DoModal() == IDOK) {
+		m_fog = dlg.fog;
+		scene.setFogParams(m_fog);
+	}
+	Invalidate();
+}
+
+
+
 // MOUSE MOVEMENT HANDLING ///////////////////////////////////////////
 
 
@@ -981,11 +1000,11 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 	if (!m_bAllowTransformations) {
 		return;
 	}
-	if (m_lnLastXPos > point.x) 
+	if (m_lnLastXPos > point.x)
 		transform(POSITIVE);
-	else if (m_lnLastXPos < point.x) 
+	else if (m_lnLastXPos < point.x)
 		transform(NEGATIVE);
-	
+
 	if (m_nAxis == ID_PLANE_XY) {
 		m_nAxis = ID_AXIS_Y;
 		if (m_lnLastYPos < point.y)
@@ -1002,16 +1021,17 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 //Parses the requested transformation and requests the correct transformation:
 void CCGWorkView::transform(Direction direction)
 {
-	Model* model = nullptr;
-	if (m_nIsSubobjectMode) {
-		model = scene.getModel(m_nSubobject);
-	}
-	else {
-		model = scene.getMainModel();
-	}
+	Model* model = scene.getActiveModel();
 	if (model == nullptr) {
 		return;
 	}
+	if (m_nIsSubobjectMode) {  //TRICK - MAKE A MODEL OUT OF GEOMETRY SO WE WOULD BE ABLE TO PERFORM TRANSFORMATION ON SUBOBJECT
+		Geometry& geometry = model->getSubGeometry(m_nSubobject);
+		Model* subModel = new Model(geometry);
+		subModel->setTransformation(model->getSubGeometryTransformationMatrix(m_nSubobject));
+		model = subModel;
+	}
+
 
 	//CODE FOR TRANSFORMATIONS:
 	AXIS sceneAxis = sceneAxisTranslator(m_nAxis);
@@ -1043,7 +1063,12 @@ void CCGWorkView::transform(Direction direction)
 			model->scaleObjectSpace(sceneAxis, adjustedQuota);
 		break;
 	}
-
+	if (m_nIsSubobjectMode) {
+		Model* subModel = model;
+		model = scene.getActiveModel();
+		model->setSubgeometryTransformation(m_nSubobject, subModel->getTransformationMatrix());
+		delete subModel;
+	}
 }
 
 void CCGWorkView::OnOptionsFinenesscontrol()
@@ -1054,30 +1079,15 @@ void CCGWorkView::OnOptionsFinenesscontrol()
 	}
 }
 
-
-void CCGWorkView::OnViewSplitscreen()
-{
-	m_bDualView = !m_bDualView;
-	m_bDualView == true ? scene.enableDualView() : scene.disableDualView();
-	Invalidate();
-}
-
-
-void CCGWorkView::OnUpdateViewSplitscreen(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_bDualView);
-}
-
-
 void CCGWorkView::OnOptionsPerspectivecontrol()
 {
 	Camera* cam = scene.getActiveCamera();
 	if (cam == nullptr) {
 		MessageBox(_T("ERROR: No active camera, please load an object."), _T("Error"),
-		MB_ICONERROR | MB_OK);
+			MB_ICONERROR | MB_OK);
 		return;
 	}
-	
+
 	PerspectiveParametersDialog dlg(m_nPerspectiveD, m_nPerspectiveAlpha);
 	if (dlg.DoModal() == IDOK) {
 		m_nPerspectiveD = dlg.d;
@@ -1091,21 +1101,26 @@ void CCGWorkView::OnOptionsPerspectivecontrol()
 
 void CCGWorkView::OnViewResetview()
 {
-	resetButtons();
-	resetModel(scene.getMainModel());
-	for (std::pair<int, Model*> pair : scene.getAllModels()) {
-		resetModel(pair.second);
+	int answer = MessageBox(_T("WARNING: You are about to clear the scene, are you sure?"), _T("WARNING"),
+		MB_OKCANCEL | MB_ICONQUESTION);
+	if (answer == IDOK) {
+		resetButtons();
+		scene.clear();
+		resetModel(scene.getActiveModel());
+		for (std::pair<int, Model*> pair : scene.getAllModels()) {
+			resetModel(pair.second);
+		}
+		scene.disableBackgroundImage();
+		scene.disableRepeatMode();
+		Invalidate();
 	}
-	scene.disableBackgroundImage();
-	scene.disableRepeatMode();
-	Invalidate();
 }
 
 void resetModel(Model* model) {
 	if (model == nullptr)
 		return;
 	model->setTransformation(Mat4::Identity());
-	Geometry& geometry = model->getGeometry();
+	Geometry& geometry = model->getMainGeometry();
 }
 
 void invertRBArray(COLORREF * array, CRect rect)
@@ -1134,22 +1149,28 @@ void CCGWorkView::sceneSetVertexNormalMode()
 
 void CCGWorkView::OnViewAdvancedSettings()
 {
+	if (!scene.getActiveModel()) {
+		MessageBox(_T("NOT ALLOWED: Please load a module first before accessing the advanced settings!"), _T("Unallowed!"), MB_ICONEXCLAMATION);
+		return;
+	}
+
 	AdvancedDialog dlg;
-	dlg.subChecked = m_nIsSubobjectMode;
 	dlg.subobjectID = m_nSubobject;
-	dlg.maxSubobject = scene.getAllModels().size() - 1;
+	dlg.modelId = scene.getActiveModelID();
+	dlg.maxSubobject = scene.getActiveModel()->getSubGeometriesNum() - 1;
+	dlg.maxObject = scene.getAllModels().size() - 1;
 	dlg.invertVertexNormals = m_bInvertVertexNormals;
 	dlg.invertPolygonNormals = m_bInvertPolygonNormals;
 	dlg.importNormals = !m_bCalculateVertexNormals;
-	
+	dlg.subChecked = m_nIsSubobjectMode;
+
 	if (dlg.DoModal() == IDOK) {
-		m_nIsSubobjectMode = dlg.subChecked;
 		m_nSubobject = dlg.subobjectID;
-		scene.setActiveModelID(m_nSubobject);
-		m_nIsSubobjectMode == true ? scene.setSubobjectMode() : scene.setWholeobjectMode();
+		scene.setActiveModelID(dlg.modelId);
+		m_nIsSubobjectMode = dlg.subChecked;
 		m_bInvertPolygonNormals = dlg.invertPolygonNormals;
-		m_bInvertPolygonNormals == true ? scene.enablePolygonNormalInvert() : scene.disablePolygonNormalInvert();
 		m_bInvertVertexNormals = dlg.invertVertexNormals;
+		m_bInvertPolygonNormals == true ? scene.enablePolygonNormalInvert() : scene.disablePolygonNormalInvert();
 		m_bInvertVertexNormals == true ? scene.enableVertexNormalInvert() : scene.disableVertexNormalInvert();
 		m_bCalculateVertexNormals = !dlg.importNormals;
 		sceneSetVertexNormalMode();
@@ -1166,7 +1187,6 @@ void CCGWorkView::resetButtons() {
 }
 
 
-
 void CCGWorkView::OnBackgroundStrechmode()
 {
 	m_bRepeatMode = false;
@@ -1177,7 +1197,7 @@ void CCGWorkView::OnBackgroundStrechmode()
 
 void CCGWorkView::OnBackgroundRepeatmode()
 {
-	m_bRepeatMode = true;	
+	m_bRepeatMode = true;
 	scene.enableRepeatMode();
 	Invalidate();
 }
@@ -1267,7 +1287,9 @@ void CCGWorkView::OnWireframTofile()
 }
 
 
-//DEBUG FUNCTIONS:
+// DEBUG INFRASTRUCTURE /////////////////////////
+
+//PREPARES SCENE FOR DEBUGGING. CALLED EVERY TIME ON DRAW.
 void CCGWorkView::activeDebugFeatures1()
 {
 	//resetButtons();
@@ -1275,13 +1297,13 @@ void CCGWorkView::activeDebugFeatures1()
 	//for (std::pair<int, Model*> pair : scene.getAllModels()) {
 	//	resetModel(pair.second);
 	//}
-	scene.setLightingMode(FLAT);
+	scene.setLightingMode(GOURAUD);
 	//scene.enableBackfaceCulling();
 	::CGSkelFFCState.FineNess = 20;
 	m_lights[0].colorR = 255;
 	m_lights[0].colorG = 255;
 	m_lights[0].colorB = 255;
-	m_lights[0].posX = 10;
+	m_lights[0].posX = 2;
 	m_lights[0].posY = 0;
 	m_lights[0].posZ = 0;
 	m_lights[0].dirX = 0;
@@ -1293,31 +1315,84 @@ void CCGWorkView::activeDebugFeatures1()
 	scene.setSolidMode();
 }
 
+//SIMULATED A LOADING PROCESS, WITH LOADING m_stdItdFileName. CALLED ON INITIALIZATION
+void CCGWorkView::activeDebugFeatures2() {
 
+	//Load New Objects & Models
+	::loadedGeometry.clear();
+	::loadedModel.clear();
+	::CGSkelFFCState.FineNess = 20;
+	m_strItdFileName = L"C:\\Users\\sami.zr\\Desktop\\BasicModels\\teapot.itd";	// Full path and filename
+	CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 
+	//Main Model Initiation 
+	Model* newModel = new Model(loadedModel);
+	scene.addModel(newModel);
 
+	//New Camera Initiation (IF none exist):
+	if (scene.getActiveCamera() == nullptr) {
+		float distance = (::loadedGeometry.getMaxZ() - ::loadedGeometry.getMinZ());
+		m_nPerspectiveD = 3 * distance;
+		m_nPerspectiveAlpha = distance;
+		Camera* newCamera = new Camera();
+		newCamera->LookAt(Vec4(0, 0, 3 * distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
+		if (m_bIsPerspective) {
+			newCamera->Perspective(m_nPerspectiveD, m_nPerspectiveAlpha);
+		}
+		scene.addCamera(newCamera);
+	}
+
+	//if (!AllocConsole())
+		//AfxMessageBox((CString)"Failed to create the console!", MB_ICONEXCLAMATION);
+
+	//transform(POSITIVE);
+
+	//m_clrBackground = STANDARD_BACKGROUND_COLOR;
+	//scene.setBackgroundColor(m_clrBackground);
+
+	//Invalidate();	// force a WM_PAINT for drawing.
+}
+
+//Debugging console:
+void CCGWorkView::activeDebugFeatures3() {
+	Geometry square;
+	Vertex* a = new Vertex(1, 1, 0);
+	Vertex* b = new Vertex(-1, 1, 0);
+	Vertex* c = new Vertex(1, -1, 0);
+	Vertex* d = new Vertex(-1, -1, 0);
+	square.addVertex(a);
+	square.addVertex(b);
+	square.addVertex(c);
+	square.addVertex(d);
+	Edge* e1 = new Edge(a, b);
+	Edge* e2 = new Edge(a, b);
+	Edge* e3 = new Edge(a, b);
+	Edge* e4 = new Edge(a, b);
+	square.addEdge(e1);
+	square.addEdge(e2);
+	square.addEdge(e3);
+	square.addEdge(e4);
+}
 
 void CCGWorkView::OnSolidrenderingSupersamplinganti()
 {
 	SuperSamplingAADialog dlg;
-	dlg.isFilter3 = superSampling3;
-	dlg.isFilter5 = superSampling5;
-	for (int i = 0; i < 4; i++) {
-		if (i == superSamplingFilter) {
-			dlg.filterType[i] = TRUE;
-		}
-		else {
-			dlg.filterType[i] = FALSE;
-		}	 
-	}
+	dlg.isFilter3 = m_bSuperSampling3;
+	dlg.isFilter5 = m_bSuperSampling5;
+	dlg.filterType = m_nSuperSamplingFilter;
+	//dlg.filterType[m_nSuperSamplingFilter] = m_nSuperSamplingFilter;
+	//for (int i = 0; i < 4; i++) {
+	//	if (i == m_nSuperSamplingFilter) {
+	//		dlg.filterType[i] = true;
+	//	}
+	//	else {
+	//		dlg.filterType[i] = FALSE;
+	//	}	 
+	//}
 	if (dlg.DoModal() == IDOK) {
-		superSampling3 = dlg.isFilter3;
-		superSampling5 = dlg.isFilter5;
-		for (int i = 0; i < 4; i++) {
-			if (dlg.filterType[i]) {
-				superSamplingFilter = i;
-			}
-		}
+		m_bSuperSampling3 = dlg.isFilter3;
+		m_bSuperSampling5 = dlg.isFilter5;
+		m_nSuperSamplingFilter = dlg.filterType;
 		Invalidate();
 	}
 }

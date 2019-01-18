@@ -127,9 +127,9 @@ void CGSkelDumpOneTraversedObject(IPObjectStruct *PObj,
 *   bool:		false - fail, true - success.                                *
 *****************************************************************************/
 Geometry loadedGeometry;
-Scene loadedScene;
-int DBGRequestedModel = 0;
-int DBGRequestedSubModel = 0;
+Model loadedModel;
+int DBGModelChooser = 0;
+int DBGFaceChooser = 0;
 bool CGSkelStoreData(IPObjectStruct *PObj)
 {
 	Geometry subGeometry;
@@ -140,7 +140,10 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	IPVertexStruct *PVertex;
 	const IPAttributeStruct *Attrs =
 		AttrTraceAttributes(PObj->Attr, PObj->Attr);
-
+	if (DBGModelChooser++ != 0)
+	{
+		//return 1;
+	}
 
 	if (PObj->ObjType != IP_OBJ_POLY) {
 		AfxMessageBox(_T("Non polygonal object detected and ignored"));
@@ -253,17 +256,16 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 			current = current->Pnext;
 
 		} while (current != NULL && previous != PPolygon->PVertex);
-	//	if (++DBGRequestedSubModel == 4) {
 			loadedGeometry.addFace(face);
 			subGeometry.addFace(face);
-	//	}
 		// Added By Firas END.
 		/* Close the polygon. */
+			if (DBGFaceChooser++ == 1) {
+			//	break;
+			}
 	}
-	Model* model = new Model(subGeometry);
-//	if (DBGRequestedModel++ != 0)
-//		return true;
-	loadedScene.addModel(model);
+	loadedModel.addSubGeometry(subGeometry);
+	loadedModel.setMainGeometry(loadedGeometry);
 	/* Close the object. */
 	return true;
 }

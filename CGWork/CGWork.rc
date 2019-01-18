@@ -44,7 +44,7 @@ IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
 // Toolbar
 //
 
-IDR_MAINFRAME TOOLBAR 34, 22
+IDR_MAINFRAME TOOLBAR 40, 22
 BEGIN
     BUTTON      ID_FILE_LOAD_OBJECT
     SEPARATOR
@@ -72,6 +72,9 @@ BEGIN
     BUTTON      ID_BACKGROUNDCOLOR
     BUTTON      ID_NORMALCOLOR
     BUTTON      ID_SILHOUETTECOLOR
+    SEPARATOR
+    BUTTON      ID_VIEW_OBJECTSELECTION
+    BUTTON      ID_VIEW_RESETVIEW
 END
 
 
@@ -150,6 +153,10 @@ BEGIN
         MENUITEM "Normals Color...",            ID_NORMALCOLOR
         MENUITEM "Silhouette Color...",         ID_SILHOUETTECOLOR
     END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About CGWork...",            ID_APP_ABOUT
+    END
     POPUP "&Light"
     BEGIN
         POPUP "&Shading"
@@ -161,9 +168,9 @@ BEGIN
         MENUITEM "&Parameters...",              ID_LIGHT_CONSTANTS
         MENUITEM "Material...",                 ID_LIGHT_MATERIAL
     END
-    POPUP "&Help"
+    POPUP "Fog"
     BEGIN
-        MENUITEM "&About CGWork...",            ID_APP_ABOUT
+        MENUITEM "Parameters...",               ID_FOG_PARAMETERS
     END
 END
 
@@ -318,9 +325,9 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,249,195,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,301,195,50,14
     EDITTEXT        IDC_SUBOBJECT_NUMBER,253,49,60,15,ES_AUTOHSCROLL
-    LTEXT           "Sub-object ID",IDC_STATIC,187,53,53,17
-    GROUPBOX        "Sub-object Settings",IDC_STATIC,171,38,149,38
-    CONTROL         "Enable Sub-Object Transformation",IDC_SUBCHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,31,51,118,13
+    LTEXT           "Object ID",IDC_STATIC,187,53,53,17
+    GROUPBOX        "Secondary Object Settings",IDC_STATIC,171,35,149,51
+    CONTROL         "Sub-Object Edit Mode",IDC_SUBCHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,188,67,118,13
     GROUPBOX        "Advanced Transformation Settings",IDC_STATIC,19,16,311,79
     GROUPBOX        "Advanced Normal Settings",IDC_STATIC,19,112,311,79
     GROUPBOX        "Vertex Normals",IDC_STATIC,181,129,134,51
@@ -328,6 +335,9 @@ BEGIN
     CONTROL         "Invert",IDC_INVERT_VERTEX_NORMALS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,147,36,10
     CONTROL         "Invert",IDC_INVERT_POLYGON_NORMALS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,44,147,36,10
     CONTROL         "Import Normals",IDC_IMPORTNORMALS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,160,65,10
+    GROUPBOX        "Model Edit Settings",IDC_STATIC,30,40,124,36
+    EDITTEXT        IDC_MODEL_NUMBER,86,53,56,14,ES_AUTOHSCROLL
+    LTEXT           "Model ID",IDC_STATIC,46,55,29,8
 END
 
 IDD_FILE_RENDERING DIALOGEX 0, 0, 209, 104
@@ -347,19 +357,19 @@ END
 
 IDD_SUPER_SAMPLING DIALOGEX 0, 0, 309, 176
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Dialog"
+CAPTION "Anti-Aliasing Settings"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,198,155,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,252,155,50,14
-    GROUPBOX        "Filter Size",IDC_FilterSize,32,35,60,84
+    GROUPBOX        "Filter Size",IDC_FilterSize,32,32,60,84
     CONTROL         "3x3 Filter",IDC_filter3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,42,63,46,10
     CONTROL         "5x5 Filter",IDC_filter5,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,42,88,46,10
-    GROUPBOX        "Filter Type",IDC_STATIC,119,35,149,85
-    CONTROL         "Box Filter",IDC_boxFilter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,52,46,10
-    CONTROL         "Triangle Filter",IDC_triangleFilter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,67,59,10
-    CONTROL         "Gaussian Filter",IDC_gaussianFilter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,82,63,10
-    CONTROL         "Sinc Filter",IDC_sincFilter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,97,47,10
+    GROUPBOX        "Filter Type",IDC_STATIC,119,32,149,85
+    CONTROL         "Box Filter",IDC_boxFilter,"Button",BS_AUTORADIOBUTTON | WS_GROUP,136,50,46,10
+    CONTROL         "Triangle Filter",IDC_triangleFilter,"Button",BS_AUTORADIOBUTTON,136,65,59,10
+    CONTROL         "Gaussian Filter",IDC_gaussianFilter,"Button",BS_AUTORADIOBUTTON,136,80,63,10
+    CONTROL         "Sinc Filter",IDC_sincFilter,"Button",BS_AUTORADIOBUTTON,136,96,47,10
 END
 
 IDD_MOTION_BLUR_DLG DIALOGEX 0, 0, 179, 136
@@ -374,6 +384,22 @@ BEGIN
     GROUPBOX        "Parameters",IDC_STATIC,79,32,84,62
     EDITTEXT        IDC_EDIT1,113,59,40,14,ES_AUTOHSCROLL
     LTEXT           "T Value",IDC_STATIC,83,61,24,8
+END
+
+IDD_FOGEFFECTS DIALOGEX 0, 0, 227, 145
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Fog Effects"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,110,124,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,170,124,50,14
+    GROUPBOX        "Fog Effects",IDC_STATIC,18,17,188,100
+    CONTROL         "Enable Fog Effect",IDC_ENABLE_FOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,36,41,73,10
+    LTEXT           "Fog Begin Coordinates",IDC_STATIC,46,72,73,8
+    LTEXT           "Fog End Coordinates",IDC_STATIC,48,96,68,8
+    PUSHBUTTON      "Fog Color",IDC_FOG_COLOR,138,36,50,14
+    EDITTEXT        IDC_FOG_BEGIN_Y,131,70,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_FOG_END_Y,131,94,40,14,ES_AUTOHSCROLL
 END
 
 
@@ -494,6 +520,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 129
     END
+
+    IDD_FOGEFFECTS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 220
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 138
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -560,6 +594,11 @@ BEGIN
 END
 
 IDD_MOTION_BLUR_DLG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_FOGEFFECTS AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
