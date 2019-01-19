@@ -229,6 +229,10 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 				Vec4* vNormal = new Vec4(previous->Normal[0], previous->Normal[1], previous->Normal[2], 1);
 				firstVertex->setNormal(vNormal);
 			}
+			float *UV;
+			if ((UV = AttrGetUVAttrib(previous->Attr, "uvvals")) != NULL) {
+				firstVertex->setUV(UV[0], UV[1]);
+			}
 		}
 		firstVertex->addFace(face);
 		Vertex* previousVertex = firstVertex;
@@ -242,6 +246,10 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 					Vec4* vNormal = new Vec4(current->Normal[0], current->Normal[1], current->Normal[2], 1);
 					currentVertex->setNormal(vNormal);
 				}
+				float *UV;
+				if ((UV = AttrGetUVAttrib(current->Attr, "uvvals")) != NULL) {
+					currentVertex->setUV(UV[0], UV[1]);
+				} 
 			}
 			Edge* edgeToAdd = loadedGeometry.getEdge(previousVertex, currentVertex);
 			if (edgeToAdd == nullptr) {

@@ -16,6 +16,7 @@
 #define IDD_SUPER_SAMPLING              159
 #define IDD_MOTION_BLUR_DLG             161
 #define IDD_FOGEFFECTS                  163
+#define IDD_PARAMETRIC_TEXTURES         165
 #define IDC_LIGHT_SPACE                 1010
 #define IDC_RADIO_LIGHT1                1017
 #define IDC_RADIO_LIGHT2                1018
@@ -64,17 +65,26 @@
 #define IDC_SAVEAS                      1082
 #define IDC_FilterSize                  1083
 #define IDC_filter3                     1084
+#define IDC_SIZE_3                      1084
 #define IDC_filter5                     1085
 #define IDC_boxFilter                   1086
+#define IDC_BOX_FILTER                  1086
 #define IDC_triangleFilter              1087
+#define IDC_TRIANGE_FILTER              1087
 #define IDC_gaussianFilter              1088
+#define IDC_GAUSSIAN_FILTER             1088
 #define IDC_sincFilter                  1089
+#define IDC_SINC_FILTER                 1089
 #define IDC_CHECK1                      1090
 #define IDC_FOG_COLOR                   1091
 #define IDC_FOG_BEGIN_Y                 1092
 #define IDC_ENABLE_FOG                  1093
 #define IDC_MODEL_NUMBER                1094
-#define IDC_RADIO5                      1099
+#define IDC_BUTTON1                     1097
+#define IDC_MODULE_NUMBER               1098
+#define IDC_ENABLE_TEXTURES             1099
+#define IDC_NO_SIZE                     1100
+#define IDC_SIZE_5                      1102
 #define ID_FILE_LOAD                    32771
 #define ID_VIEW_ORTHOGRAPHIC            32772
 #define ID_VIEW_PERSPECTIVE             32773
@@ -141,14 +151,15 @@
 #define ID_VIEW_MOTIONBLUR              32854
 #define ID_SHADING_LIGHT                32857
 #define ID_FOG_PARAMETERS               32858
+#define ID_TEXTURES_LOADTEXTURE         32859
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        165
-#define _APS_NEXT_COMMAND_VALUE         32859
-#define _APS_NEXT_CONTROL_VALUE         1097
+#define _APS_NEXT_RESOURCE_VALUE        167
+#define _APS_NEXT_COMMAND_VALUE         32860
+#define _APS_NEXT_CONTROL_VALUE         1103
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

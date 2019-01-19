@@ -53,6 +53,7 @@ private:
 	bool m_bBackfaceCullingActive;
 	bool m_bWithSilhouette;
 	bool m_bWithFog;
+	bool m_bWithParametricTextures;
 	bool m_bRepeatMode;					//Strech or Repeat mode for background
 	float m_nTranslationSensetivity;   //Mouse sensetivity for translation
 	float m_nRotationSensetivity;		//Mouse sensetivity for rotation
@@ -63,13 +64,12 @@ private:
 	bool m_bIsWireframe;
 	bool m_nIsSubobjectMode;
 	int m_nSubobject;	
-	CRect outputRect;
+	CRect outputRect, renderRect, drawRect;
 	COLORREF m_clrBackground;		//Current background color
 	CString m_strItdFileName;		// file name of IRIT data
 	const char* pngSavePath;
-	bool m_bSuperSampling3;
-	bool m_bSuperSampling5;
 	int m_nSuperSamplingFilter;
+	int m_nSuperSamplingSize;
 	bool m_bWithMotionBlur;
 	float m_fMotionBlurTValue;
 	COLORREF* lastFrame;
@@ -237,6 +237,7 @@ public:
 	afx_msg void OnFogEffects();
 	afx_msg void OnSolidrenderingSupersamplinganti();
 	afx_msg void OnViewMotionblur();
+	afx_msg void OnTexturesLoadtexture();
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

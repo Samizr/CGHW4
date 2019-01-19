@@ -41,6 +41,7 @@ class Renderer {
 	Mat4 windowMatrix;
 	bool withBounding;
 	bool withPolygonNormals;
+	bool withParametricTextures;
 	VNMode vertexNormals;
 	bool invertPolygonNormals;
 	bool invertVertexNormals;
@@ -49,6 +50,7 @@ class Renderer {
 	COLORREF backgroundClr;
 	COLORREF silhouetteClr;
 	LightMode lightingMode;
+	PngWrapper* renderedTexture;
 	FogParams fog;
 	float* filters3[4];
 	float* filters5[4];
@@ -64,6 +66,8 @@ class Renderer {
 	void getPolyBoundaries(vector<Vec4>& poly, int* minX, int* minY, int* maxX, int* maxY);
 	vector<pair<Vec4, Vec4>> getEdgesNormals(const vector<Edge*> edges, const Mat4 objectWorldMatrix);
 	vector<pair<COLORREF, COLORREF>> getEdgesColors(const vector<Edge*>& edges, const Mat4& objectWorldMatrix, const vector<pair<Vec4, Vec4>>& polyEdgesNormals, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
+	vector<pair<double*, double*>> getEdgesUVAttrs(const vector<Edge*>& edges);
+	COLORREF getColorParametricTexture(vector<pair<float, double*>> intersectionPointsUV, int x);
 	COLORREF getColorGouraud(vector<pair<float, COLORREF>> intersectionPointsCLR, int x);
 	COLORREF getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM, int x, int y, int z, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
 	COLORREF getColorFog(COLORREF originalClr, float depth);
@@ -92,11 +96,13 @@ public:
 	void enablePolygonNormals();
 	void enablePolygonNormalInvert();
 	void enableVertexNormalInvert();
+	void enableParametrixTextures();
 	void setVertexNormalMode(VNMode mode);
 	void disableBoundingBox();
 	void disablePolygonNormals();
 	void disablePolygonNormalInvert();
 	void disableVertexNormalInvert();
+	void disableParametrixTextures();
 	void drawBounding(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr);
 	void drawBackgoundImageStretch(COLORREF* bitArr, CRect rect, PngWrapper* png);
 	void drawBackgoundImageRepeat(COLORREF* bitArr, CRect rect, PngWrapper* png);

@@ -27,7 +27,8 @@ class Scene {
 	static int modelIdGenerator;
 	bool withBoundingBox;
 	bool withBackfaceCulling;
-	PngWrapper* pngImage;
+
+	PngWrapper* pngBackgroundImage;
 	bool withPngBackground;
 	bool withSilhouette;
 	bool repeatMode;
@@ -63,7 +64,7 @@ public:
 	Camera* getActiveCamera();
 	void setAmbientLight(LightParams light);
 	void setLightSource(LightParams light, int id);
-	void setActiveModelID(int id);
+	void setActiveModelByID(int id);
 	int getActiveModelID();
 
 	void clear();
@@ -76,6 +77,7 @@ public:
 	void enableSilhouettes();
 	void enablePNGBackground();
 	void enableRepeatMode();
+	void enableParametricTextures();
 	void setVertexNormalsMode(VNMode mode);
 	void setBackgroundColor(COLORREF clr);
 	void setSilhouetteColor(COLORREF clr);
@@ -88,12 +90,13 @@ public:
 	void disableSilhouettes();
 	void disablePNGBackground();
 	void disableRepeatMode();
+	void disableParametricTextures();
 	void setLightAmbientVariable(double data);
 	void setLightDiffuseVariable(double data);
 	void setLightSpecularVariable(double data);
 	void setLightCosineComponent(double data);
 	void setFogParams(FogParams fog);
-	void setPngBackgroundImage(PngWrapper* pngImage);
+	void setPngBackgroundImage(PngWrapper* pngBackgroundImage);
 	void enableBackgroundImage();
 	void disableBackgroundImage();
 };

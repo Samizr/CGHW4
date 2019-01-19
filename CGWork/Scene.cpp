@@ -25,6 +25,7 @@ Scene::Scene()
 int Scene::addModel(Model* model){
 	this->models[modelIdGenerator] = model;
 	activeModel = modelIdGenerator;
+	model->normalizeUVAttributes();
 	return modelIdGenerator++;
 }
 
@@ -117,7 +118,7 @@ void Scene::clear()
 	activeCamera = -1;
 }
 
-void Scene::setActiveModelID(int id)
+void Scene::setActiveModelByID(int id)
 {
 	activeModel = id;
 }
@@ -131,10 +132,10 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	//DRAW BACKGROUND
 	this->m_renderer.setMainRect(rect);
 	if (withPngBackground && !repeatMode) {
-		this->m_renderer.drawBackgoundImageStretch(bitArr, rect, pngImage);
+		this->m_renderer.drawBackgoundImageStretch(bitArr, rect, pngBackgroundImage);
 	}
 	else if (withPngBackground && repeatMode) {
-		this->m_renderer.drawBackgoundImageRepeat(bitArr, rect, pngImage);
+		this->m_renderer.drawBackgoundImageRepeat(bitArr, rect, pngBackgroundImage);
 	}
 	else {
 		this->m_renderer.drawBackgroundColor(bitArr, rect);
@@ -246,6 +247,11 @@ void Scene::enableRepeatMode()
 	repeatMode = true;
 }
 
+void Scene::enableParametricTextures()
+{
+	this->m_renderer.enableParametrixTextures();
+}
+
 
 void Scene::disableBackfaceCulling()
 {
@@ -265,6 +271,11 @@ void Scene::disablePNGBackground()
 void Scene::disableRepeatMode()
 {
 	repeatMode = false;
+}
+
+void Scene::disableParametricTextures()
+{
+	this->m_renderer.disableParametrixTextures();
 }
 
 void Scene::enablePolygonNormals()
@@ -327,8 +338,8 @@ void Scene::setFogParams(FogParams fog)
 	this->m_renderer.setFogParams(fog);
 }
 
-void Scene::setPngBackgroundImage(PngWrapper* pngImage) {
-	this->pngImage = pngImage;
+void Scene::setPngBackgroundImage(PngWrapper* pngBackgroundImage) {
+	this->pngBackgroundImage = pngBackgroundImage;
 }
 
 void Scene::enableBackgroundImage() {

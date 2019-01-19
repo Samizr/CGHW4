@@ -28,6 +28,7 @@ static char THIS_FILE[] = __FILE__;
 #include "SuperSamplingAADialog.h"
 #include "MotionBlurDialog.h"
 #include "FogEffectsDialog.h"
+#include "ParametricTexturesDialog.h"
 
 
 // For Status Bar access
@@ -140,6 +141,7 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_COMMAND(ID_FOG_PARAMETERS, &CCGWorkView::OnFogEffects)
 	ON_COMMAND(ID_SOLIDRENDERING_SUPERSAMPLINGANTI, &CCGWorkView::OnSolidrenderingSupersamplinganti)
 	ON_COMMAND(ID_VIEW_MOTIONBLUR, &CCGWorkView::OnViewMotionblur)
+	ON_COMMAND(ID_TEXTURES_LOADTEXTURE, &CCGWorkView::OnTexturesLoadtexture)
 END_MESSAGE_MAP()
 
 
@@ -170,6 +172,7 @@ CCGWorkView::CCGWorkView() {
 	m_bInvertVertexNormals = false;
 	m_bBackfaceCullingActive = false;
 	m_bWithSilhouette = false;
+	m_bWithParametricTextures = false;
 
 	//Fog Related
 	m_fog.active = false;
@@ -207,11 +210,10 @@ CCGWorkView::CCGWorkView() {
 	m_pDbDC = NULL;
 
 	//init the supersampling stuff
-	m_bSuperSampling3 = false;
-	m_bSuperSampling5 = false;
 	m_nSuperSamplingFilter = 0;
+	m_nSuperSamplingSize = 0;
 
-	//motion blur init 
+	//init motion blur stuff
 	m_bWithMotionBlur = false;
 	m_fMotionBlurTValue = 0.25;
 	lastFrame = nullptr;
@@ -363,25 +365,14 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	ASSERT_VALID(pDoc);
 	if (!pDoc)
 		return;
-	CRect renderRect, drawRect;
-	GetClientRect(&renderRect);
+
 	GetClientRect(&drawRect);
+	GetClientRect(&renderRect);
 	if (!m_bRenderToScreen) {
 		renderRect = outputRect;
 		drawRect = outputRect;
 	}
-	if (m_bSuperSampling3) {
-		renderRect.left = 0;
-		renderRect.top = 0;
-		renderRect.right = 3 * renderRect.right;
-		renderRect.bottom = 3 * renderRect.bottom;
-	}
-	else if (m_bSuperSampling5) {
-		renderRect.left = 0;
-		renderRect.top = 0;
-		renderRect.right = 5 * renderRect.right;
-		renderRect.bottom = 5 * renderRect.bottom;
-	}
+
 	CDC *pDCToUse = m_pDbDC;
 	int renderH = renderRect.bottom - renderRect.top;
 	int renderW = renderRect.right - renderRect.left;
@@ -399,8 +390,8 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	}
 	bitArray = new COLORREF[renderH * renderW];
 	scene.draw(bitArray, renderRect);
-	if (m_bSuperSampling5 || m_bSuperSampling3) {
-		int filterSize = m_bSuperSampling3 ? 3 : 5;
+	if (m_nSuperSamplingSize != 0) {
+		int filterSize = m_nSuperSamplingSize == 1 ? 3 : 5;
 		COLORREF* superSampled = bitArray;
 		bitArray = new COLORREF[drawH * drawW];
 		scene.getRenderer().superSampleImage(superSampled, bitArray, renderRect, drawRect, filterSize, m_nSuperSamplingFilter);
@@ -1166,7 +1157,7 @@ void CCGWorkView::OnViewAdvancedSettings()
 
 	if (dlg.DoModal() == IDOK) {
 		m_nSubobject = dlg.subobjectID;
-		scene.setActiveModelID(dlg.modelId);
+		scene.setActiveModelByID(dlg.modelId);
 		m_nIsSubobjectMode = dlg.subChecked;
 		m_bInvertPolygonNormals = dlg.invertPolygonNormals;
 		m_bInvertVertexNormals = dlg.invertVertexNormals;
@@ -1315,7 +1306,7 @@ void CCGWorkView::activeDebugFeatures1()
 	scene.setSolidMode();
 }
 
-//SIMULATED A LOADING PROCESS, WITH LOADING m_stdItdFileName. CALLED ON INITIALIZATION
+//SIMULATES A LOADING PROCESS, WITH LOADING m_stdItdFileName. CALLED ON INITIALIZATION
 void CCGWorkView::activeDebugFeatures2() {
 
 	//Load New Objects & Models
@@ -1377,24 +1368,27 @@ void CCGWorkView::activeDebugFeatures3() {
 void CCGWorkView::OnSolidrenderingSupersamplinganti()
 {
 	SuperSamplingAADialog dlg;
-	dlg.isFilter3 = m_bSuperSampling3;
-	dlg.isFilter5 = m_bSuperSampling5;
 	dlg.filterType = m_nSuperSamplingFilter;
-	//dlg.filterType[m_nSuperSamplingFilter] = m_nSuperSamplingFilter;
-	//for (int i = 0; i < 4; i++) {
-	//	if (i == m_nSuperSamplingFilter) {
-	//		dlg.filterType[i] = true;
-	//	}
-	//	else {
-	//		dlg.filterType[i] = FALSE;
-	//	}	 
-	//}
+	dlg.filterSize = m_nSuperSamplingSize;
 	if (dlg.DoModal() == IDOK) {
-		m_bSuperSampling3 = dlg.isFilter3;
-		m_bSuperSampling5 = dlg.isFilter5;
+		m_nSuperSamplingSize = dlg.filterSize;
 		m_nSuperSamplingFilter = dlg.filterType;
 		Invalidate();
 	}
+	GetClientRect(&renderRect);
+	if (m_nSuperSamplingSize = 1) { //ANTI ALIASING SIZE 3x3
+		renderRect.left = 0;
+		renderRect.top = 0;
+		renderRect.right = 3 * renderRect.right;
+		renderRect.bottom = 3 * renderRect.bottom;
+	}
+	else if (m_nSuperSamplingSize = 2) { //ANTI ALIASING SIZE 5x5
+		renderRect.left = 0;
+		renderRect.top = 0;
+		renderRect.right = 5 * renderRect.right;
+		renderRect.bottom = 5 * renderRect.bottom;
+	}
+
 }
 
 
@@ -1406,4 +1400,21 @@ void CCGWorkView::OnViewMotionblur() {
 		m_bWithMotionBlur = dlg.motionBlurActive;
 		m_fMotionBlurTValue = dlg.motionBlurTValue;
 	}
+}
+
+void CCGWorkView::OnTexturesLoadtexture()
+{
+	if (!scene.getActiveModel()) {
+		MessageBox(_T("NOT ALLOWED: Please load a module first before accessing parametric texture settings!"), _T("Unallowed!"), MB_ICONEXCLAMATION);
+		return;
+	}
+	ParametricTexturesDialog dlg;
+	dlg.enableParametricTextures = m_bWithParametricTextures;
+	if (dlg.DoModal() == IDOK) {
+		scene.getModel(dlg.modelNum)->setModelTexturePNG(dlg.pngBackgroundImage);
+		scene.setActiveModelByID(dlg.modelNum);
+		m_bWithParametricTextures = dlg.enableParametricTextures;
+		m_bWithParametricTextures ? scene.enableParametricTextures() : scene.disableParametricTextures();
+	}
+	Invalidate();
 }

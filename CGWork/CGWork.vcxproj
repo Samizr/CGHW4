@@ -215,6 +215,7 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="MotionBlurDialog.cpp" />
     <ClCompile Include="MouseSensitivityDialog.cpp" />
+    <ClCompile Include="ParametricTexturesDialog.cpp" />
     <ClCompile Include="PerspectiveParametersDialog.cpp" />
     <ClCompile Include="PngWrapper.cpp" />
     <ClCompile Include="Face.cpp" />
@@ -261,6 +262,7 @@
     <ClInclude Include="Model.h" />
     <ClInclude Include="MotionBlurDialog.h" />
     <ClInclude Include="MouseSensitivityDialog.h" />
+    <ClInclude Include="ParametricTexturesDialog.h" />
     <ClInclude Include="PerspectiveParametersDialog.h" />
     <ClInclude Include="PngWrapper.h" />
     <ClInclude Include="Face.h" />

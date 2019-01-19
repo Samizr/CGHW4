@@ -26,11 +26,14 @@ static bool pointOnLine(Vec4 p1, Vec4 p2, int x, int y);
 static bool pointOnLineScreen(Vec4 p1, Vec4 p2, int x, int y);
 vector<pair<float, COLORREF>> findIntersectionsColor(int line, vector<pair<Vec4, Vec4>> polyEdges, vector<pair<COLORREF, COLORREF>> polyEdgesColors);
 vector<pair<float, Vec4>> findIntersectionsNormal(int line, vector<pair<Vec4, Vec4>> polyEdges, vector<pair<Vec4, Vec4>> polyEdgesNormals);
+vector<pair<float, double*>> findIntersectionsUVAttrs(int line, vector<pair<Vec4, Vec4>> polyEdges, vector<pair<double*, double*>> polyEdgesUVAttrs);
 static COLORREF getInterpolatedColor(double a, COLORREF clr1, COLORREF clr2);
 static Vec4 getInterpolatedNormal(double a, Vec4 nrm1, Vec4 nrm2);
+static double* getInterpolatedUVs(double a, double* p1, double* p2);
 static float getIntersectionPoint(Vec4 p1, Vec4 p2, float y);
+static double getInterpolationPercentage(float x, float y, Vec4 p1, Vec4 p2);
 static Vec4 getTransformedImportedNormal(const Vec4& normal, const Mat4& transformation);
-
+static COLORREF invertRB(COLORREF clr);
 
 static double distance(int x1, int y1, int x2, int y2);
 float distanceBetweenPoints(float x1, float y1, float x2, float y2);
@@ -50,6 +53,7 @@ Renderer::Renderer() {
 	lightingMode = FLAT;
 	normalClr = STANDARD_NORMAL_COLOR;
 	silhouetteClr = STANDARD_NORMAL_COLOR;
+	renderedTexture = nullptr;
 	initializeFilters();
 }
 
@@ -98,6 +102,12 @@ void Renderer::drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model
 
 
 void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* model, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
+	if (withParametricTextures && model->getModelTexturePNG()) {
+		renderedTexture = model->getModelTexturePNG();
+	}
+	else {
+		renderedTexture = nullptr;
+	}
 	for (int i = 0; i < model->getSubGeometriesNum(); i++) {
 		Geometry* geometry = &model->getSubGeometry(i);
 		objectWorldMatrix = model->getSubGeometryTransformationMatrix(i) * model->getTransformationMatrix();
@@ -166,8 +176,10 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 	vector<pair<Vec4, Vec4>> polyEdges = getEdgesAsVectorVec4(edges, finalMatrix);
 	vector<pair<Vec4, Vec4>> polyEdgesNormals = getEdgesNormals(edges, objectWorldMatrix);
 	vector<pair<COLORREF, COLORREF>> polyEdgesColors = getEdgesColors(edges, objectWorldMatrix, polyEdgesNormals, originalClr, lightSources, ambientLight, materialParams);
+	vector<pair<double*, double*>> polyEdgesUVAttrs = getEdgesUVAttrs(edges);
 	vector<pair<float, COLORREF>> intersectionPointsCLR;
 	vector<pair<float, Vec4>> intersectionPointsNRM;
+	vector<pair<float, double*>> intersectionPointsUV;
 	getPolyBoundaries(poly, &minX, &minY, &maxX, &maxY);
 
 	// Go over all inside frame from above pixels, only work with ones inside projected polygon.
@@ -175,6 +187,7 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 		clr = getColor(face->calculateMidpoint(), face->calculateNormal(objectWorldMatrix), originalClr, lightSources, ambientLight, materialParams);
 
 	for (int i = minY; i < maxY; i++) {
+		intersectionPointsUV = renderedTexture ? findIntersectionsUVAttrs(i, polyEdges, polyEdgesUVAttrs) : intersectionPointsUV;
 		intersectionPointsCLR = lightingMode == GOURAUD ? findIntersectionsColor(i, polyEdges, polyEdgesColors) : intersectionPointsCLR;
 		intersectionPointsNRM = lightingMode == PHONG ? findIntersectionsNormal(i, polyEdges, polyEdgesNormals) : intersectionPointsNRM;
 		for (int j = minX; j < maxX; j++) {
@@ -184,13 +197,31 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 					continue;
 				clr = lightingMode == GOURAUD ? getColorGouraud(intersectionPointsCLR, j) : clr;
 				clr = lightingMode == PHONG ? getColorPhong(intersectionPointsNRM, j, i, currentDepth, originalClr, lightSources, ambientLight, materialParams) : clr;
+				clr = renderedTexture ? getColorParametricTexture(intersectionPointsUV, j) : clr;
 				clr = fog.active ? getColorFog(clr, currentDepth) : clr;
 				bitArr[i * rect.Width() + j] = clr;
 				if (zBuffer)
 					zBuffer[i * rect.Width() + j] = currentDepth;
 			}
 		}
+	//	for (int i = 0; intersectionPointsUV.size(); i++) {
+		//	delete intersectionPointsUV[i].second;
+		//}
 	}
+}
+
+COLORREF Renderer::getColorParametricTexture(vector<pair<float, double*>> intersectionPointsUV, int x)
+{
+	int minId = intersectionPointsUV[0].first <= intersectionPointsUV[1].first ? 0 : 1;
+	int maxId = 1 - minId;
+	double pointDist = abs(x - intersectionPointsUV[minId].first);
+	double lineDist = abs(intersectionPointsUV[0].first - intersectionPointsUV[1].first);
+	double percentage = lineDist == 0 ? 1 : pointDist / lineDist;
+	percentage = percentage > 1 ? 1 : percentage;
+	double* UV = getInterpolatedUVs(percentage, intersectionPointsUV[maxId].second, intersectionPointsUV[minId].second);
+	double h = renderedTexture->GetHeight();
+	double w = renderedTexture->GetWidth();
+	return invertRB(renderedTexture->GetValue(UV[0] * h, UV[1] * w));
 }
 
 COLORREF Renderer::getColorGouraud(vector<pair<float, COLORREF>> intersectionPointsCLR, int x) {
@@ -287,14 +318,8 @@ vector<pair<float, COLORREF>> findIntersectionsColor(int line, vector<pair<Vec4,
 	for (pair<Vec4, Vec4>& edge : polyEdges) {
 		if ((line >= (int)edge.first.yCoord() && line <= (int)edge.second.yCoord()) || (line <= (int)edge.first.yCoord() && line >= (int)edge.second.yCoord())) {
 			float x = getIntersectionPoint(edge.first, edge.second, line);
-			if (x < edge.first.xCoord() && x < edge.second.xCoord())
-				x = min(edge.first.xCoord(), edge.second.xCoord());
-			else if (x > edge.first.xCoord() && x > edge.second.xCoord())
-				x = max(edge.first.xCoord(), edge.second.xCoord());
+			double percentage = getInterpolationPercentage(x, line, edge.first, edge.second);
 
-			double lineDist = distance(edge.first.xCoord(), edge.first.yCoord(), edge.second.xCoord(), edge.second.yCoord());
-			double pointDist = distance(x, line, edge.second.xCoord(), edge.second.yCoord());
-			double percentage = pointDist / lineDist;
 			pair<float, COLORREF> pair;
 			pair.first = x;
 			pair.second = getInterpolatedColor(percentage, polyEdgesColors[i].first, polyEdgesColors[i].second);
@@ -302,7 +327,7 @@ vector<pair<float, COLORREF>> findIntersectionsColor(int line, vector<pair<Vec4,
 		}
 		i++;
 	}
-	if (out.size() > 2) {
+	if (out.size() > 2) { //MAKE TEMPLATE FUNCTION ?
 		vector<pair<float, COLORREF>>::iterator lowest = out.begin(), highest = out.begin();
 		for (auto it = out.begin(); it != out.end(); it++) {
 			lowest = (*lowest).first <= (*it).first ? lowest : it;
@@ -324,14 +349,8 @@ vector<pair<float, Vec4>> findIntersectionsNormal(int line, vector<pair<Vec4, Ve
 	for (pair<Vec4, Vec4>& edge : polyEdges) {
 		if ((line >= (int)edge.first.yCoord() && line <= (int)edge.second.yCoord()) || (line <= (int)edge.first.yCoord() && line >= (int)edge.second.yCoord())) {
 			float x = getIntersectionPoint(edge.first, edge.second, line);
-			if (x < edge.first.xCoord() && x < edge.second.xCoord())
-				x = min(edge.first.xCoord(), edge.second.xCoord());
-			else if (x > edge.first.xCoord() && x > edge.second.xCoord())
-				x = max(edge.first.xCoord(), edge.second.xCoord());
+			double percentage = getInterpolationPercentage(x, line, edge.first, edge.second);
 
-			double lineDist = distance(edge.first.xCoord(), edge.first.yCoord(), edge.second.xCoord(), edge.second.yCoord());
-			double pointDist = distance(x, line, edge.second.xCoord(), edge.second.yCoord());
-			double percentage = pointDist / lineDist;
 			pair<float, Vec4> pair;
 			pair.first = x;
 			pair.second = getInterpolatedNormal(percentage, polyEdgesNormals[i].first, polyEdgesNormals[i].second);
@@ -355,8 +374,77 @@ vector<pair<float, Vec4>> findIntersectionsNormal(int line, vector<pair<Vec4, Ve
 	return out;
 }
 
+vector<pair<float, double*>> findIntersectionsUVAttrs(int line, vector<pair<Vec4, Vec4>> polyEdges, vector<pair<double*, double*>> polyEdgesUVAttrs)
+{
+	vector<pair<float, double*>> out;
+	int i = 0;
+	for (pair<Vec4, Vec4>& edge : polyEdges) {
+		if ((line >= (int)edge.first.yCoord() && line <= (int)edge.second.yCoord()) || (line <= (int)edge.first.yCoord() && line >= (int)edge.second.yCoord())) {
+			float x = getIntersectionPoint(edge.first, edge.second, line);
+			double percentage = getInterpolationPercentage(x, line, edge.first, edge.second);
+
+			pair<float, double*> pair;
+			pair.first = x;
+			pair.second = getInterpolatedUVs(percentage, polyEdgesUVAttrs[i].first, polyEdgesUVAttrs[i].second);
+			out.push_back(pair);
+		}
+		i++;
+	}
+	if (out.size() > 2) {
+		vector<pair<float, double*>>::iterator lowest = out.begin(), highest = out.begin();
+		for (auto it = out.begin(); it != out.end(); it++) {
+			lowest = (*lowest).first <= (*it).first ? lowest : it;
+			highest = (*highest).first > (*it).first ? highest : it;
+		}
+		vector<pair<float, double*>> newOut;
+		newOut.push_back(*lowest);
+		newOut.push_back(*highest);
+		return newOut;
+	}
+
+	ASSERT(out.size() != 1);
+	return out;
+}
+
+vector<pair<double*, double*>> Renderer::getEdgesUVAttrs(const vector<Edge*>& edges) {
+	vector<pair<double*, double*>> polyEdgesUVAttrs;
+	for (int i = 0; i <= edges.size(); i++) {
+		int j = i, k = i;
+		if (i == edges.size()) {
+			if (edges[i - 1]->getB()->getVec4Coords() == edges[0]->getA()->getVec4Coords()) //Index manipulation to enable adding an additional edge between last and first edge
+				break;
+			j = i - 1;
+			k = 0;
+		}
+		double* pointAUV = new double[2];
+		double* pointBUV = new double[2];
+		pointAUV[0] = edges[k]->getA()->getUAttribute();
+		pointAUV[1] = edges[k]->getA()->getVAttribute();
+		pointBUV[0] = edges[j]->getB()->getUAttribute();
+		pointBUV[1] = edges[j]->getB()->getVAttribute();
+		pair<double*, double*> outUVAttribs;
+		outUVAttribs.first = pointAUV;
+		outUVAttribs.second = pointBUV;
+		polyEdgesUVAttrs.push_back(outUVAttribs);
+	}
+	return polyEdgesUVAttrs;
+}
+
+
 float getIntersectionPoint(Vec4 p1, Vec4 p2, float y) {
-	return getIntersectionWithLine(p1, p2, 0, y).xCoord();
+	float x = getIntersectionWithLine(p1, p2, 0, y).xCoord();
+	if (x < p1.xCoord() && x < p2.xCoord())
+		x = min(p1.xCoord(), p2.xCoord());
+	else if (x > p1.xCoord() && x > p2.xCoord())
+		x = max(p1.xCoord(), p2.xCoord());
+
+	return x;
+}
+
+double getInterpolationPercentage(float x, float y, Vec4 p1, Vec4 p2) {
+	double lineDist = distance(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord());
+	double pointDist = distance(x, y, p2.xCoord(), p2.yCoord());
+	return pointDist / lineDist;
 }
 
 Vec4 getTransformedImportedNormal(const Vec4 & normal, const Mat4 & transformation)
@@ -368,8 +456,6 @@ Vec4 getTransformedImportedNormal(const Vec4 & normal, const Mat4 & transformati
 
 	return noTranslate * normal;
 }
-
-
 
 static COLORREF getInterpolatedColor(double a, COLORREF clr1, COLORREF clr2) {
 	int r = GetRValue(clr2) * (1 - a) + GetRValue(clr1) * a;
@@ -386,6 +472,13 @@ static COLORREF getInterpolatedColor(double a, COLORREF clr1, COLORREF clr2) {
 
 static Vec4 getInterpolatedNormal(double a, Vec4 nrm1, Vec4 nrm2) {
 	return nrm1 * a + nrm2 * (1 - a);
+}
+
+static double* getInterpolatedUVs(double a, double* p1, double* p2) {
+	double* out = new double[2];
+	out[0] = p1[0] * a + p2[0] * (1 - a);
+	out[1] = p1[1] * a + p2[1] * (1 - a);
+	return out;
 }
 
 static double distance(int x1, int y1, int x2, int y2) {
@@ -995,6 +1088,11 @@ void Renderer::disableVertexNormalInvert()
 	invertVertexNormals = false;
 }
 
+void Renderer::disableParametrixTextures()
+{
+	withParametricTextures = false;
+}
+
 void Renderer::enablePolygonNormals()
 {
 	withPolygonNormals = true;
@@ -1008,6 +1106,11 @@ void Renderer::enablePolygonNormalInvert()
 void Renderer::enableVertexNormalInvert()
 {
 	invertVertexNormals = true;
+}
+
+void Renderer::enableParametrixTextures()
+{
+	withParametricTextures = true;
 }
 
 
@@ -1154,4 +1257,12 @@ vector<Vec4> Renderer::getPolyAsVectorVec4(Face* face, const Mat4 finalMatrix)
 		poly.push_back(currPoint * (1 / currPoint.wCoord()));
 	}
 	return poly;
+}
+
+COLORREF invertRB(COLORREF clr)
+{
+	int iRed = GetRValue(clr);
+	int iBlue = GetBValue(clr);
+	int iGreen = GetGValue(clr);
+	return RGB(iBlue, iGreen, iRed);
 }

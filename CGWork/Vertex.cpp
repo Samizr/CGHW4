@@ -6,12 +6,15 @@ Vertex::Vertex() {
 	this->_yCoord = 0.0;
 	this->_zCoord = 0.0;
 	importedNormal = nullptr;
+	validUV = false;
 }
 
 Vertex::Vertex(float x, float y, float z) {
 	this->_xCoord = x;
 	this->_yCoord = y;
 	this->_zCoord = z;
+	importedNormal = nullptr;
+	validUV = false;
 }
 
 void Vertex::addFace(Face * face) {
@@ -46,9 +49,31 @@ Vec4 * Vertex::getNormal()
 	return importedNormal;
 }
 
+double Vertex::getUAttribute()
+{
+	return attrU;
+}
+
+double Vertex::getVAttribute()
+{
+	return attrV;
+}
+
+bool Vertex::UVAttributesValid()
+{
+	return validUV;
+}
+
 void Vertex::setNormal(Vec4 * normal)
 {
 	importedNormal = normal;
+}
+
+void Vertex::setUV(double U, double V)
+{
+	validUV = true;
+	attrU = U;
+	attrV = V;
 }
 
 float Vertex::xCoord() {

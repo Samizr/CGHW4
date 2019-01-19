@@ -11,6 +11,8 @@ private:
 	float _xCoord, _yCoord, _zCoord;
 	vector<Face*> faces;
 	Vec4* importedNormal;
+	double attrU, attrV;
+	bool validUV;
 public:
 	Vertex();
 	Vertex(float x, float y, float z);
@@ -19,7 +21,11 @@ public:
 	Vec4 calculateVertexNormalTarget(Mat4 transformationMatrix, bool invert);
 	Vec4 getVec4Coords();
 	Vec4* getNormal();
+	double getUAttribute();
+	double getVAttribute();
+	bool UVAttributesValid();
 	void setNormal(Vec4* normal);
+	void setUV(double U, double V);
 	float xCoord();
 	float yCoord();
 	float zCoord();
