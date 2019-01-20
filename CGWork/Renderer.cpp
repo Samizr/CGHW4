@@ -102,6 +102,8 @@ void Renderer::drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model
 
 
 void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* model, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
+	sceneMaximalDepth = -FLT_MAX;
+	sceneMinimalDepth = FLT_MAX;
 	if (withParametricTextures && model->getModelTexturePNG()) {
 		renderedTexture = model->getModelTexturePNG();
 	}
@@ -126,6 +128,7 @@ void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* mo
 			drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
 		}
 	}
+
 }
 
 void Renderer::drawSolidBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
@@ -169,8 +172,9 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 
 	//Prepare function parameters.
 	int minX = rect.Width(), minY = rect.Height(), maxX = 0, maxY = 0;
-	COLORREF clr = originalClr;
+	COLORREF clr, prefillingClr = originalClr;
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+	//Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
 	vector<Edge*> edges = face->getEdges();
 	vector<Vec4> poly = getPolyAsVectorVec4(face, finalMatrix);
 	vector<pair<Vec4, Vec4>> polyEdges = getEdgesAsVectorVec4(edges, finalMatrix);
@@ -184,9 +188,9 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 
 	// Go over all inside frame from above pixels, only work with ones inside projected polygon.
 	if (lightingMode == FLAT)
-		clr = getColor(face->calculateMidpoint(), face->calculateNormal(objectWorldMatrix), originalClr, lightSources, ambientLight, materialParams);
+		prefillingClr = getColor(face->calculateMidpoint(), face->calculateNormal(objectWorldMatrix), originalClr, lightSources, ambientLight, materialParams);
 
-	for (int i = minY; i < maxY; i++) {
+	for (int i = max(minY, 0); i < min(maxY, rect.Width()); i++) {
 		intersectionPointsUV = renderedTexture ? findIntersectionsUVAttrs(i, polyEdges, polyEdgesUVAttrs) : intersectionPointsUV;
 		intersectionPointsCLR = lightingMode == GOURAUD ? findIntersectionsColor(i, polyEdges, polyEdgesColors) : intersectionPointsCLR;
 		intersectionPointsNRM = lightingMode == PHONG ? findIntersectionsNormal(i, polyEdges, polyEdgesNormals) : intersectionPointsNRM;
@@ -195,9 +199,12 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 				float currentDepth = getDepthAtPoint(j, i, poly);
 				if (zBuffer && currentDepth <= zBuffer[i * rect.Width() + j])
 					continue;
-				clr = lightingMode == GOURAUD ? getColorGouraud(intersectionPointsCLR, j) : clr;
-				clr = lightingMode == PHONG ? getColorPhong(intersectionPointsNRM, j, i, currentDepth, originalClr, lightSources, ambientLight, materialParams) : clr;
+				sceneMaximalDepth = max(sceneMaximalDepth, currentDepth);
+				sceneMinimalDepth = min(sceneMinimalDepth, currentDepth);
+				clr = prefillingClr;
 				clr = renderedTexture ? getColorParametricTexture(intersectionPointsUV, j) : clr;
+				clr = lightingMode == GOURAUD ? getColorGouraud(intersectionPointsCLR, j) : clr;
+				clr = lightingMode == PHONG ? getColorPhong(intersectionPointsNRM, j, i, currentDepth, clr, lightSources, ambientLight, materialParams) : clr;
 				clr = fog.active ? getColorFog(clr, currentDepth) : clr;
 				bitArr[i * rect.Width() + j] = clr;
 				if (zBuffer)
@@ -208,6 +215,7 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 		//	delete intersectionPointsUV[i].second;
 		//}
 	}
+
 }
 
 COLORREF Renderer::getColorParametricTexture(vector<pair<float, double*>> intersectionPointsUV, int x)
@@ -219,9 +227,9 @@ COLORREF Renderer::getColorParametricTexture(vector<pair<float, double*>> inters
 	double percentage = lineDist == 0 ? 1 : pointDist / lineDist;
 	percentage = percentage > 1 ? 1 : percentage;
 	double* UV = getInterpolatedUVs(percentage, intersectionPointsUV[maxId].second, intersectionPointsUV[minId].second);
-	double h = renderedTexture->GetHeight();
-	double w = renderedTexture->GetWidth();
-	return invertRB(renderedTexture->GetValue(UV[0] * h, UV[1] * w));
+	double h = renderedTexture->GetHeight() - 1;
+	double w = renderedTexture->GetWidth() - 1;
+	return extractColorFromPng(UV[0] * h, UV[1] * w, renderedTexture);// renderedTexture->GetValue(UV[0] * h, UV[1] * w);
 }
 
 COLORREF Renderer::getColorGouraud(vector<pair<float, COLORREF>> intersectionPointsCLR, int x) {
@@ -250,19 +258,16 @@ COLORREF Renderer::getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM
 
 COLORREF Renderer::getColorFog(COLORREF originalClr, float depth)
 {
-	float deltaPos = fog.z_far - abs(depth);
+	float deltaPos = fog.z_far - depth;
 	float deltaMax = fog.z_far - fog.z_near;
 	float ratio = deltaPos / deltaMax;
 	if (ratio > 1) {
 		return originalClr;
 	}
-	else if (ratio < 0) {
+	else if (ratio < 0) {	
 		return fog.color;
 	}
-	int R = ratio * GetRValue(originalClr) + (1 - ratio) * GetRValue(fog.color);
-	int G = ratio * GetGValue(originalClr) + (1 - ratio) * GetGValue(fog.color);
-	int B = ratio * GetBValue(originalClr) + (1 - ratio) * GetBValue(fog.color);
-	return RGB(R, G, B);
+	return getInterpolatedColor(ratio, fog.color, originalClr);
 }
 
 
@@ -1065,6 +1070,12 @@ void Renderer::setFogParams(FogParams fog)
 	this->fog = fog;
 }
 
+void Renderer::getSceneDepthParams(float * min, float * max)
+{
+	*min = sceneMinimalDepth;
+	*max = sceneMaximalDepth;
+}
+
 void Renderer::disableBoundingBox() {
 	withBounding = false;
 }
@@ -1147,7 +1158,7 @@ COLORREF Renderer::getColor(Vec4 point, Vec4 normal, COLORREF originalClr, const
 			lightVec = Vec4(light.dirX, light.dirY, light.dirZ, 0);
 		}
 		else if (light.type == LIGHT_TYPE_POINT) {
-			lightVec = Vec4(point.xCoord() - light.posX, point.yCoord() - light.posX, point.zCoord() - light.posZ, 0);
+			lightVec = Vec4(point.xCoord() - light.posX, point.yCoord() - light.posY, point.zCoord() - light.posZ, 0);
 			lightVec.normalize();
 		}
 		//DIFFUSE LIGHT:
@@ -1219,8 +1230,16 @@ vector<pair<Vec4, Vec4>> Renderer::getEdgesNormals(const vector<Edge*> edges, co
 			j = i - 1;
 			k = 0;
 		}
-		Vec4 normalA = getTransformedImportedNormal(*(edges[k]->getA()->getNormal()), objectWorldMatrix);
-		Vec4 normalB = getTransformedImportedNormal(*(edges[j]->getB()->getNormal()), objectWorldMatrix);
+		Vec4 normalA, normalB;
+		if (edges[k]->getA()->getNormal() && edges[j]->getB()->getNormal()) {
+			normalA = getTransformedImportedNormal(*(edges[k]->getA()->getNormal()), objectWorldMatrix);
+			normalB = getTransformedImportedNormal(*(edges[j]->getB()->getNormal()), objectWorldMatrix);
+		}
+		else {
+			normalA = edges[k]->getA()->calculateVertexNormalTarget(objectWorldMatrix, false);
+			normalB = edges[j]->getB()->calculateVertexNormalTarget(objectWorldMatrix, false);
+
+		}
 		pair<Vec4, Vec4> outNormals;
 		outNormals.first = normalA;
 		outNormals.second = normalB;

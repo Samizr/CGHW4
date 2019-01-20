@@ -27,7 +27,7 @@ vector<Face*> Vertex::getFaces() {
 
 Vec4 Vertex::calculateVertexNormalTarget(Mat4 transformationMatrix, bool invert)
 {
-	Vec4 targetSum = Vec4();
+	Vec4 targetSum;
 	Vec4 vertexAsVector = transformationMatrix * Vec4(_xCoord, _yCoord, _zCoord, 1);
 	for (Face* face : faces) {
 		targetSum = targetSum + face->calculateFaceNormalTarget(vertexAsVector, transformationMatrix, invert);

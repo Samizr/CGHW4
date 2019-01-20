@@ -96,6 +96,7 @@ public:
 	void setLightSpecularVariable(double data);
 	void setLightCosineComponent(double data);
 	void setFogParams(FogParams fog);
+	void getSceneDepthParams(float *min, float *max);
 	void setPngBackgroundImage(PngWrapper* pngBackgroundImage);
 	void enableBackgroundImage();
 	void disableBackgroundImage();

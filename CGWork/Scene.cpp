@@ -176,6 +176,7 @@ void Scene::drawSolid(COLORREF* bitArr, CRect rect) {
 	float* zBuffer = createZBuffer(rect);
 	double materialComponents[4] = { ambientFraction, diffuseFraction, specularFraction, cosinComponent };
 	for (std::pair<int, Model*> pair : models) {
+		this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&pair.second->getMainGeometry()));
 		if (withBackfaceCulling) {
 			m_renderer.drawSolidBackfaceCulling(bitArr, rect, pair.second, lightSources, ambientLight, materialComponents);
 		}
@@ -336,6 +337,11 @@ void Scene::setLightCosineComponent(double data)
 void Scene::setFogParams(FogParams fog)
 {
 	this->m_renderer.setFogParams(fog);
+}
+
+void Scene::getSceneDepthParams(float * min, float * max)
+{
+	this->m_renderer.getSceneDepthParams(min, max);
 }
 
 void Scene::setPngBackgroundImage(PngWrapper* pngBackgroundImage) {

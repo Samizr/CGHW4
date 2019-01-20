@@ -54,6 +54,7 @@ class Renderer {
 	FogParams fog;
 	float* filters3[4];
 	float* filters5[4];
+	float sceneMinimalDepth, sceneMaximalDepth;
 
 	void drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 finalMatrix);
 	void drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
@@ -92,6 +93,7 @@ public:
 	void setSilhouetteClr(COLORREF clr);
 	void setLightingMode(LightMode mode);
 	void setFogParams(FogParams fog);
+	void getSceneDepthParams(float* min, float* max);
 	void enableBoundingBox();
 	void enablePolygonNormals();
 	void enablePolygonNormalInvert();

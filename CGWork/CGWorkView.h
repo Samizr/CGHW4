@@ -238,6 +238,7 @@ public:
 	afx_msg void OnSolidrenderingSupersamplinganti();
 	afx_msg void OnViewMotionblur();
 	afx_msg void OnTexturesLoadtexture();
+	afx_msg void OnFogDisplayscenedepth();
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

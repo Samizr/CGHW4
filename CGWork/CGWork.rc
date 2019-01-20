@@ -175,6 +175,7 @@ BEGIN
     POPUP "Fog"
     BEGIN
         MENUITEM "Parameters...",               ID_FOG_PARAMETERS
+        MENUITEM "Display Scene Depth",         ID_FOG_DISPLAYSCENEDEPTH
     END
 END
 

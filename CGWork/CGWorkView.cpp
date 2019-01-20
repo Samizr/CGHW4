@@ -142,6 +142,7 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_COMMAND(ID_SOLIDRENDERING_SUPERSAMPLINGANTI, &CCGWorkView::OnSolidrenderingSupersamplinganti)
 	ON_COMMAND(ID_VIEW_MOTIONBLUR, &CCGWorkView::OnViewMotionblur)
 	ON_COMMAND(ID_TEXTURES_LOADTEXTURE, &CCGWorkView::OnTexturesLoadtexture)
+	ON_COMMAND(ID_FOG_DISPLAYSCENEDEPTH, &CCGWorkView::OnFogDisplayscenedepth)
 END_MESSAGE_MAP()
 
 
@@ -298,7 +299,8 @@ BOOL CCGWorkView::InitializeCGWork()
 	scene.setBackgroundColor(m_clrBackground);
 	scene.draw(bitArray, r);
 	scene.setFogParams(m_fog);
-	//activeDebugFeatures3();
+	activeDebugFeatures2();
+	activeDebugFeatures1();
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
@@ -372,6 +374,7 @@ void CCGWorkView::OnDraw(CDC* pDC)
 		renderRect = outputRect;
 		drawRect = outputRect;
 	}
+
 
 	CDC *pDCToUse = m_pDbDC;
 	int renderH = renderRect.bottom - renderRect.top;
@@ -1170,6 +1173,7 @@ void CCGWorkView::OnViewAdvancedSettings()
 }
 
 void CCGWorkView::resetButtons() {
+	m_nView = ID_VIEW_ORTHOGRAPHIC;
 	m_bIsPerspective = false;
 	m_bBoxFrame = false;
 	m_bPolyNormals = false;
@@ -1294,14 +1298,14 @@ void CCGWorkView::activeDebugFeatures1()
 	m_lights[0].colorR = 255;
 	m_lights[0].colorG = 255;
 	m_lights[0].colorB = 255;
-	m_lights[0].posX = 2;
+	m_lights[0].posX = 20;
 	m_lights[0].posY = 0;
 	m_lights[0].posZ = 0;
 	m_lights[0].dirX = 0;
 	m_lights[0].dirY = 0;
 	m_lights[0].dirZ = -2;
 	m_lights[0].enabled = true;
-	m_lights[0].type = LIGHT_TYPE_DIRECTIONAL;
+	m_lights[0].type = LIGHT_TYPE_POINT;
 	scene.setLightSource(m_lights[0], 0);
 	scene.setSolidMode();
 }
@@ -1347,25 +1351,29 @@ void CCGWorkView::activeDebugFeatures2() {
 //Debugging console:
 void CCGWorkView::activeDebugFeatures3() {
 	Geometry square;
-	Vertex* a = new Vertex(1, 1, -1);
-	Vertex* b = new Vertex(-1, 1, -1);
-	Vertex* c = new Vertex(1, -1, 1);
-	Vertex* d = new Vertex(-1, -1, 1);
-	square.addVertex(a);
-	square.addVertex(b);
-	square.addVertex(c);
-	square.addVertex(d);
+	Vertex* a = new Vertex(1, 1, -10);
+	Vertex* b = new Vertex(-1, 1, -10);
+	Vertex* c = new Vertex(1, -1, 10);
+	Vertex* d = new Vertex(-1, -1, 10);
 	Edge* e1 = new Edge(a, b);
 	Edge* e2 = new Edge(b, d);
 	Edge* e3 = new Edge(d, c);
 	Edge* e4 = new Edge(c, a);
+	Face* face = new Face(e1, e2, e3, e4);
+	square.addVertex(a);
+	square.addVertex(b);
+	square.addVertex(c);
+	square.addVertex(d);
 	square.addEdge(e1);
 	square.addEdge(e2);
 	square.addEdge(e3);
 	square.addEdge(e4);
-	Face* face = new Face(e1, e2, e3, e4);
+	a->addFace(face);
+	b->addFace(face);
+	c->addFace(face);
+	d->addFace(face);
 	square.addFace(face);
-	square.setLineClr(RGB(255, 255, 0));
+	square.setLineClr(RGB(255, 0, 0));
 	Model* squareModel = new Model(square);
 	
 	scene.addModel(squareModel);
@@ -1430,4 +1438,14 @@ void CCGWorkView::OnTexturesLoadtexture()
 		m_bWithParametricTextures ? scene.enableParametricTextures() : scene.disableParametricTextures();
 	}
 	Invalidate();
+}
+
+
+void CCGWorkView::OnFogDisplayscenedepth()
+{
+	float min, max;
+	char buff[100];
+	scene.getSceneDepthParams(&min, &max);
+	sprintf_s(buff, "Minimum Object Depth = %f\n Maximum Object Depth = %f", min, max);
+	MessageBox((CString)(buff), _T("Fog Parameters"), MB_ICONINFORMATION);
 }

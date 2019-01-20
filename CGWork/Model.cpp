@@ -137,8 +137,8 @@ void Model::normalizeUVAttributes()
 	if (!UVAttributesValid())
 		return;
 
-	double Umax = DBL_MIN;
-	double Vmax = DBL_MIN;
+	double Umax = -DBL_MAX;
+	double Vmax = -DBL_MAX;
 	double Umin = DBL_MAX;
 	double Vmin = DBL_MAX;
 	for (auto vertex : mainGeometry.getVertices()) {
