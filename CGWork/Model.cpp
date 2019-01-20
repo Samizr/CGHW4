@@ -34,7 +34,8 @@ bool Model::UVAttributesNormalized()
 }
 
 Model::Model(Geometry& geometry) {
-	this->mainGeometry = geometry;
+	this->setMainGeometry(geometry);
+	this->addSubGeometry(geometry);
 	this->mMainTransform = Mat4::Identity();
 	this->ParametricTexturePNG = nullptr;
 }

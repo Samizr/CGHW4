@@ -12,9 +12,9 @@ using std::numeric_limits;
 
 void Geometry::setPointLimits()
 {
-	maxX = std::numeric_limits<float>::min();
-	maxY = std::numeric_limits<float>::min();
-	maxZ = std::numeric_limits<float>::min();
+	maxX = -std::numeric_limits<float>::max();
+	maxY = -std::numeric_limits<float>::max();
+	maxZ = -std::numeric_limits<float>::max();
 	minX = std::numeric_limits<float>::max();
 	minY = std::numeric_limits<float>::max();
 	minZ = std::numeric_limits<float>::max();

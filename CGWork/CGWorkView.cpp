@@ -298,7 +298,7 @@ BOOL CCGWorkView::InitializeCGWork()
 	scene.setBackgroundColor(m_clrBackground);
 	scene.draw(bitArray, r);
 	scene.setFogParams(m_fog);
-	//activeDebugFeatures1();
+	//activeDebugFeatures3();
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
@@ -1347,22 +1347,35 @@ void CCGWorkView::activeDebugFeatures2() {
 //Debugging console:
 void CCGWorkView::activeDebugFeatures3() {
 	Geometry square;
-	Vertex* a = new Vertex(1, 1, 0);
-	Vertex* b = new Vertex(-1, 1, 0);
-	Vertex* c = new Vertex(1, -1, 0);
-	Vertex* d = new Vertex(-1, -1, 0);
+	Vertex* a = new Vertex(1, 1, -1);
+	Vertex* b = new Vertex(-1, 1, -1);
+	Vertex* c = new Vertex(1, -1, 1);
+	Vertex* d = new Vertex(-1, -1, 1);
 	square.addVertex(a);
 	square.addVertex(b);
 	square.addVertex(c);
 	square.addVertex(d);
 	Edge* e1 = new Edge(a, b);
-	Edge* e2 = new Edge(a, b);
-	Edge* e3 = new Edge(a, b);
-	Edge* e4 = new Edge(a, b);
+	Edge* e2 = new Edge(b, d);
+	Edge* e3 = new Edge(d, c);
+	Edge* e4 = new Edge(c, a);
 	square.addEdge(e1);
 	square.addEdge(e2);
 	square.addEdge(e3);
 	square.addEdge(e4);
+	Face* face = new Face(e1, e2, e3, e4);
+	square.addFace(face);
+	square.setLineClr(RGB(255, 255, 0));
+	Model* squareModel = new Model(square);
+	
+	scene.addModel(squareModel);
+
+	float distance = 5;
+	m_nPerspectiveD = 3 * distance;
+	m_nPerspectiveAlpha = distance;
+	Camera* newCamera = new Camera();
+	newCamera->LookAt(Vec4(0, 0, 3 * distance, 0), Vec4(0, 0, 0, 0), Vec4(0, 1, 0, 0));
+	scene.addCamera(newCamera);
 }
 
 void CCGWorkView::OnSolidrenderingSupersamplinganti()

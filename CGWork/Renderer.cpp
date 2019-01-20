@@ -327,7 +327,7 @@ vector<pair<float, COLORREF>> findIntersectionsColor(int line, vector<pair<Vec4,
 		}
 		i++;
 	}
-	if (out.size() > 2) { //MAKE TEMPLATE FUNCTION ?
+	if (out.size() > 2) { 
 		vector<pair<float, COLORREF>>::iterator lowest = out.begin(), highest = out.begin();
 		for (auto it = out.begin(); it != out.end(); it++) {
 			lowest = (*lowest).first <= (*it).first ? lowest : it;
