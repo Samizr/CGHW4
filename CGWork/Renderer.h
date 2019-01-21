@@ -70,7 +70,7 @@ class Renderer {
 	vector<pair<double*, double*>> getEdgesUVAttrs(const vector<Edge*>& edges);
 	COLORREF getColorParametricTexture(vector<pair<float, double*>> intersectionPointsUV, int x);
 	COLORREF getColorGouraud(vector<pair<float, COLORREF>> intersectionPointsCLR, int x);
-	COLORREF getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM, int x, int y, int z, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
+	COLORREF getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM, int x, int y, float z, COLORREF originalClr, Mat4 finalMatrixInverse ,array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
 	COLORREF getColorFog(COLORREF originalClr, float depth);
 
 public:

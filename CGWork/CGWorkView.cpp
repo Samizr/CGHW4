@@ -299,8 +299,8 @@ BOOL CCGWorkView::InitializeCGWork()
 	scene.setBackgroundColor(m_clrBackground);
 	scene.draw(bitArray, r);
 	scene.setFogParams(m_fog);
-	activeDebugFeatures2();
-	activeDebugFeatures1();
+	//activeDebugFeatures2();
+	//activeDebugFeatures1();
 	SetTimer(1, 1, NULL);
 	int h = r.bottom - r.top;
 	int w = r.right - r.left;
@@ -1292,7 +1292,7 @@ void CCGWorkView::activeDebugFeatures1()
 	//for (std::pair<int, Model*> pair : scene.getAllModels()) {
 	//	resetModel(pair.second);
 	//}
-	scene.setLightingMode(GOURAUD);
+	scene.setLightingMode(PHONG);
 	//scene.enableBackfaceCulling();
 	::CGSkelFFCState.FineNess = 20;
 	m_lights[0].colorR = 255;

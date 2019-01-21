@@ -172,8 +172,9 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 
 	//Prepare function parameters.
 	int minX = rect.Width(), minY = rect.Height(), maxX = 0, maxY = 0;
-	COLORREF clr, prefillingClr = originalClr;
+	COLORREF clr, preScanConversionClr = originalClr;
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+	Mat4 finalMatrixInverse = finalMatrix.getInverse();
 	//Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
 	vector<Edge*> edges = face->getEdges();
 	vector<Vec4> poly = getPolyAsVectorVec4(face, finalMatrix);
@@ -188,7 +189,7 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 
 	// Go over all inside frame from above pixels, only work with ones inside projected polygon.
 	if (lightingMode == FLAT)
-		prefillingClr = getColor(face->calculateMidpoint(), face->calculateNormal(objectWorldMatrix), originalClr, lightSources, ambientLight, materialParams);
+		preScanConversionClr = getColor(face->calculateMidpoint(), face->calculateNormal(objectWorldMatrix), originalClr, lightSources, ambientLight, materialParams);
 
 	for (int i = max(minY, 0); i < min(maxY, rect.Width()); i++) {
 		intersectionPointsUV = renderedTexture ? findIntersectionsUVAttrs(i, polyEdges, polyEdgesUVAttrs) : intersectionPointsUV;
@@ -201,10 +202,11 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 					continue;
 				sceneMaximalDepth = max(sceneMaximalDepth, currentDepth);
 				sceneMinimalDepth = min(sceneMinimalDepth, currentDepth);
-				clr = prefillingClr;
+				clr = preScanConversionClr;
 				clr = renderedTexture ? getColorParametricTexture(intersectionPointsUV, j) : clr;
 				clr = lightingMode == GOURAUD ? getColorGouraud(intersectionPointsCLR, j) : clr;
-				clr = lightingMode == PHONG ? getColorPhong(intersectionPointsNRM, j, i, currentDepth, clr, lightSources, ambientLight, materialParams) : clr;
+				//Vec4 depthToSend = (windowMatrix * (normalizationMatrix * (projectionMatrix * /*(cameraMatrix */ Vec4(0, 0, currentDepth, 0))));
+				clr = lightingMode == PHONG ? getColorPhong(intersectionPointsNRM, j, i, currentDepth, clr, finalMatrixInverse, lightSources, ambientLight, materialParams) : clr;
 				clr = fog.active ? getColorFog(clr, currentDepth) : clr;
 				bitArr[i * rect.Width() + j] = clr;
 				if (zBuffer)
@@ -242,10 +244,9 @@ COLORREF Renderer::getColorGouraud(vector<pair<float, COLORREF>> intersectionPoi
 	return getInterpolatedColor(percentage, intersectionPointsCLR[maxId].second, intersectionPointsCLR[minId].second);
 }
 
-COLORREF Renderer::getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM, int x, int y, int z, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
-	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
-	Vec4 point(x, y, z, 0);
-	Vec4 objectSpacePoint = objectWorldMatrix * finalMatrix.getInverse() * point;
+COLORREF Renderer::getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM, int x, int y, float z, COLORREF originalClr, Mat4 finalMatrixInverse, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
+	Vec4 point(x, y, z, 1);
+	Vec4 objectSpacePoint = objectWorldMatrix * finalMatrixInverse * point;
 	int minId = intersectionPointsNRM[0].first <= intersectionPointsNRM[1].first ? 0 : 1;
 	int maxId = 1 - minId;
 	double pointDist = abs(x - intersectionPointsNRM[minId].first);
@@ -269,7 +270,6 @@ COLORREF Renderer::getColorFog(COLORREF originalClr, float depth)
 	}
 	return getInterpolatedColor(ratio, fog.color, originalClr);
 }
-
 
 float* createZBuffer(CRect rect) {
 	float* zBuffer = new float[rect.Width() * rect.Height()];
@@ -1238,7 +1238,6 @@ vector<pair<Vec4, Vec4>> Renderer::getEdgesNormals(const vector<Edge*> edges, co
 		else {
 			normalA = edges[k]->getA()->calculateVertexNormalTarget(objectWorldMatrix, false);
 			normalB = edges[j]->getB()->calculateVertexNormalTarget(objectWorldMatrix, false);
-
 		}
 		pair<Vec4, Vec4> outNormals;
 		outNormals.first = normalA;
