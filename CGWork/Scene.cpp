@@ -132,10 +132,10 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	//DRAW BACKGROUND
 	this->m_renderer.setMainRect(rect);
 	if (withPngBackground && !repeatMode) {
-		this->m_renderer.drawBackgoundImageStretch(bitArr, rect, pngBackgroundImage);
+		this->m_renderer.drawBackgoundImageStretch(bitArr, rect, pngTextureImage);
 	}
 	else if (withPngBackground && repeatMode) {
-		this->m_renderer.drawBackgoundImageRepeat(bitArr, rect, pngBackgroundImage);
+		this->m_renderer.drawBackgoundImageRepeat(bitArr, rect, pngTextureImage);
 	}
 	else {
 		this->m_renderer.drawBackgroundColor(bitArr, rect);
@@ -344,8 +344,8 @@ void Scene::getSceneDepthParams(float * min, float * max)
 	this->m_renderer.getSceneDepthParams(min, max);
 }
 
-void Scene::setPngBackgroundImage(PngWrapper* pngBackgroundImage) {
-	this->pngBackgroundImage = pngBackgroundImage;
+void Scene::setPngBackgroundImage(PngWrapper* pngTextureImage) {
+	this->pngTextureImage = pngTextureImage;
 }
 
 void Scene::enableBackgroundImage() {

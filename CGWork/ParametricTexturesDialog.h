@@ -23,7 +23,7 @@ protected:
 public:
 	int modelNum;
 	CString rasterImageFileName;
-	PngWrapper* pngBackgroundImage;
+	PngWrapper* pngTextureImage;
 	afx_msg void OnBnLoadRasterImage();
 	BOOL enableParametricTextures;
 };

@@ -26,7 +26,6 @@ protected:
 	Mat4 mMainTransform;
 	vector<pair<Geometry, Mat4>> subGeometries;
 	PngWrapper* ParametricTexturePNG;
-	bool UVAttributesValid();
 	bool UVAttributesNormalized(); //DBG function
 
 public:
@@ -53,5 +52,6 @@ public:
 	void scaleViewSpace(AXIS axis, float amount);
 	void normalizeUVAttributes();
 	void clear();
+	bool UVAttributesValid();
 };
 #endif /* Model_h */

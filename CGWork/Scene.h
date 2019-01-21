@@ -28,7 +28,7 @@ class Scene {
 	bool withBoundingBox;
 	bool withBackfaceCulling;
 
-	PngWrapper* pngBackgroundImage;
+	PngWrapper* pngTextureImage;
 	bool withPngBackground;
 	bool withSilhouette;
 	bool repeatMode;
@@ -97,7 +97,7 @@ public:
 	void setLightCosineComponent(double data);
 	void setFogParams(FogParams fog);
 	void getSceneDepthParams(float *min, float *max);
-	void setPngBackgroundImage(PngWrapper* pngBackgroundImage);
+	void setPngBackgroundImage(PngWrapper* pngTextureImage);
 	void enableBackgroundImage();
 	void disableBackgroundImage();
 };

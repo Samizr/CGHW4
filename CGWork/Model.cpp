@@ -11,8 +11,9 @@
 bool Model::UVAttributesValid()
 {
 	for (auto vertex : mainGeometry.getVertices()) {
-		if (!vertex->UVAttributesValid())
+		if (!vertex->UVAttributesValid()) {
 			return false;
+		}
 	}
 	return true;
 }
@@ -134,32 +135,31 @@ void Model::scaleViewSpace(AXIS axis, float amount) {
 
 void Model::normalizeUVAttributes()
 {
-	if (!UVAttributesValid())
+	if (!UVAttributesValid()) {
+		::AfxMessageBox(CString("ATTENTION: Object does not have valid UV attributes!"));
 		return;
+	}
 
-	double Umax = -DBL_MAX;
-	double Vmax = -DBL_MAX;
-	double Umin = DBL_MAX;
-	double Vmin = DBL_MAX;
+	double Umax = -DBL_MAX, Vmax = -DBL_MAX, Umin = DBL_MAX, Vmin = DBL_MAX;
 	for (auto vertex : mainGeometry.getVertices()) {
 		Umax = max(Umax, vertex->getUAttribute());
 		Vmax = max(Vmax, vertex->getVAttribute());
 		Umin = min(Umin, vertex->getUAttribute());
 		Vmin = min(Vmin, vertex->getVAttribute());
+		if (vertex->getVAttribute() < 0.06) {
+			int dbg = 1;
+		}
 	}
 	//Squeeze both height and width (might test other techniques).
 	double deltaU = Umax - Umin;
 	double deltaV = Vmax - Vmin;
 	ASSERT(deltaU > 0, deltaV > 0);
 	for (auto vertex : mainGeometry.getVertices()) {
-		vertex->setUV(vertex->getUAttribute() / deltaU, vertex->getVAttribute() / deltaV);
+		if ((vertex->getVAttribute() - Vmin) / deltaV < 0 || (vertex->getUAttribute() - Umin) / deltaU < 0)
+			int dbg = 1;
+		vertex->setUV((vertex->getUAttribute() - Umin) / deltaU, (vertex->getVAttribute() - Vmin) / deltaV);
 	}
-	for (int i = 0; i < subGeometries.size(); i++) {
-		for (auto vertex : subGeometries[i].first.getVertices()) {
-			vertex->setUV(vertex->getUAttribute() / deltaU, vertex->getVAttribute() / deltaV);
-		}
-	}
-	if (UVAttributesNormalized()) {
+	if (!UVAttributesNormalized()) {
 		::AfxMessageBox(CString("UV Attributes Normalization Error!"));
 	}
 }

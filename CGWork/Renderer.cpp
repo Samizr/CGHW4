@@ -205,7 +205,6 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 				clr = preScanConversionClr;
 				clr = renderedTexture ? getColorParametricTexture(intersectionPointsUV, j) : clr;
 				clr = lightingMode == GOURAUD ? getColorGouraud(intersectionPointsCLR, j) : clr;
-				//Vec4 depthToSend = (windowMatrix * (normalizationMatrix * (projectionMatrix * /*(cameraMatrix */ Vec4(0, 0, currentDepth, 0))));
 				clr = lightingMode == PHONG ? getColorPhong(intersectionPointsNRM, j, i, currentDepth, clr, finalMatrixInverse, lightSources, ambientLight, materialParams) : clr;
 				clr = fog.active ? getColorFog(clr, currentDepth) : clr;
 				bitArr[i * rect.Width() + j] = clr;
@@ -231,7 +230,7 @@ COLORREF Renderer::getColorParametricTexture(vector<pair<float, double*>> inters
 	double* UV = getInterpolatedUVs(percentage, intersectionPointsUV[maxId].second, intersectionPointsUV[minId].second);
 	double h = renderedTexture->GetHeight() - 1;
 	double w = renderedTexture->GetWidth() - 1;
-	return extractColorFromPng(UV[0] * h, UV[1] * w, renderedTexture);// renderedTexture->GetValue(UV[0] * h, UV[1] * w);
+	return extractColorFromPng(UV[0] * h, UV[1] * w, renderedTexture);
 }
 
 COLORREF Renderer::getColorGouraud(vector<pair<float, COLORREF>> intersectionPointsCLR, int x) {

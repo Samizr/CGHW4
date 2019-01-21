@@ -14,7 +14,7 @@ IMPLEMENT_DYNAMIC(ParametricTexturesDialog, CDialogEx)
 ParametricTexturesDialog::ParametricTexturesDialog(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_PARAMETRIC_TEXTURES, pParent)
 	, modelNum(0)
-	, pngBackgroundImage(nullptr)
+	, pngTextureImage(nullptr)
 	, enableParametricTextures(FALSE)
 {
 
@@ -47,11 +47,11 @@ void ParametricTexturesDialog::OnBnLoadRasterImage()
 	CFileDialog dlg(TRUE, _T("png"), _T("*.png"), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters);
 	if (dlg.DoModal() == IDOK) {
 		rasterImageFileName = dlg.GetPathName();
-		pngBackgroundImage = new PngWrapper();
+		pngTextureImage = new PngWrapper();
 		CStringA charstr(rasterImageFileName);
 		const char* fileName = charstr;
 		OutputDebugStringA(fileName);
-		pngBackgroundImage->SetFileName(fileName);
-		pngBackgroundImage->ReadPng();
+		pngTextureImage->SetFileName(fileName);
+		pngTextureImage->ReadPng();
 	}
 }

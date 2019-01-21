@@ -34,6 +34,11 @@ static char THIS_FILE[] = __FILE__;
 // For Status Bar access
 #include "MainFrm.h"
 
+#define NO_FILTER 0
+#define FILTER_3X3 1
+#define FILTER_5X5 2
+#define NO_MODELS_IN_SCENE -1
+
 // Static Functions:
 static AXIS sceneAxisTranslator(int guiID);
 static void initializeBMI(BITMAPINFO& bminfo, CRect rect);
@@ -41,12 +46,14 @@ static void resetModel(Model* model);
 static COLORREF invertRB(COLORREF clr);
 static void writeColorRefArrayToPng(COLORREF* bitArr, const char* name, CRect rect);
 static void invertRBArray(COLORREF* array, CRect rect);
+static CRect determineRenderRect(int AAFilterSize, CRect currentRect);
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
 
 #define INITIAL_SENSITIVITY 10
 /////////////////////////////////////////////////////////////////////////////
 // CCGWorkView
+
 
 IMPLEMENT_DYNCREATE(CCGWorkView, CView)
 
@@ -299,6 +306,7 @@ BOOL CCGWorkView::InitializeCGWork()
 	scene.setBackgroundColor(m_clrBackground);
 	scene.draw(bitArray, r);
 	scene.setFogParams(m_fog);
+	//activeDebugFeatures3();
 	//activeDebugFeatures2();
 	//activeDebugFeatures1();
 	SetTimer(1, 1, NULL);
@@ -368,14 +376,13 @@ void CCGWorkView::OnDraw(CDC* pDC)
 	if (!pDoc)
 		return;
 
+	//Pre Render Processing
 	GetClientRect(&drawRect);
-	GetClientRect(&renderRect);
+	renderRect = determineRenderRect(m_nSuperSamplingSize, drawRect);
 	if (!m_bRenderToScreen) {
 		renderRect = outputRect;
 		drawRect = outputRect;
 	}
-
-
 	CDC *pDCToUse = m_pDbDC;
 	int renderH = renderRect.bottom - renderRect.top;
 	int renderW = renderRect.right - renderRect.left;
@@ -391,18 +398,26 @@ void CCGWorkView::OnDraw(CDC* pDC)
 			delete bitArray;
 		}
 	}
+
+	// Main Render Processing
 	bitArray = new COLORREF[renderH * renderW];
 	scene.draw(bitArray, renderRect);
-	if (m_nSuperSamplingSize != 0) {
-		int filterSize = m_nSuperSamplingSize == 1 ? 3 : 5;
-		COLORREF* superSampled = bitArray;
-		bitArray = new COLORREF[drawH * drawW];
-		scene.getRenderer().superSampleImage(superSampled, bitArray, renderRect, drawRect, filterSize, m_nSuperSamplingFilter);
+
+	// Post Render Processing
+	if (scene.getActiveModelID() != NO_MODELS_IN_SCENE) {
+		if (m_nSuperSamplingSize != NO_FILTER) {
+			int filterSize = m_nSuperSamplingSize == 1 ? 3 : 5;
+			COLORREF* superSampled = bitArray;
+			bitArray = new COLORREF[drawH * drawW];
+			scene.getRenderer().superSampleImage(superSampled, bitArray, renderRect, drawRect, filterSize, m_nSuperSamplingFilter);
+		}
+		if (m_bWithMotionBlur) {
+			scene.getRenderer().interpolateFrames(lastFrame, bitArray, drawRect, m_fMotionBlurTValue);
+		}
 	}
+
+	// Block Transfer and Draw Processing
 	invertRBArray(bitArray, drawRect);
-	if (m_bWithMotionBlur) {
-		scene.getRenderer().interpolateFrames(lastFrame, bitArray, drawRect, m_fMotionBlurTValue);
-	}
 	SetDIBits(*m_pDbDC, m_pDbBitMap, 0, drawH, bitArray, &bminfo, 0);
 	if (m_bRenderToScreen && pDCToUse != m_pDC) {
 		m_pDC->BitBlt(drawRect.left, drawRect.top, drawRect.right, drawRect.bottom, pDCToUse, drawRect.left, drawRect.top, SRCCOPY);
@@ -1127,6 +1142,24 @@ void invertRBArray(COLORREF * array, CRect rect)
 	}
 }
 
+CRect determineRenderRect(int AAFilterSize, CRect currentRect)
+{
+	CRect renderRect = currentRect;
+	if (AAFilterSize == FILTER_3X3) {
+		renderRect.left = 0;
+		renderRect.top = 0;
+		renderRect.right = 3 * currentRect.right;
+		renderRect.bottom = 3 * currentRect.bottom;
+	}
+	else if (AAFilterSize == FILTER_5X5) { 
+		renderRect.left = 0;
+		renderRect.top = 0;
+		renderRect.right = 5 * currentRect.right;
+		renderRect.bottom = 5 * currentRect.bottom;
+	}
+	return renderRect;
+}
+
 void CCGWorkView::sceneSetVertexNormalMode()
 {
 	if (m_bVertexNormals && m_bCalculateVertexNormals) {
@@ -1351,10 +1384,10 @@ void CCGWorkView::activeDebugFeatures2() {
 //Debugging console:
 void CCGWorkView::activeDebugFeatures3() {
 	Geometry square;
-	Vertex* a = new Vertex(1, 1, -10);
-	Vertex* b = new Vertex(-1, 1, -10);
-	Vertex* c = new Vertex(1, -1, 10);
-	Vertex* d = new Vertex(-1, -1, 10);
+	Vertex* a = new Vertex(1, 1, -2);
+	Vertex* b = new Vertex(-1, 1, -2);
+	Vertex* c = new Vertex(1, -1, 2);
+	Vertex* d = new Vertex(-1, -1, 2);
 	Edge* e1 = new Edge(a, b);
 	Edge* e2 = new Edge(b, d);
 	Edge* e3 = new Edge(d, c);
@@ -1372,6 +1405,11 @@ void CCGWorkView::activeDebugFeatures3() {
 	b->addFace(face);
 	c->addFace(face);
 	d->addFace(face);
+	a->setUV(1, 1);
+	b->setUV(0, 1);
+	c->setUV(1, 0);
+	d->setUV(0, 0);
+
 	square.addFace(face);
 	square.setLineClr(RGB(255, 0, 0));
 	Model* squareModel = new Model(square);
@@ -1395,20 +1433,7 @@ void CCGWorkView::OnSolidrenderingSupersamplinganti()
 		m_nSuperSamplingSize = dlg.filterSize;
 		m_nSuperSamplingFilter = dlg.filterType;
 		Invalidate();
-	}
-	GetClientRect(&renderRect);
-	if (m_nSuperSamplingSize = 1) { //ANTI ALIASING SIZE 3x3
-		renderRect.left = 0;
-		renderRect.top = 0;
-		renderRect.right = 3 * renderRect.right;
-		renderRect.bottom = 3 * renderRect.bottom;
-	}
-	else if (m_nSuperSamplingSize = 2) { //ANTI ALIASING SIZE 5x5
-		renderRect.left = 0;
-		renderRect.top = 0;
-		renderRect.right = 5 * renderRect.right;
-		renderRect.bottom = 5 * renderRect.bottom;
-	}
+	}	
 
 }
 
@@ -1431,12 +1456,20 @@ void CCGWorkView::OnTexturesLoadtexture()
 	}
 	ParametricTexturesDialog dlg;
 	dlg.enableParametricTextures = m_bWithParametricTextures;
-	if (dlg.DoModal() == IDOK) {
-		scene.getModel(dlg.modelNum)->setModelTexturePNG(dlg.pngBackgroundImage);
-		scene.setActiveModelByID(dlg.modelNum);
-		m_bWithParametricTextures = dlg.enableParametricTextures;
-		m_bWithParametricTextures ? scene.enableParametricTextures() : scene.disableParametricTextures();
+	dlg.modelNum = scene.getActiveModelID();
+	bool modelOk = false;
+	while (!modelOk && dlg.DoModal() == IDOK) {
+		if (scene.getModel(dlg.modelNum)->UVAttributesValid()) {
+			scene.getModel(dlg.modelNum)->setModelTexturePNG(dlg.pngTextureImage);
+			scene.setActiveModelByID(dlg.modelNum);
+			modelOk = true;
+		}
+		else {
+			::AfxMessageBox(_T("NOT ALLOWED: The model you chose does not have valid parametrization"));
+		}
 	}
+	m_bWithParametricTextures = dlg.enableParametricTextures;
+	m_bWithParametricTextures ? scene.enableParametricTextures() : scene.disableParametricTextures();
 	Invalidate();
 }
 
