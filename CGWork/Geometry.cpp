@@ -41,12 +41,13 @@ void Geometry::addFace(Face* face)
 
 Vertex * Geometry::getVertex(float x, float y, float z)
 {
-	auto search = vertexMap.find(Vec4(x, y, z, 0));
-	if (search == vertexMap.end()) {
-		return nullptr;
-	} else {
-		return (*search).second;
-	}
+	return nullptr;
+	//auto search = vertexMap.find(Vec4(x, y, z, 0));
+	//if (search == vertexMap.end()) {
+	//	return nullptr;
+	//} else {
+	//	return (*search).second;
+	//}
 }
 
 Edge * Geometry::getEdge(Vertex * x, Vertex * y) {

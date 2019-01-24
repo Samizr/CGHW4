@@ -12,7 +12,8 @@ private:
 	vector<Face*> faces;
 	Vec4* importedNormal;
 	double attrU, attrV;
-	bool validUV;
+	//double coincideAttrU, coincideAttrU;
+	bool validUV, coincideUV;
 public:
 	Vertex();
 	Vertex(float x, float y, float z);

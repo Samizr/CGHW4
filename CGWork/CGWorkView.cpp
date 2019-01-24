@@ -1349,7 +1349,7 @@ void CCGWorkView::activeDebugFeatures2() {
 	//Load New Objects & Models
 	::loadedGeometry.clear();
 	::loadedModel.clear();
-	::CGSkelFFCState.FineNess = 20;
+	::CGSkelFFCState.FineNess = 2;
 	m_strItdFileName = L"C:\\Users\\sami.zr\\Desktop\\BasicModels\\teapot.itd";	// Full path and filename
 	CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 
@@ -1369,6 +1369,8 @@ void CCGWorkView::activeDebugFeatures2() {
 		}
 		scene.addCamera(newCamera);
 	}
+	//scene.setSolidMode();
+	//OnTexturesLoadtexture();
 
 	//if (!AllocConsole())
 		//AfxMessageBox((CString)"Failed to create the console!", MB_ICONEXCLAMATION);
@@ -1385,32 +1387,51 @@ void CCGWorkView::activeDebugFeatures2() {
 void CCGWorkView::activeDebugFeatures3() {
 	Geometry square;
 	Vertex* a = new Vertex(1, 1, -2);
-	Vertex* b = new Vertex(-1, 1, -2);
 	Vertex* c = new Vertex(1, -1, 2);
+	Vertex* b = new Vertex(-1, 1, -2);
 	Vertex* d = new Vertex(-1, -1, 2);
+	Vertex* e = new Vertex(3, 1, -2); //new
+	Vertex* f = new Vertex(3, -1, 2); //new
+
 	Edge* e1 = new Edge(a, b);
 	Edge* e2 = new Edge(b, d);
 	Edge* e3 = new Edge(d, c);
 	Edge* e4 = new Edge(c, a);
 	Face* face = new Face(e1, e2, e3, e4);
+	Edge* e5 = new Edge(a, e);
+	Edge* e6 = new Edge(c, f);// new
+	Edge* e7 = new Edge(e, f);// new
+	Edge* e8 = new Edge(a, b);
+	Face* face2 = new Face(e5, e6, e7, e8); //new
 	square.addVertex(a);
 	square.addVertex(b);
 	square.addVertex(c);
 	square.addVertex(d);
+	square.addVertex(e); //new
+	square.addVertex(f); //new
 	square.addEdge(e1);
 	square.addEdge(e2);
 	square.addEdge(e3);
 	square.addEdge(e4);
+	square.addEdge(e5); //new
+	square.addEdge(e6); //new
+	square.addEdge(e7); //new
+	square.addEdge(e8); //new
 	a->addFace(face);
 	b->addFace(face);
 	c->addFace(face);
 	d->addFace(face);
-	a->setUV(1, 1);
-	b->setUV(0, 1);
-	c->setUV(1, 0);
+	e->addFace(face2); //new
+	f->addFace(face2); //new
+	a->setUV(2, 2);
+	b->setUV(0, 2);
+	c->setUV(2, 0);
 	d->setUV(0, 0);
+	e->setUV(4, 4);
+	f->setUV(4, 0);
 
 	square.addFace(face);
+	square.addFace(face2);
 	square.setLineClr(RGB(255, 0, 0));
 	Model* squareModel = new Model(square);
 	

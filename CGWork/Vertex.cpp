@@ -71,6 +71,8 @@ void Vertex::setNormal(Vec4 * normal)
 
 void Vertex::setUV(double U, double V)
 {
+	//if (validUV)
+	//	return;
 	validUV = true;
 	attrU = U;
 	attrV = V;

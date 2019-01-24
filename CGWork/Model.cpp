@@ -146,17 +146,12 @@ void Model::normalizeUVAttributes()
 		Vmax = max(Vmax, vertex->getVAttribute());
 		Umin = min(Umin, vertex->getUAttribute());
 		Vmin = min(Vmin, vertex->getVAttribute());
-		if (vertex->getVAttribute() < 0.06) {
-			int dbg = 1;
-		}
 	}
 	//Squeeze both height and width (might test other techniques).
 	double deltaU = Umax - Umin;
 	double deltaV = Vmax - Vmin;
 	ASSERT(deltaU > 0, deltaV > 0);
 	for (auto vertex : mainGeometry.getVertices()) {
-		if ((vertex->getVAttribute() - Vmin) / deltaV < 0 || (vertex->getUAttribute() - Umin) / deltaU < 0)
-			int dbg = 1;
 		vertex->setUV((vertex->getUAttribute() - Umin) / deltaU, (vertex->getVAttribute() - Vmin) / deltaV);
 	}
 	if (!UVAttributesNormalized()) {

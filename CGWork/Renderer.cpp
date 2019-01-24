@@ -230,7 +230,8 @@ COLORREF Renderer::getColorParametricTexture(vector<pair<float, double*>> inters
 	double* UV = getInterpolatedUVs(percentage, intersectionPointsUV[maxId].second, intersectionPointsUV[minId].second);
 	double h = renderedTexture->GetHeight() - 1;
 	double w = renderedTexture->GetWidth() - 1;
-	return extractColorFromPng(UV[0] * h, UV[1] * w, renderedTexture);
+
+	return extractColorFromPng(UV[1] * w, UV[0] * h, renderedTexture);
 }
 
 COLORREF Renderer::getColorGouraud(vector<pair<float, COLORREF>> intersectionPointsCLR, int x) {
@@ -262,10 +263,10 @@ COLORREF Renderer::getColorFog(COLORREF originalClr, float depth)
 	float deltaMax = fog.z_far - fog.z_near;
 	float ratio = deltaPos / deltaMax;
 	if (ratio > 1) {
-		return originalClr;
+		return fog.color;
 	}
 	else if (ratio < 0) {	
-		return fog.color;
+		return originalClr;
 	}
 	return getInterpolatedColor(ratio, fog.color, originalClr);
 }
@@ -793,14 +794,19 @@ void Renderer::superSampleImage(COLORREF * superSampledImage, COLORREF * finalIm
 	// go over the super sampled image by [filterSize x filterSize] squares. 
 	for (int i = 0; i < SSRect.Height(); i += filterSize) {
 		for (int j = 0; j < SSRect.Width(); j += filterSize) {
-			int R = 0, G = 0, B = 0;
+			float fR = 0, fG = 0, fB = 0;
 			for (int filterI = 0; filterI < filterSize; filterI++) {
 				for (int filterJ = 0; filterJ < filterSize; filterJ++) {
-					R += (1.0 / filterSum) * GetRValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filter[filterI * filterSize + filterJ];
-					G += (1.0 / filterSum) * GetGValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filter[filterI * filterSize + filterJ];
-					B += (1.0 / filterSum) * GetBValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filter[filterI * filterSize + filterJ];
+					float filterValue = filter[filterI * filterSize + filterJ];
+					fR += (1.0 / filterSum) * GetRValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filterValue;
+					fG += (1.0 / filterSum) * GetGValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filterValue;
+					fB += (1.0 / filterSum) * GetBValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filterValue;
 				}
 			}
+			int R, G, B;
+			R = fR;
+			G = fG;
+			B = fB;
 			R = R > 255 ? 255 : R;
 			G = G > 255 ? 255 : G;
 			B = B > 255 ? 255 : B;
@@ -811,6 +817,7 @@ void Renderer::superSampleImage(COLORREF * superSampledImage, COLORREF * finalIm
 		}
 	}
 }
+
 
 void Renderer::initializeFilters() {
 	// 0 is box filter;
@@ -832,11 +839,12 @@ static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png) {
 	int c = png->GetValue(xCoord, yCoord);
 	int r = 0, g = 0, b = 0;
 	if (png->GetNumChannels() == 1) {
+		//c = c ? 255 : 0;
 		r = c;
 		g = c;
 		b = c;
 	}
-	if (png->GetNumChannels() == 3 || png->GetNumChannels() == 4) {
+	else if (png->GetNumChannels() == 3 || png->GetNumChannels() == 4) {
 		r = GET_R(c);
 		g = GET_G(c);
 		b = GET_B(c);
