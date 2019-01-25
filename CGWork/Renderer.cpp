@@ -138,10 +138,6 @@ void Renderer::interpolateFrames(COLORREF *lastFrame, COLORREF *currentFrame, CR
 			int lastR = GetRValue(lastFrame[i * rect.Width() + j]);
 			int lastG = GetGValue(lastFrame[i * rect.Width() + j]);
 			int lastB = GetBValue(lastFrame[i * rect.Width() + j]);
-			if (currR > 5) {
-				int hi = 0;
-				hi++;
-			}
 			currR = tValue * lastR + (1 - tValue) * currR;
 			currG = tValue * lastG + (1 - tValue) * currG;
 			currB = tValue * lastB + (1 - tValue) * currB;
@@ -674,14 +670,19 @@ void Renderer::superSampleImage(COLORREF * superSampledImage, COLORREF * finalIm
 	// go over the super sampled image by [filterSize x filterSize] squares. 
 	for (int i = 0; i < SSRect.Height(); i += filterSize) {
 		for (int j = 0; j < SSRect.Width(); j += filterSize) {
-			int R = 0, G = 0, B = 0;
+			float fR = 0, fG = 0, fB = 0;
 			for (int filterI = 0; filterI < filterSize; filterI++) {
 				for (int filterJ = 0; filterJ < filterSize; filterJ++) {
-					R += (1.0 / filterSum) * GetRValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filter[filterI * filterSize + filterJ];
-					G += (1.0 / filterSum) * GetGValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filter[filterI * filterSize + filterJ];
-					B += (1.0 / filterSum) * GetBValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filter[filterI * filterSize + filterJ];
+					float filterValue = filter[filterI * filterSize + filterJ];
+					fR += (1.0 / filterSum) * GetRValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filterValue;
+					fG += (1.0 / filterSum) * GetGValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filterValue;
+					fB += (1.0 / filterSum) * GetBValue(superSampledImage[(i + filterI) * SSRect.Width() + (j + filterJ)]) * filterValue;
 				}
 			}
+			int R, G, B;
+			R = fR;
+			G = fG;
+			B = fB;
 			R = R > 255 ? 255 : R;
 			G = G > 255 ? 255 : G;
 			B = B > 255 ? 255 : B;

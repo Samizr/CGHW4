@@ -1110,10 +1110,9 @@ void resetModel(Model* model) {
 
 void invertRBArray(COLORREF * array, CRect rect)
 {
-	for (int i = rect.left; i < rect.right; i++) {
-		for (int j = rect.top; j < rect.bottom; j++) {
-			COLORREF newclr = invertRB(array[i + j * rect.Width()]);
-			array[i + j * rect.Width()] = newclr;
+	for (int i = rect.top; i < rect.bottom; i++) {
+		for (int j = rect.left; j < rect.right; j++) {
+			array[i * rect.Width() + j] = invertRB(array[i * rect.Width() + j]);
 		}
 	}
 }
