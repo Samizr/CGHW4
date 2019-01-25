@@ -194,7 +194,7 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 		for (int j = minX; j < maxX; j++) {
 			if (i >= 0 && j >= 0 && j < rect.Width() && i < rect.Height() && pixelIsInPolygon(j, i, poly)) {
 				float currentDepth = getDepthAtPoint(j, i, poly);
-				if (zBuffer && currentDepth <= zBuffer[i * rect.Width() + j])
+				if (zBuffer && currentDepth >= zBuffer[i * rect.Width() + j])
 					continue;
 				sceneMaximalDepth = max(sceneMaximalDepth, currentDepth);
 				sceneMinimalDepth = min(sceneMinimalDepth, currentDepth);
@@ -692,6 +692,7 @@ std::vector<Vec4> getTriangleWithPointInside(float x, float y, std::vector<Vec4>
 		}
 	}
 }
+
 Vec4 getIntersectionWithLine(Vec4 p1, Vec4 p2, float x, float y) {
 	Vec4 intersection(0, y, 0, 1);
 	float deltaY = p2.yCoord() - p1.yCoord();
@@ -709,6 +710,7 @@ Vec4 getIntersectionWithLine(Vec4 p1, Vec4 p2, float x, float y) {
 	intersection[2] = p1.zCoord() + (p2.zCoord() - p1.zCoord()) * ((p1.yCoord() - y) / (p1.yCoord() - p2.yCoord()));
 	return intersection;
 }
+
 float distanceBetweenPoints(float x1, float y1, float x2, float y2) {
 	float deltaY = y2 - y1;
 	float deltaX = x2 - x1;
@@ -812,7 +814,6 @@ void Renderer::superSampleImage(COLORREF * superSampledImage, COLORREF * finalIm
 		}
 	}
 }
-
 
 void Renderer::initializeFilters() {
 	// 0 is box filter;

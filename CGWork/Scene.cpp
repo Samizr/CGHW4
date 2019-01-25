@@ -207,7 +207,7 @@ float* createZBuffer(CRect rect) {
 	float* zBuffer = new float[rect.Width() * rect.Height()];
 	for (int i = 0; i < rect.Height(); i++) {
 		for (int j = 0; j < rect.Width(); j++) {
-			zBuffer[i * rect.Width() + j] = -std::numeric_limits<float>::infinity();;
+			zBuffer[i * rect.Width() + j] = std::numeric_limits<float>::infinity();;
 		}
 	}
 	return zBuffer;
