@@ -21,7 +21,6 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
-	BOOL isFilter3;
-	BOOL isFilter5;
-	BOOL filterType[4];
+	int filterType;
+	int filterSize;
 };

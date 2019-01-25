@@ -6,12 +6,15 @@ Vertex::Vertex() {
 	this->_yCoord = 0.0;
 	this->_zCoord = 0.0;
 	importedNormal = nullptr;
+	validUV = false;
 }
 
 Vertex::Vertex(float x, float y, float z) {
 	this->_xCoord = x;
 	this->_yCoord = y;
 	this->_zCoord = z;
+	importedNormal = nullptr;
+	validUV = false;
 }
 
 void Vertex::addFace(Face * face) {
@@ -24,7 +27,7 @@ vector<Face*> Vertex::getFaces() {
 
 Vec4 Vertex::calculateVertexNormalTarget(Mat4 transformationMatrix, bool invert)
 {
-	Vec4 targetSum = Vec4();
+	Vec4 targetSum;
 	Vec4 vertexAsVector = transformationMatrix * Vec4(_xCoord, _yCoord, _zCoord, 1);
 	for (Face* face : faces) {
 		targetSum = targetSum + face->calculateFaceNormalTarget(vertexAsVector, transformationMatrix, invert);
@@ -46,9 +49,33 @@ Vec4 * Vertex::getNormal()
 	return importedNormal;
 }
 
+double Vertex::getUAttribute()
+{
+	return attrU;
+}
+
+double Vertex::getVAttribute()
+{
+	return attrV;
+}
+
+bool Vertex::UVAttributesValid()
+{
+	return validUV;
+}
+
 void Vertex::setNormal(Vec4 * normal)
 {
 	importedNormal = normal;
+}
+
+void Vertex::setUV(double U, double V)
+{
+	//if (validUV)
+	//	return;
+	validUV = true;
+	attrU = U;
+	attrV = V;
 }
 
 float Vertex::xCoord() {

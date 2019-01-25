@@ -16,6 +16,7 @@
 #include "stdafx.h"
 #include "Mat4.h"
 #include "PngWrapper.h"
+#include "Fog.h"
 
 #define STANDARD_NORMAL_COLOR RGB(0,255,0)
 #define NUM_LIGHT_SOURCES 7
@@ -40,6 +41,7 @@ class Renderer {
 	Mat4 windowMatrix;
 	bool withBounding;
 	bool withPolygonNormals;
+	bool withParametricTextures;
 	VNMode vertexNormals;
 	bool invertPolygonNormals;
 	bool invertVertexNormals;
@@ -48,21 +50,28 @@ class Renderer {
 	COLORREF backgroundClr;
 	COLORREF silhouetteClr;
 	LightMode lightingMode;
+	PngWrapper* renderedTexture;
+	FogParams fog;
 	float* filters3[4];
 	float* filters5[4];
+	float sceneMinimalDepth, sceneMaximalDepth;
+
 	void drawCenterAxis(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 finalMatrix);
 	void drawPolygonNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawCalculatedVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawImportedVertexNormals(COLORREF* bitArr, CRect rect, Geometry * geometry, Mat4 restMatrix, Mat4 transformationMatrix);
 	void drawBoundingBox(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr, Mat4 finalMatrix);
-	COLORREF getLightingColor(Vec4 point, Vec4 normal, COLORREF originalClr, const std::array<LightParams, NUM_LIGHT_SOURCES> &lightSources, const LightParams& ambientLight, double* materialParams);
+	COLORREF getColor(Vec4 point, Vec4 normal, COLORREF originalClr, const std::array<LightParams, NUM_LIGHT_SOURCES> &lightSources, const LightParams& ambientLight, double* materialParams);
 	void drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face* face, COLORREF lineClr, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);	vector<pair<Vec4, Vec4>> getEdgesAsVectorVec4(const vector<Edge*> edges, const Mat4 finalMatrix);
 	vector<Vec4> getPolyAsVectorVec4(Face* face, const Mat4 finalMatrix);
 	void getPolyBoundaries(vector<Vec4>& poly, int* minX, int* minY, int* maxX, int* maxY);
 	vector<pair<Vec4, Vec4>> getEdgesNormals(const vector<Edge*> edges, const Mat4 objectWorldMatrix);
 	vector<pair<COLORREF, COLORREF>> getEdgesColors(const vector<Edge*>& edges, const Mat4& objectWorldMatrix, const vector<pair<Vec4, Vec4>>& polyEdgesNormals, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
+	vector<pair<double*, double*>> getEdgesUVAttrs(const vector<Edge*>& edges);
+	COLORREF getColorParametricTexture(vector<pair<float, double*>> intersectionPointsUV, int x);
 	COLORREF getColorGouraud(vector<pair<float, COLORREF>> intersectionPointsCLR, int x);
-	COLORREF getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM, int x, int y, int z, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
+	COLORREF getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM, int x, int y, float z, COLORREF originalClr, Mat4 finalMatrixInverse ,array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams);
+	COLORREF getColorFog(COLORREF originalClr, float depth);
 
 public:
 	Renderer();
@@ -83,15 +92,19 @@ public:
 	void setBackgroundClr(COLORREF clr);
 	void setSilhouetteClr(COLORREF clr);
 	void setLightingMode(LightMode mode);
+	void setFogParams(FogParams fog);
+	void getSceneDepthParams(float* min, float* max);
 	void enableBoundingBox();
 	void enablePolygonNormals();
 	void enablePolygonNormalInvert();
 	void enableVertexNormalInvert();
+	void enableParametrixTextures();
 	void setVertexNormalMode(VNMode mode);
 	void disableBoundingBox();
 	void disablePolygonNormals();
 	void disablePolygonNormalInvert();
 	void disableVertexNormalInvert();
+	void disableParametrixTextures();
 	void drawBounding(COLORREF* bitArr, CRect rect, Geometry * geometry, COLORREF clr);
 	void drawBackgoundImageStretch(COLORREF* bitArr, CRect rect, PngWrapper* png);
 	void drawBackgoundImageRepeat(COLORREF* bitArr, CRect rect, PngWrapper* png);

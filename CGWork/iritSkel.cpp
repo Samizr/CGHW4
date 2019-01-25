@@ -127,9 +127,7 @@ void CGSkelDumpOneTraversedObject(IPObjectStruct *PObj,
 *   bool:		false - fail, true - success.                                *
 *****************************************************************************/
 Geometry loadedGeometry;
-Scene loadedScene;
-int DBGRequestedModel = 0;
-int DBGRequestedSubModel = 0;
+Model loadedModel;
 bool CGSkelStoreData(IPObjectStruct *PObj)
 {
 	Geometry subGeometry;
@@ -140,7 +138,6 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	IPVertexStruct *PVertex;
 	const IPAttributeStruct *Attrs =
 		AttrTraceAttributes(PObj->Attr, PObj->Attr);
-
 
 	if (PObj->ObjType != IP_OBJ_POLY) {
 		AfxMessageBox(_T("Non polygonal object detected and ignored"));
@@ -153,7 +150,7 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	if (CGSkelGetObjectColor(PObj, objectRGB))
 	{
 		/* color code */
-		COLORREF clr = RGB(255*objectRGB[0], 255*objectRGB[1], 255*objectRGB[2]);
+		COLORREF clr = RGB(255 * objectRGB[0], 255 * objectRGB[1], 255 * objectRGB[2]);
 		subGeometry.setLineClr(clr);
 	}
 	else {
@@ -202,7 +199,7 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 		/* use if(IP_HAS_PLANE_POLY(PPolygon)) to know whether a normal is defined for the polygon
 		   access the normal by the first 3 components of PPolygon->Plane */
 		PVertex = PPolygon->PVertex;
-		do {			     /* Assume at least one edge in polygon! */
+		do {	/* Assume at least one edge in polygon! */
 			/* code handeling all vertex/normal/texture coords */
 			if (IP_HAS_NORMAL_VRTX(PVertex))
 			{
@@ -216,7 +213,7 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 		// Added By Firas BEGIN.
 		IPVertexStruct *previous = PPolygon->PVertex;
 		IPVertexStruct *current = PPolygon->PVertex->Pnext;
-		Face* face = new Face();
+		Face* face = new Face;
 		Vertex* firstVertex = loadedGeometry.getVertex(previous->Coord[0], previous->Coord[1], previous->Coord[2]);
 		if (firstVertex == nullptr) {
 			firstVertex = new Vertex(previous->Coord[0], previous->Coord[1], previous->Coord[2]);
@@ -226,11 +223,16 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 				Vec4* vNormal = new Vec4(previous->Normal[0], previous->Normal[1], previous->Normal[2], 1);
 				firstVertex->setNormal(vNormal);
 			}
+			float *UV;
+			if (UV = AttrGetUVAttrib(previous->Attr, "uvvals"))
+				firstVertex->setUV(UV[0], UV[1]);
 		}
+
 		firstVertex->addFace(face);
 		Vertex* previousVertex = firstVertex;
 		do {
 			Vertex* currentVertex = loadedGeometry.getVertex(current->Coord[0], current->Coord[1], current->Coord[2]);
+			float* currentUV = AttrGetUVAttrib(current->Attr, "uvvals");
 			if (currentVertex == nullptr) {
 				currentVertex = new Vertex(current->Coord[0], current->Coord[1], current->Coord[2]);
 				loadedGeometry.addVertex(currentVertex);
@@ -239,13 +241,19 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 					Vec4* vNormal = new Vec4(current->Normal[0], current->Normal[1], current->Normal[2], 1);
 					currentVertex->setNormal(vNormal);
 				}
+				float *UV;
+				if (UV = AttrGetUVAttrib(previous->Attr, "uvvals"))
+				currentVertex->setUV(currentUV[0], currentUV[1]);
 			}
 			Edge* edgeToAdd = loadedGeometry.getEdge(previousVertex, currentVertex);
+			//previousVertex->setUV(prevUV[0], prevUV[1]);
+		//	currentVertex->setUV(currentUV[0], currentUV[1]);
 			if (edgeToAdd == nullptr) {
 				edgeToAdd = new Edge(previousVertex, currentVertex);
 				loadedGeometry.addEdge(edgeToAdd);
 				subGeometry.addEdge(edgeToAdd);
 			}
+
 			face->addEdge(edgeToAdd);
 			currentVertex->addFace(face);
 			previous = current;
@@ -253,17 +261,16 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 			current = current->Pnext;
 
 		} while (current != NULL && previous != PPolygon->PVertex);
-	//	if (++DBGRequestedSubModel == 4) {
-			loadedGeometry.addFace(face);
-			subGeometry.addFace(face);
-	//	}
-		// Added By Firas END.
-		/* Close the polygon. */
+
+		loadedGeometry.addFace(face);
+		subGeometry.addFace(face);
+
+
+	// Added By Firas END.
+	/* Close the polygon. */
 	}
-	Model* model = new Model(subGeometry);
-//	if (DBGRequestedModel++ != 0)
-//		return true;
-	loadedScene.addModel(model);
+	loadedModel.addSubGeometry(subGeometry);
+	loadedModel.setMainGeometry(loadedGeometry);
 	/* Close the object. */
 	return true;
 }

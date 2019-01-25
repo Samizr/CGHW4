@@ -24,7 +24,6 @@ protected:
 	LightParams m_lights[MAX_LIGHT];
 	LightParams m_ambiant;
 	int m_currentLightIdx;
-	int GetCurrentLightIndex();
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	
 	DECLARE_MESSAGE_MAP()

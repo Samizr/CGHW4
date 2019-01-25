@@ -26,11 +26,14 @@ static bool pointOnLine(Vec4 p1, Vec4 p2, int x, int y);
 static bool pointOnLineScreen(Vec4 p1, Vec4 p2, int x, int y);
 vector<pair<float, COLORREF>> findIntersectionsColor(int line, vector<pair<Vec4, Vec4>> polyEdges, vector<pair<COLORREF, COLORREF>> polyEdgesColors);
 vector<pair<float, Vec4>> findIntersectionsNormal(int line, vector<pair<Vec4, Vec4>> polyEdges, vector<pair<Vec4, Vec4>> polyEdgesNormals);
+vector<pair<float, double*>> findIntersectionsUVAttrs(int line, vector<pair<Vec4, Vec4>> polyEdges, vector<pair<double*, double*>> polyEdgesUVAttrs);
 static COLORREF getInterpolatedColor(double a, COLORREF clr1, COLORREF clr2);
 static Vec4 getInterpolatedNormal(double a, Vec4 nrm1, Vec4 nrm2);
+static double* getInterpolatedUVs(double a, double* p1, double* p2);
 static float getIntersectionPoint(Vec4 p1, Vec4 p2, float y);
+static double getInterpolationPercentage(float x, float y, Vec4 p1, Vec4 p2);
 static Vec4 getTransformedImportedNormal(const Vec4& normal, const Mat4& transformation);
-
+static COLORREF invertRB(COLORREF clr);
 
 static double distance(int x1, int y1, int x2, int y2);
 float distanceBetweenPoints(float x1, float y1, float x2, float y2);
@@ -50,35 +53,37 @@ Renderer::Renderer() {
 	lightingMode = FLAT;
 	normalClr = STANDARD_NORMAL_COLOR;
 	silhouetteClr = STANDARD_NORMAL_COLOR;
+	renderedTexture = nullptr;
 	initializeFilters();
 }
 
 // TODO SWITCH BACK NAMES WITH DRAWWIREFRAME
 void Renderer::drawWireframe(COLORREF* bitArr, CRect rect, Model* model) {
 
-	Geometry* geometry = &model->getGeometry();
-
-	windowMatrix = generateViewportMatrix(rect);
-	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
-	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
-	Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
-	for (Edge* edge : geometry->getEdges()) {
-		drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, geometry->getLineClr(), rect.Width());
+	for (int i = 0; i < model->getSubGeometriesNum(); i++) {
+		Geometry* geometry = &model->getSubGeometry(i);
+		objectWorldMatrix = model->getSubGeometryTransformationMatrix(i) * model->getTransformationMatrix();
+		windowMatrix = generateViewportMatrix(rect);
+		Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+		Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
+		Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
+		for (Edge* edge : geometry->getEdges()) {
+			drawEdge(bitArr, rect, edge, finalMatrix, afterCamera, geometry->getLineClr(), rect.Width());
+		}
+		if (withPolygonNormals) {
+			drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		}
+		if (vertexNormals == CALCULATED) {
+			drawCalculatedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		}
+		if (vertexNormals == IMPORTED) {
+			drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		}
 	}
-	if (withPolygonNormals) {
-		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
-	}
-	if (vertexNormals == CALCULATED) {
-		drawCalculatedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
-	}
-	if (vertexNormals == IMPORTED) {
-		drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
-	}
-	//	drawCenterAxis(bitArr, rect, geometry, finalMatrix);
 }
 
 void Renderer::drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model) {
-	Geometry* geometry = &model->getGeometry();
+	Geometry* geometry = &model->getMainGeometry();
 	windowMatrix = generateViewportMatrix(rect);
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
 	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
@@ -95,26 +100,39 @@ void Renderer::drawWireframeBackfaceCulling(COLORREF * bitArr, CRect rect, Model
 	}
 }
 
+
 void Renderer::drawSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Model* model, std::array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
-	Geometry* geometry = &model->getGeometry();
-	windowMatrix = generateViewportMatrix(rect);
-	Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
-	for (Face* face : geometry->getFaces()) {
-		drawFaceSolid(bitArr, zBuffer, rect, face, geometry->getLineClr(), lightSources, ambientLight, materialParams);
+	sceneMaximalDepth = -FLT_MAX;
+	sceneMinimalDepth = FLT_MAX;
+	if (withParametricTextures && model->getModelTexturePNG()) {
+		renderedTexture = model->getModelTexturePNG();
 	}
-	if (withPolygonNormals) {
-		drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+	else {
+		renderedTexture = nullptr;
 	}
-	if (vertexNormals == CALCULATED) {
-		drawCalculatedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+	for (int i = 0; i < model->getSubGeometriesNum(); i++) {
+		Geometry* geometry = &model->getSubGeometry(i);
+		objectWorldMatrix = model->getSubGeometryTransformationMatrix(i) * model->getTransformationMatrix();
+		windowMatrix = generateViewportMatrix(rect);
+		Mat4 restMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix))));
+		for (Face* face : geometry->getFaces()) {
+			drawFaceSolid(bitArr, zBuffer, rect, face, geometry->getLineClr(), lightSources, ambientLight, materialParams);
+		}
+		if (withPolygonNormals) {
+			drawPolygonNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		}
+		if (vertexNormals == CALCULATED) {
+			drawCalculatedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		}
+		if (vertexNormals == IMPORTED) {
+			drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
+		}
 	}
-	if (vertexNormals == IMPORTED) {
-		drawImportedVertexNormals(bitArr, rect, geometry, restMatrix, objectWorldMatrix);
-	}
+
 }
 
 void Renderer::drawSolidBackfaceCulling(COLORREF * bitArr, CRect rect, Model * model, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
-	Geometry* geometry = &model->getGeometry();
+	Geometry* geometry = &model->getMainGeometry();
 	windowMatrix = generateViewportMatrix(rect);
 	for (Face* face : geometry->getFaces()) {
 		if (face->calculateNormal(objectWorldMatrix)[2] > 0) {
@@ -150,22 +168,27 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 
 	//Prepare function parameters.
 	int minX = rect.Width(), minY = rect.Height(), maxX = 0, maxY = 0;
-	COLORREF clr = originalClr;
+	COLORREF clr, preScanConversionClr = originalClr;
 	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
+	Mat4 finalMatrixInverse = finalMatrix.getInverse();
+	//Mat4 afterCamera = (cameraMatrix * objectWorldMatrix);
 	vector<Edge*> edges = face->getEdges();
 	vector<Vec4> poly = getPolyAsVectorVec4(face, finalMatrix);
 	vector<pair<Vec4, Vec4>> polyEdges = getEdgesAsVectorVec4(edges, finalMatrix);
 	vector<pair<Vec4, Vec4>> polyEdgesNormals = getEdgesNormals(edges, objectWorldMatrix);
 	vector<pair<COLORREF, COLORREF>> polyEdgesColors = getEdgesColors(edges, objectWorldMatrix, polyEdgesNormals, originalClr, lightSources, ambientLight, materialParams);
+	vector<pair<double*, double*>> polyEdgesUVAttrs = getEdgesUVAttrs(edges);
 	vector<pair<float, COLORREF>> intersectionPointsCLR;
 	vector<pair<float, Vec4>> intersectionPointsNRM;
+	vector<pair<float, double*>> intersectionPointsUV;
 	getPolyBoundaries(poly, &minX, &minY, &maxX, &maxY);
 
 	// Go over all inside frame from above pixels, only work with ones inside projected polygon.
 	if (lightingMode == FLAT)
-		clr = getLightingColor(face->calculateMidpoint(), face->calculateNormal(objectWorldMatrix), originalClr, lightSources, ambientLight, materialParams);
+		preScanConversionClr = getColor(face->calculateMidpoint(), face->calculateNormal(objectWorldMatrix), originalClr, lightSources, ambientLight, materialParams);
 
-	for (int i = minY; i < maxY; i++) {
+	for (int i = max(minY, 0); i < min(maxY, rect.Width()); i++) {
+		intersectionPointsUV = renderedTexture ? findIntersectionsUVAttrs(i, polyEdges, polyEdgesUVAttrs) : intersectionPointsUV;
 		intersectionPointsCLR = lightingMode == GOURAUD ? findIntersectionsColor(i, polyEdges, polyEdgesColors) : intersectionPointsCLR;
 		intersectionPointsNRM = lightingMode == PHONG ? findIntersectionsNormal(i, polyEdges, polyEdgesNormals) : intersectionPointsNRM;
 		for (int j = minX; j < maxX; j++) {
@@ -173,14 +196,37 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 				float currentDepth = getDepthAtPoint(j, i, poly);
 				if (zBuffer && currentDepth <= zBuffer[i * rect.Width() + j])
 					continue;
+				sceneMaximalDepth = max(sceneMaximalDepth, currentDepth);
+				sceneMinimalDepth = min(sceneMinimalDepth, currentDepth);
+				clr = preScanConversionClr;
+				clr = renderedTexture ? getColorParametricTexture(intersectionPointsUV, j) : clr;
 				clr = lightingMode == GOURAUD ? getColorGouraud(intersectionPointsCLR, j) : clr;
-				clr = lightingMode == PHONG ? getColorPhong(intersectionPointsNRM, j, i, currentDepth, originalClr, lightSources, ambientLight, materialParams) : clr;
+				clr = lightingMode == PHONG ? getColorPhong(intersectionPointsNRM, j, i, currentDepth, clr, finalMatrixInverse, lightSources, ambientLight, materialParams) : clr;
+				clr = fog.active ? getColorFog(clr, currentDepth) : clr;
 				bitArr[i * rect.Width() + j] = clr;
 				if (zBuffer)
 					zBuffer[i * rect.Width() + j] = currentDepth;
 			}
 		}
+		for (int i = 0; intersectionPointsUV.size(); i++) {
+			delete intersectionPointsUV[i].second;
+		}
 	}
+}
+
+COLORREF Renderer::getColorParametricTexture(vector<pair<float, double*>> intersectionPointsUV, int x)
+{
+	int minId = intersectionPointsUV[0].first <= intersectionPointsUV[1].first ? 0 : 1;
+	int maxId = 1 - minId;
+	double pointDist = abs(x - intersectionPointsUV[minId].first);
+	double lineDist = abs(intersectionPointsUV[0].first - intersectionPointsUV[1].first);
+	double percentage = lineDist == 0 ? 1 : pointDist / lineDist;
+	percentage = percentage > 1 ? 1 : percentage;
+	double* UV = getInterpolatedUVs(percentage, intersectionPointsUV[maxId].second, intersectionPointsUV[minId].second);
+	double h = renderedTexture->GetHeight() - 1;
+	double w = renderedTexture->GetWidth() - 1;
+
+	return extractColorFromPng(UV[1] * w, UV[0] * h, renderedTexture);
 }
 
 COLORREF Renderer::getColorGouraud(vector<pair<float, COLORREF>> intersectionPointsCLR, int x) {
@@ -193,10 +239,9 @@ COLORREF Renderer::getColorGouraud(vector<pair<float, COLORREF>> intersectionPoi
 	return getInterpolatedColor(percentage, intersectionPointsCLR[maxId].second, intersectionPointsCLR[minId].second);
 }
 
-COLORREF Renderer::getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM, int x, int y, int z, COLORREF originalClr, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
-	Mat4 finalMatrix = (windowMatrix * (normalizationMatrix * (projectionMatrix * (cameraMatrix * objectWorldMatrix))));
-	Vec4 point(x, y, z, 0);
-	Vec4 objectSpacePoint = objectWorldMatrix * finalMatrix.getInverse() * point;
+COLORREF Renderer::getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM, int x, int y, float z, COLORREF originalClr, Mat4 finalMatrixInverse, array<LightParams, NUM_LIGHT_SOURCES> lightSources, LightParams ambientLight, double* materialParams) {
+	Vec4 point(x, y, z, 1);
+	Vec4 objectSpacePoint = objectWorldMatrix * finalMatrixInverse * point;
 	int minId = intersectionPointsNRM[0].first <= intersectionPointsNRM[1].first ? 0 : 1;
 	int maxId = 1 - minId;
 	double pointDist = abs(x - intersectionPointsNRM[minId].first);
@@ -204,10 +249,22 @@ COLORREF Renderer::getColorPhong(vector<pair<float, Vec4>> intersectionPointsNRM
 	double percentage = lineDist == 0 ? 1 : pointDist / lineDist;
 	percentage = percentage > 1 ? 1 : percentage;
 	Vec4 normal = getInterpolatedNormal(percentage, intersectionPointsNRM[maxId].second, intersectionPointsNRM[minId].second);
-	return getLightingColor(objectSpacePoint, normal, originalClr, lightSources, ambientLight, materialParams);
+	return getColor(objectSpacePoint, normal, originalClr, lightSources, ambientLight, materialParams);
 }
 
-
+COLORREF Renderer::getColorFog(COLORREF originalClr, float depth)
+{
+	float deltaPos = fog.z_far - depth;
+	float deltaMax = fog.z_far - fog.z_near;
+	float ratio = deltaPos / deltaMax;
+	if (ratio > 1) {
+		return fog.color;
+	}
+	else if (ratio < 0) {	
+		return originalClr;
+	}
+	return getInterpolatedColor(ratio, fog.color, originalClr);
+}
 
 float* createZBuffer(CRect rect) {
 	float* zBuffer = new float[rect.Width() * rect.Height()];
@@ -220,7 +277,7 @@ float* createZBuffer(CRect rect) {
 }
 
 void fillZBuffer(CRect rect, float* zBuffer, Model* model, Mat4 finalMatrix) {
-	Geometry* geometry = &model->getGeometry();
+	Geometry* geometry = &model->getMainGeometry();
 	for (Face* face : geometry->getFaces()) {
 		int minX = rect.Width();
 		int minY = rect.Height();
@@ -261,14 +318,8 @@ vector<pair<float, COLORREF>> findIntersectionsColor(int line, vector<pair<Vec4,
 	for (pair<Vec4, Vec4>& edge : polyEdges) {
 		if ((line >= (int)edge.first.yCoord() && line <= (int)edge.second.yCoord()) || (line <= (int)edge.first.yCoord() && line >= (int)edge.second.yCoord())) {
 			float x = getIntersectionPoint(edge.first, edge.second, line);
-			if (x < edge.first.xCoord() && x < edge.second.xCoord())
-				x = min(edge.first.xCoord(), edge.second.xCoord());
-			else if (x > edge.first.xCoord() && x > edge.second.xCoord())
-				x = max(edge.first.xCoord(), edge.second.xCoord());
+			double percentage = getInterpolationPercentage(x, line, edge.first, edge.second);
 
-			double lineDist = distance(edge.first.xCoord(), edge.first.yCoord(), edge.second.xCoord(), edge.second.yCoord());
-			double pointDist = distance(x, line, edge.second.xCoord(), edge.second.yCoord());
-			double percentage = pointDist / lineDist;
 			pair<float, COLORREF> pair;
 			pair.first = x;
 			pair.second = getInterpolatedColor(percentage, polyEdgesColors[i].first, polyEdgesColors[i].second);
@@ -276,7 +327,7 @@ vector<pair<float, COLORREF>> findIntersectionsColor(int line, vector<pair<Vec4,
 		}
 		i++;
 	}
-	if (out.size() > 2) {
+	if (out.size() > 2) { 
 		vector<pair<float, COLORREF>>::iterator lowest = out.begin(), highest = out.begin();
 		for (auto it = out.begin(); it != out.end(); it++) {
 			lowest = (*lowest).first <= (*it).first ? lowest : it;
@@ -298,14 +349,8 @@ vector<pair<float, Vec4>> findIntersectionsNormal(int line, vector<pair<Vec4, Ve
 	for (pair<Vec4, Vec4>& edge : polyEdges) {
 		if ((line >= (int)edge.first.yCoord() && line <= (int)edge.second.yCoord()) || (line <= (int)edge.first.yCoord() && line >= (int)edge.second.yCoord())) {
 			float x = getIntersectionPoint(edge.first, edge.second, line);
-			if (x < edge.first.xCoord() && x < edge.second.xCoord())
-				x = min(edge.first.xCoord(), edge.second.xCoord());
-			else if (x > edge.first.xCoord() && x > edge.second.xCoord())
-				x = max(edge.first.xCoord(), edge.second.xCoord());
+			double percentage = getInterpolationPercentage(x, line, edge.first, edge.second);
 
-			double lineDist = distance(edge.first.xCoord(), edge.first.yCoord(), edge.second.xCoord(), edge.second.yCoord());
-			double pointDist = distance(x, line, edge.second.xCoord(), edge.second.yCoord());
-			double percentage = pointDist / lineDist;
 			pair<float, Vec4> pair;
 			pair.first = x;
 			pair.second = getInterpolatedNormal(percentage, polyEdgesNormals[i].first, polyEdgesNormals[i].second);
@@ -329,8 +374,77 @@ vector<pair<float, Vec4>> findIntersectionsNormal(int line, vector<pair<Vec4, Ve
 	return out;
 }
 
+vector<pair<float, double*>> findIntersectionsUVAttrs(int line, vector<pair<Vec4, Vec4>> polyEdges, vector<pair<double*, double*>> polyEdgesUVAttrs)
+{
+	vector<pair<float, double*>> out;
+	int i = 0;
+	for (pair<Vec4, Vec4>& edge : polyEdges) {
+		if ((line >= (int)edge.first.yCoord() && line <= (int)edge.second.yCoord()) || (line <= (int)edge.first.yCoord() && line >= (int)edge.second.yCoord())) {
+			float x = getIntersectionPoint(edge.first, edge.second, line);
+			double percentage = getInterpolationPercentage(x, line, edge.first, edge.second);
+
+			pair<float, double*> pair;
+			pair.first = x;
+			pair.second = getInterpolatedUVs(percentage, polyEdgesUVAttrs[i].first, polyEdgesUVAttrs[i].second);
+			out.push_back(pair);
+		}
+		i++;
+	}
+	if (out.size() > 2) {
+		vector<pair<float, double*>>::iterator lowest = out.begin(), highest = out.begin();
+		for (auto it = out.begin(); it != out.end(); it++) {
+			lowest = (*lowest).first <= (*it).first ? lowest : it;
+			highest = (*highest).first > (*it).first ? highest : it;
+		}
+		vector<pair<float, double*>> newOut;
+		newOut.push_back(*lowest);
+		newOut.push_back(*highest);
+		return newOut;
+	}
+
+	ASSERT(out.size() != 1);
+	return out;
+}
+
+vector<pair<double*, double*>> Renderer::getEdgesUVAttrs(const vector<Edge*>& edges) {
+	vector<pair<double*, double*>> polyEdgesUVAttrs;
+	for (int i = 0; i <= edges.size(); i++) {
+		int j = i, k = i;
+		if (i == edges.size()) {
+			if (edges[i - 1]->getB()->getVec4Coords() == edges[0]->getA()->getVec4Coords()) //Index manipulation to enable adding an additional edge between last and first edge
+				break;
+			j = i - 1;
+			k = 0;
+		}
+		double* pointAUV = new double[2];
+		double* pointBUV = new double[2];
+		pointAUV[0] = edges[k]->getA()->getUAttribute();
+		pointAUV[1] = edges[k]->getA()->getVAttribute();
+		pointBUV[0] = edges[j]->getB()->getUAttribute();
+		pointBUV[1] = edges[j]->getB()->getVAttribute();
+		pair<double*, double*> outUVAttribs;
+		outUVAttribs.first = pointAUV;
+		outUVAttribs.second = pointBUV;
+		polyEdgesUVAttrs.push_back(outUVAttribs);
+	}
+	return polyEdgesUVAttrs;
+}
+
+
 float getIntersectionPoint(Vec4 p1, Vec4 p2, float y) {
-	return getIntersectionWithLine(p1, p2, 0, y).xCoord();
+	float x = getIntersectionWithLine(p1, p2, 0, y).xCoord();
+	if (x < p1.xCoord() && x < p2.xCoord())
+		x = min(p1.xCoord(), p2.xCoord());
+	else if (x > p1.xCoord() && x > p2.xCoord())
+		x = max(p1.xCoord(), p2.xCoord());
+
+	return x;
+}
+
+double getInterpolationPercentage(float x, float y, Vec4 p1, Vec4 p2) {
+	double lineDist = distance(p1.xCoord(), p1.yCoord(), p2.xCoord(), p2.yCoord());
+	double pointDist = distance(x, y, p2.xCoord(), p2.yCoord());
+	return pointDist / lineDist;
 }
 
 Vec4 getTransformedImportedNormal(const Vec4 & normal, const Mat4 & transformation)
@@ -342,8 +456,6 @@ Vec4 getTransformedImportedNormal(const Vec4 & normal, const Mat4 & transformati
 
 	return noTranslate * normal;
 }
-
-
 
 static COLORREF getInterpolatedColor(double a, COLORREF clr1, COLORREF clr2) {
 	int r = GetRValue(clr2) * (1 - a) + GetRValue(clr1) * a;
@@ -360,6 +472,13 @@ static COLORREF getInterpolatedColor(double a, COLORREF clr1, COLORREF clr2) {
 
 static Vec4 getInterpolatedNormal(double a, Vec4 nrm1, Vec4 nrm2) {
 	return nrm1 * a + nrm2 * (1 - a);
+}
+
+static double* getInterpolatedUVs(double a, double* p1, double* p2) {
+	double* out = new double[2];
+	out[0] = p1[0] * a + p2[0] * (1 - a);
+	out[1] = p1[1] * a + p2[1] * (1 - a);
+	return out;
 }
 
 static double distance(int x1, int y1, int x2, int y2) {
@@ -694,6 +813,7 @@ void Renderer::superSampleImage(COLORREF * superSampledImage, COLORREF * finalIm
 	}
 }
 
+
 void Renderer::initializeFilters() {
 	// 0 is box filter;
 	// 1 is triangle filter;
@@ -714,11 +834,12 @@ static int extractColorFromPng(int xCoord, int yCoord, PngWrapper* png) {
 	int c = png->GetValue(xCoord, yCoord);
 	int r = 0, g = 0, b = 0;
 	if (png->GetNumChannels() == 1) {
+		//c = c ? 255 : 0;
 		r = c;
 		g = c;
 		b = c;
 	}
-	if (png->GetNumChannels() == 3 || png->GetNumChannels() == 4) {
+	else if (png->GetNumChannels() == 3 || png->GetNumChannels() == 4) {
 		r = GET_R(c);
 		g = GET_G(c);
 		b = GET_B(c);
@@ -946,6 +1067,17 @@ void Renderer::setLightingMode(LightMode mode)
 	lightingMode = mode;
 }
 
+void Renderer::setFogParams(FogParams fog)
+{
+	this->fog = fog;
+}
+
+void Renderer::getSceneDepthParams(float * min, float * max)
+{
+	*min = sceneMinimalDepth;
+	*max = sceneMaximalDepth;
+}
+
 void Renderer::disableBoundingBox() {
 	withBounding = false;
 }
@@ -969,6 +1101,11 @@ void Renderer::disableVertexNormalInvert()
 	invertVertexNormals = false;
 }
 
+void Renderer::disableParametrixTextures()
+{
+	withParametricTextures = false;
+}
+
 void Renderer::enablePolygonNormals()
 {
 	withPolygonNormals = true;
@@ -984,6 +1121,11 @@ void Renderer::enableVertexNormalInvert()
 	invertVertexNormals = true;
 }
 
+void Renderer::enableParametrixTextures()
+{
+	withParametricTextures = true;
+}
+
 
 
 void Renderer::setVertexNormalMode(VNMode mode)
@@ -991,7 +1133,7 @@ void Renderer::setVertexNormalMode(VNMode mode)
 	vertexNormals = mode;
 }
 
-COLORREF Renderer::getLightingColor(Vec4 point, Vec4 normal, COLORREF originalClr, const std::array<LightParams, NUM_LIGHT_SOURCES> &lightSources, const LightParams& ambientLight, double* materialParams)
+COLORREF Renderer::getColor(Vec4 point, Vec4 normal, COLORREF originalClr, const std::array<LightParams, NUM_LIGHT_SOURCES> &lightSources, const LightParams& ambientLight, double* materialParams)
 {
 	int origR = GetRValue(originalClr);
 	int origG = GetGValue(originalClr);
@@ -1018,10 +1160,8 @@ COLORREF Renderer::getLightingColor(Vec4 point, Vec4 normal, COLORREF originalCl
 			lightVec = Vec4(light.dirX, light.dirY, light.dirZ, 0);
 		}
 		else if (light.type == LIGHT_TYPE_POINT) {
-			lightVec = Vec4(point.xCoord() - light.posX, point.yCoord() - light.posX, point.zCoord() - light.posZ, 0);
+			lightVec = Vec4(point.xCoord() - light.posX, point.yCoord() - light.posY, point.zCoord() - light.posZ, 0);
 			lightVec.normalize();
-			//if (point.zCoord() > 0)
-			//	continue; //FORCEFUL, REMOVE LATER AND FIND A BETTER SOLUTION (TEST -1 and see what happens)
 		}
 		//DIFFUSE LIGHT:
 		float cos_diffuse = lightVec.cosineAngle(normal);
@@ -1092,8 +1232,15 @@ vector<pair<Vec4, Vec4>> Renderer::getEdgesNormals(const vector<Edge*> edges, co
 			j = i - 1;
 			k = 0;
 		}
-		Vec4 normalA = getTransformedImportedNormal(*(edges[k]->getA()->getNormal()), objectWorldMatrix);
-		Vec4 normalB = getTransformedImportedNormal(*(edges[j]->getB()->getNormal()), objectWorldMatrix);
+		Vec4 normalA, normalB;
+		if (edges[k]->getA()->getNormal() && edges[j]->getB()->getNormal()) {
+			normalA = getTransformedImportedNormal(*(edges[k]->getA()->getNormal()), objectWorldMatrix);
+			normalB = getTransformedImportedNormal(*(edges[j]->getB()->getNormal()), objectWorldMatrix);
+		}
+		else {
+			normalA = edges[k]->getA()->calculateVertexNormalTarget(objectWorldMatrix, false);
+			normalB = edges[j]->getB()->calculateVertexNormalTarget(objectWorldMatrix, false);
+		}
 		pair<Vec4, Vec4> outNormals;
 		outNormals.first = normalA;
 		outNormals.second = normalB;
@@ -1115,8 +1262,8 @@ vector<pair<COLORREF, COLORREF>> Renderer::getEdgesColors(const vector<Edge*>& e
 		Vec4 pointAobject = objectWorldMatrix * edges[k]->getA()->getVec4Coords();
 		Vec4 pointBobject = objectWorldMatrix * edges[j]->getB()->getVec4Coords();
 		pair<COLORREF, COLORREF> outColors;
-		outColors.first = getLightingColor(pointAobject, polyEdgesNormals[k].first, originalClr, lightSources, ambientLight, materialParams);
-		outColors.second = getLightingColor(pointAobject, polyEdgesNormals[j].second, originalClr, lightSources, ambientLight, materialParams);
+		outColors.first = getColor(pointAobject, polyEdgesNormals[k].first, originalClr, lightSources, ambientLight, materialParams);
+		outColors.second = getColor(pointBobject, polyEdgesNormals[j].second, originalClr, lightSources, ambientLight, materialParams);
 		polyEdgesColors.push_back(outColors);
 	}
 	return polyEdgesColors;
@@ -1130,4 +1277,12 @@ vector<Vec4> Renderer::getPolyAsVectorVec4(Face* face, const Mat4 finalMatrix)
 		poly.push_back(currPoint * (1 / currPoint.wCoord()));
 	}
 	return poly;
+}
+
+COLORREF invertRB(COLORREF clr)
+{
+	int iRed = GetRValue(clr);
+	int iBlue = GetBValue(clr);
+	int iGreen = GetGValue(clr);
+	return RGB(iBlue, iGreen, iRed);
 }

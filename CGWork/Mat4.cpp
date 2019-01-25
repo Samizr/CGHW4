@@ -40,11 +40,11 @@ Mat4 Mat4::getTranspose() const {
 
 Mat4 Mat4::getInverse() const
 {
-	Mat4 mat = *this;
+	Mat4 input = *this;
 	float a[16], aInverted[16];
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
-			a[i * 4 + j] = mat[i][j];
+			a[i * 4 + j] = input[i][j];
 		}
 	}
 
@@ -52,13 +52,12 @@ Mat4 Mat4::getInverse() const
 		return Identity();
 	}
 	else {
+		Vec4 rows[4];
 		for (int i = 0; i < 4; i++) {
-			for (int j = 0; j < 4; j++) {
-				mat[i][j] = a[i * 4 + j];
-			}
+			rows[i] = Vec4(aInverted[i * 4], aInverted[i * 4 + 1], aInverted[i * 4 + 2], aInverted[i * 4 + 3]);
 		}
+		return Mat4(rows);
 	}
-	return mat;
 }
 
 Mat4 Mat4::operator*(const float& a) const {

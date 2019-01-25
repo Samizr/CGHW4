@@ -12,9 +12,9 @@ using std::numeric_limits;
 
 void Geometry::setPointLimits()
 {
-	maxX = std::numeric_limits<float>::min();
-	maxY = std::numeric_limits<float>::min();
-	maxZ = std::numeric_limits<float>::min();
+	maxX = -std::numeric_limits<float>::max();
+	maxY = -std::numeric_limits<float>::max();
+	maxZ = -std::numeric_limits<float>::max();
 	minX = std::numeric_limits<float>::max();
 	minY = std::numeric_limits<float>::max();
 	minZ = std::numeric_limits<float>::max();
@@ -41,12 +41,13 @@ void Geometry::addFace(Face* face)
 
 Vertex * Geometry::getVertex(float x, float y, float z)
 {
-	auto search = vertexMap.find(Vec4(x, y, z, 0));
-	if (search == vertexMap.end()) {
-		return nullptr;
-	} else {
-		return (*search).second;
-	}
+	return nullptr;
+	//auto search = vertexMap.find(Vec4(x, y, z, 0));
+	//if (search == vertexMap.end()) {
+	//	return nullptr;
+	//} else {
+	//	return (*search).second;
+	//}
 }
 
 Edge * Geometry::getEdge(Vertex * x, Vertex * y) {

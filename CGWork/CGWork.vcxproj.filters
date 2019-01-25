@@ -102,8 +102,14 @@
     <ClCompile Include="SuperSamplingAADialog.cpp">
       <Filter>Source Files\Frontend</Filter>
     </ClCompile>
+    <ClCompile Include="FogEffectsDialog.cpp">
+      <Filter>Source Files\Frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="ParametricTexturesDialog.cpp">
+      <Filter>Source Files\Frontend</Filter>
+    </ClCompile>
     <ClCompile Include="MotionBlurDialog.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Frontend</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -125,9 +131,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Light.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LightDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MainFrm.h">
@@ -272,6 +275,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MotionBlurDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Fog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FogEffectsDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParametricTexturesDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

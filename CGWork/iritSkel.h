@@ -22,7 +22,7 @@
 
 extern IPFreeformConvStateStruct CGSkelFFCState;
 extern Geometry loadedGeometry;
-extern Scene loadedScene;
+extern Model loadedModel;
 
 
 bool CGSkelProcessIritDataFiles(CString &FileNames, int NumFiles);

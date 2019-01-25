@@ -22,10 +22,12 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	int maxSubobject;
+	int maxObject;
 	BOOL subChecked;
 	int subobjectID;
 
 	BOOL invertVertexNormals;
 	BOOL invertPolygonNormals;	
 	BOOL importNormals;
+	int modelId;
 };

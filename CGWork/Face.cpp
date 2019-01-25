@@ -74,8 +74,6 @@ Vec4 Face::calculateMidpoint()
 	return midpoint;
 }
 
-
-
 Face::~Face()
 {
 }

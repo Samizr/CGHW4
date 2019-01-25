@@ -66,12 +66,3 @@ float Camera::getAlpha()
 {
 	return alpha;
 }
-
-//void Camera::setD(float newD)
-//{
-//	d = newD;
-//}
-//
-//void Camera::setAlpha(float newAlpha)
-//{
-//}

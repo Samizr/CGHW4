@@ -13,12 +13,9 @@ IMPLEMENT_DYNAMIC(SuperSamplingAADialog, CDialog)
 
 SuperSamplingAADialog::SuperSamplingAADialog(CWnd* pParent /*=nullptr*/)
 	: CDialog(IDD_SUPER_SAMPLING, pParent)
-	, isFilter3(FALSE)
-	, isFilter5(FALSE)
+	, filterType(0)
+	, filterSize(0)
 {
-	for (int i = 0; i < 4; i++) {
-		filterType[i] = FALSE;
-	}
 }
 
 SuperSamplingAADialog::~SuperSamplingAADialog()
@@ -28,12 +25,8 @@ SuperSamplingAADialog::~SuperSamplingAADialog()
 void SuperSamplingAADialog::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_Check(pDX, IDC_filter3, isFilter3);
-	DDX_Check(pDX, IDC_filter5, isFilter5);
-	DDX_Check(pDX, IDC_boxFilter, filterType[0]);
-	DDX_Check(pDX, IDC_triangleFilter, filterType[1]);
-	DDX_Check(pDX, IDC_gaussianFilter, filterType[2]);
-	DDX_Check(pDX, IDC_sincFilter, filterType[3]);
+	DDX_Radio(pDX, IDC_BOX_FILTER, filterType);
+	DDX_Radio(pDX, IDC_NO_SIZE, filterSize);
 }
 
 

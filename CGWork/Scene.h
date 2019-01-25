@@ -20,22 +20,20 @@
 class Scene {
 	std::map<int, Model*> models;
 	std::map<int, Camera*> cameras;
-	Model* mainModel;
 	int activeCamera;
 	int activeModel;
-	int secondActiveModel;
-	bool dualView;
-	bool subobjectDraw;
 	Renderer m_renderer;
 	static int cameraIdGenerator;
 	static int modelIdGenerator;
 	bool withBoundingBox;
 	bool withBackfaceCulling;
-	PngWrapper* pngImage;
+
+	PngWrapper* pngTextureImage;
 	bool withPngBackground;
 	bool withSilhouette;
 	bool repeatMode;
 	bool wireframeMode;
+
 	//LIGHTING RELATED:
 	std::array<LightParams, NUM_LIGHT_SOURCES> lightSources;
 	LightParams ambientLight;
@@ -43,35 +41,33 @@ class Scene {
 	double diffuseFraction;
 	double specularFraction;
 	int cosinComponent;
+
+	//DRAW FUNCTIONS:
 	void drawWireframe(COLORREF* bitArr, CRect rect);
 	void drawSolid(COLORREF* bitArr, CRect rect);
+	void drawMiscellaneous(COLORREF* bitArr, CRect rect);
 
 public:
 	Scene();
 	int addModel(Model* model);
 	int addCamera(Camera* camera);
-	Model* getMainModel();
 	std::map<int, Model*>& getAllModels();
-	void setMainModel(Model* model);
-	//void setAllModels(const std/*:*/:map<int, Model*>& models);
 	void loadFromScene(const Scene& other);
 	void setRenderer(Renderer& renderer);
 	Renderer& getRenderer();
 
 	void setWireframeMode();
 	void setSolidMode();
-	void setSubobjectMode();
-	void setWholeobjectMode();
 	Model* getModel(int id);
 	Camera* getCamera(int id);
 	Model* getActiveModel();
-	Model* getSecondActiveModel();
 	Camera* getActiveCamera();
 	void setAmbientLight(LightParams light);
 	void setLightSource(LightParams light, int id);
+	void setActiveModelByID(int id);
+	int getActiveModelID();
 
 	void clear();
-	void setActiveModelID(int id);
 	void draw(COLORREF* bitArr, CRect rect);
 	void enableBoundingBox();
 	void enablePolygonNormals();
@@ -81,7 +77,7 @@ public:
 	void enableSilhouettes();
 	void enablePNGBackground();
 	void enableRepeatMode();
-	void enableDualView();
+	void enableParametricTextures();
 	void setVertexNormalsMode(VNMode mode);
 	void setBackgroundColor(COLORREF clr);
 	void setSilhouetteColor(COLORREF clr);
@@ -94,13 +90,14 @@ public:
 	void disableSilhouettes();
 	void disablePNGBackground();
 	void disableRepeatMode();
-	void disableDualView();
+	void disableParametricTextures();
 	void setLightAmbientVariable(double data);
 	void setLightDiffuseVariable(double data);
 	void setLightSpecularVariable(double data);
 	void setLightCosineComponent(double data);
-
-	void setPngBackgroundImage(PngWrapper* pngImage);
+	void setFogParams(FogParams fog);
+	void getSceneDepthParams(float *min, float *max);
+	void setPngBackgroundImage(PngWrapper* pngTextureImage);
 	void enableBackgroundImage();
 	void disableBackgroundImage();
 };

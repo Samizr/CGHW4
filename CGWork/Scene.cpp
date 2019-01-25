@@ -14,10 +14,6 @@ Scene::Scene()
 {
 	this->activeCamera = -1;
 	this->activeModel = -1;
-	this->secondActiveModel = -1;
-	this->dualView = false;
-	this->subobjectDraw = false;
-	this->mainModel = nullptr;
 	this->withBackfaceCulling = false;
 	this->withBoundingBox = false;
 	this->withSilhouette = false;
@@ -28,12 +24,8 @@ Scene::Scene()
 
 int Scene::addModel(Model* model){
 	this->models[modelIdGenerator] = model;
-	if (dualView && activeModel > secondActiveModel) {
-		secondActiveModel = modelIdGenerator;
-	}
-	else {
-		activeModel = modelIdGenerator;
-	}
+	activeModel = modelIdGenerator;
+	model->normalizeUVAttributes();
 	return modelIdGenerator++;
 }
 
@@ -52,7 +44,6 @@ void Scene::loadFromScene(const Scene & other)
 {
 	this->clear();
 	this->models = other.models;
-	this->mainModel = other.mainModel;
 	this->cameras = other.cameras;
 	this->modelIdGenerator = other.modelIdGenerator;
 	this->cameraIdGenerator = other.cameraIdGenerator;
@@ -71,32 +62,12 @@ Renderer & Scene::getRenderer()
 	return m_renderer;
 }
 
-Model * Scene::getMainModel()
-{
-	return mainModel;
-}
-
-void Scene::setMainModel(Model * model)
-{
-	mainModel = model;
-}
-
 void Scene::setWireframeMode(){
 	wireframeMode = true;
 }
 
 void Scene::setSolidMode(){
 	wireframeMode = false;
-}
-
-void Scene::setSubobjectMode()
-{
-	subobjectDraw = true;
-}
-
-void Scene::setWholeobjectMode()
-{
-	subobjectDraw = false;
 }
 
 Model* Scene::getModel(int id) {
@@ -120,14 +91,6 @@ Model* Scene::getActiveModel() {
 	return models[activeModel];
 }
 
-Model * Scene::getSecondActiveModel()
-{
-	if (secondActiveModel == -1) {
-		return nullptr;
-	}
-	return models[secondActiveModel];
-}
-
 Camera* Scene::getActiveCamera() {
 	if (activeCamera == -1) {
 		return nullptr;
@@ -149,24 +112,30 @@ void Scene::clear()
 {
 	models.clear();
 	cameras.clear();
-	mainModel = nullptr;
 	modelIdGenerator = 0;
 	cameraIdGenerator = 0;
+	activeModel = -1;
+	activeCamera = -1;
 }
 
-void Scene::setActiveModelID(int id)
+void Scene::setActiveModelByID(int id)
 {
 	activeModel = id;
+}
+
+int Scene::getActiveModelID()
+{
+	return activeModel;
 }
 
 void Scene::draw(COLORREF* bitArr, CRect rect) {
 	//DRAW BACKGROUND
 	this->m_renderer.setMainRect(rect);
 	if (withPngBackground && !repeatMode) {
-		this->m_renderer.drawBackgoundImageStretch(bitArr, rect, pngImage);
+		this->m_renderer.drawBackgoundImageStretch(bitArr, rect, pngTextureImage);
 	}
 	else if (withPngBackground && repeatMode) {
-		this->m_renderer.drawBackgoundImageRepeat(bitArr, rect, pngImage);
+		this->m_renderer.drawBackgoundImageRepeat(bitArr, rect, pngTextureImage);
 	}
 	else {
 		this->m_renderer.drawBackgroundColor(bitArr, rect);
@@ -180,30 +149,20 @@ void Scene::draw(COLORREF* bitArr, CRect rect) {
 	Camera* camera = cameras[activeCamera];
 	this->m_renderer.setCameraMatrix(camera->getTransformationMatrix());
 	this->m_renderer.setProjectionMatrix(camera->getProjectionMatrix());
-	this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&mainModel->getGeometry()));
-
 	if (wireframeMode) {
 		drawWireframe(bitArr, rect);
 	}
 	else {
 		drawSolid(bitArr, rect);
 	}
+	drawMiscellaneous(bitArr, rect);
 	
-	//DRAW BOUNDING BOX
-	if (withBoundingBox && !subobjectDraw) {
-		Geometry* geometry = &mainModel->getGeometry();
-		m_renderer.drawBounding(bitArr, rect, geometry, geometry->getLineClr());
-	}
-	//DRAW SILHOUETTE
-	if (withSilhouette) {
-		Geometry* geometry = &mainModel->getGeometry();
-		m_renderer.drawSilhouette(bitArr, rect, geometry);
-	}
+	
 }
 
 void Scene::drawWireframe(COLORREF* bitArr, CRect rect) {
 	for (std::pair<int, Model*> pair : models) {
-		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
+		this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&pair.second->getMainGeometry()));
 		if (withBackfaceCulling) {
 			m_renderer.drawWireframeBackfaceCulling(bitArr, rect, pair.second);
 		}
@@ -217,7 +176,7 @@ void Scene::drawSolid(COLORREF* bitArr, CRect rect) {
 	float* zBuffer = createZBuffer(rect);
 	double materialComponents[4] = { ambientFraction, diffuseFraction, specularFraction, cosinComponent };
 	for (std::pair<int, Model*> pair : models) {
-		this->m_renderer.setObjectWorldMatrix(models[pair.first]->getTransformationMatrix() * mainModel->getTransformationMatrix());
+		this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&pair.second->getMainGeometry()));
 		if (withBackfaceCulling) {
 			m_renderer.drawSolidBackfaceCulling(bitArr, rect, pair.second, lightSources, ambientLight, materialComponents);
 		}
@@ -226,6 +185,22 @@ void Scene::drawSolid(COLORREF* bitArr, CRect rect) {
 		}
 	}
 	free(zBuffer);
+}
+
+void Scene::drawMiscellaneous(COLORREF * bitArr, CRect rect)
+{
+	for (int i = 0; i < models.size(); i++) {
+		this->m_renderer.setNormalizationMatrix(generateNormalizationMatrix(&models[i]->getMainGeometry()));
+		this->m_renderer.setObjectWorldMatrix(models[i]->getTransformationMatrix());
+		Geometry* geometry = &models[i]->getMainGeometry();
+		if (withBoundingBox) {
+			m_renderer.drawBounding(bitArr, rect, geometry, geometry->getLineClr());
+		}
+		if (withSilhouette) {
+			m_renderer.drawSilhouette(bitArr, rect, geometry);
+		}
+		
+	}
 }
 
 float* createZBuffer(CRect rect) {
@@ -273,6 +248,12 @@ void Scene::enableRepeatMode()
 	repeatMode = true;
 }
 
+void Scene::enableParametricTextures()
+{
+	this->m_renderer.enableParametrixTextures();
+}
+
+
 void Scene::disableBackfaceCulling()
 {
 	withBackfaceCulling = false;
@@ -291,6 +272,11 @@ void Scene::disablePNGBackground()
 void Scene::disableRepeatMode()
 {
 	repeatMode = false;
+}
+
+void Scene::disableParametricTextures()
+{
+	this->m_renderer.disableParametrixTextures();
 }
 
 void Scene::enablePolygonNormals()
@@ -328,16 +314,6 @@ void Scene::setLightingMode(LightMode mode)
 	this->m_renderer.setLightingMode(mode);
 }
 
-void Scene::enableDualView()
-{
-	dualView = true;
-}
-
-void Scene::disableDualView()
-{
-	dualView = false;
-}
-
 void Scene::setLightAmbientVariable(double data)
 {
 	ambientFraction = data;
@@ -358,8 +334,18 @@ void Scene::setLightCosineComponent(double data)
 	cosinComponent = data;
 }
 
-void Scene::setPngBackgroundImage(PngWrapper* pngImage) {
-	this->pngImage = pngImage;
+void Scene::setFogParams(FogParams fog)
+{
+	this->m_renderer.setFogParams(fog);
+}
+
+void Scene::getSceneDepthParams(float * min, float * max)
+{
+	this->m_renderer.getSceneDepthParams(min, max);
+}
+
+void Scene::setPngBackgroundImage(PngWrapper* pngTextureImage) {
+	this->pngTextureImage = pngTextureImage;
 }
 
 void Scene::enableBackgroundImage() {
