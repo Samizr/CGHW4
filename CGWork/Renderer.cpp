@@ -212,11 +212,10 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 					zBuffer[i * rect.Width() + j] = currentDepth;
 			}
 		}
-	//	for (int i = 0; intersectionPointsUV.size(); i++) {
-		//	delete intersectionPointsUV[i].second;
-		//}
+		for (int i = 0; intersectionPointsUV.size(); i++) {
+			delete intersectionPointsUV[i].second;
+		}
 	}
-
 }
 
 COLORREF Renderer::getColorParametricTexture(vector<pair<float, double*>> intersectionPointsUV, int x)
