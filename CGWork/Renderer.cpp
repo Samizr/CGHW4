@@ -208,9 +208,13 @@ void Renderer::drawFaceSolid(COLORREF* bitArr, float* zBuffer, CRect rect, Face*
 					zBuffer[i * rect.Width() + j] = currentDepth;
 			}
 		}
-		for (int i = 0; intersectionPointsUV.size(); i++) {
+		for (int i = 0; i < intersectionPointsUV.size(); i++) {
 			delete intersectionPointsUV[i].second;
 		}
+	}
+	for (int i = 0; i < polyEdgesUVAttrs.size(); i++) {
+		delete polyEdgesUVAttrs[i].first;
+		delete polyEdgesUVAttrs[i].second;
 	}
 }
 
@@ -223,10 +227,13 @@ COLORREF Renderer::getColorParametricTexture(vector<pair<float, double*>> inters
 	double percentage = lineDist == 0 ? 1 : pointDist / lineDist;
 	percentage = percentage > 1 ? 1 : percentage;
 	double* UV = getInterpolatedUVs(percentage, intersectionPointsUV[maxId].second, intersectionPointsUV[minId].second);
+	double u = UV[0];
+	double v = UV[1];
 	double h = renderedTexture->GetHeight() - 1;
 	double w = renderedTexture->GetWidth() - 1;
+	delete UV;
 
-	return extractColorFromPng(UV[1] * w, UV[0] * h, renderedTexture);
+	return extractColorFromPng(u * w, v * h, renderedTexture);
 }
 
 COLORREF Renderer::getColorGouraud(vector<pair<float, COLORREF>> intersectionPointsCLR, int x) {
@@ -1154,14 +1161,11 @@ COLORREF Renderer::getColor(Vec4 point, Vec4 normal, COLORREF originalClr, const
 		if (!light.enabled) {
 			continue;
 		}
-		//Vec4 lightVec = Vec4(light.posX, light.posY, light.posZ, 0);
-		//lightVec = cameraMatrix * lightVec;
-		//point = cameraMatrix * point;
 		if (light.type == LIGHT_TYPE_DIRECTIONAL) {
 			lightVec = Vec4(light.dirX, light.dirY, light.dirZ, 0);
 		}
 		else if (light.type == LIGHT_TYPE_POINT) {
-			lightVec = Vec4(point.xCoord() - light.posX, point.yCoord() - light.posY, point.zCoord() - light.posZ, 0);
+			lightVec = Vec4(light.posX - point.xCoord(), light.posY - point.yCoord(), light.posZ - point.zCoord(), 0);
 			lightVec.normalize();
 		}
 		//DIFFUSE LIGHT:
@@ -1175,7 +1179,7 @@ COLORREF Renderer::getColor(Vec4 point, Vec4 normal, COLORREF originalClr, const
 		Vec4 viewerVec(0, 0, cameraMatrix[2][3], 0); //FIX THIS!
 		Vec4 specularVec = normal * 2 * (lightVec ^ normal) - lightVec;
 		//Vec4 viewerVec = cameraMatrix.getInverse() * (-1) * Vec4(1, 1, 1, 1);
-		float cos_specular = specularVec.cosineAngle(viewerVec);
+		float cos_specular = -specularVec.cosineAngle(viewerVec);
 		if (cos_specular > 0) {
 			cos_specular = pow(cos_specular, cosinComponent);
 			R += specularFraction * cos_specular * light.colorR;

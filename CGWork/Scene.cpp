@@ -199,7 +199,6 @@ void Scene::drawMiscellaneous(COLORREF * bitArr, CRect rect)
 		if (withSilhouette) {
 			m_renderer.drawSilhouette(bitArr, rect, geometry);
 		}
-		
 	}
 }
 
